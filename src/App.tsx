@@ -1,10 +1,7 @@
-import { Navbar, TwoColumnLayout, Column, Button } from './components/layout';
+import { TwoColumnLayout, Column, Button } from './components/layout';
 
 function App() {
   return (
-    <div className="min-h-screen bg-dark-bg">
-      <Navbar />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <TwoColumnLayout
           leftColumn={
             <Column spacing="lg" border>
@@ -53,8 +50,6 @@ function App() {
           }
           gap="lg"
         />
-      </main>
-    </div>
   );
 }
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { NavLink as RouterNavLink } from 'react-router-dom';
 import type { NavLink } from '../../types/layout';
 
 const navLinks: NavLink[] = [
@@ -24,14 +25,18 @@ export function Navbar() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex md:space-x-8">
             {navLinks.map((link, index) => (
-              <a
+              <RouterNavLink
                 key={index}
-                href={link.href}
-                className="text-text-secondary hover:text-orange-accent transition-colors duration-200 focus-orange"
+                to={link.href}
+                className={({ isActive }) => 
+                  `text-text-secondary hover:text-orange-accent transition-colors duration-200 focus-orange ${
+                    isActive ? 'text-orange-accent' : ''
+                  }`
+                }
               >
                 {link.icon && <span className="mr-2">{link.icon}</span>}
                 {link.label}
-              </a>
+              </RouterNavLink>
             ))}
           </div>
 
@@ -53,15 +58,19 @@ export function Navbar() {
         <div className="md:hidden bg-dark-bg border-t border-dark-border">
           <div className="px-2 pt-2 pb-3 space-y-1">
             {navLinks.map((link, index) => (
-              <a
+              <RouterNavLink
                 key={index}
-                href={link.href}
-                className="block px-3 py-2 text-text-secondary hover:text-orange-accent hover:bg-dark-surface rounded-md transition-colors duration-200"
+                to={link.href}
+                className={({ isActive }) => 
+                  `block px-3 py-2 text-text-secondary hover:text-orange-accent hover:bg-dark-surface rounded-md transition-colors duration-200 ${
+                    isActive ? 'text-orange-accent' : ''
+                  }`
+                }
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {link.icon && <span className="mr-2">{link.icon}</span>}
                 {link.label}
-              </a>
+              </RouterNavLink>
             ))}
           </div>
         </div>
