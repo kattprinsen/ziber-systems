@@ -1,11 +1,19 @@
 import { useState } from 'react';
-import type { NavbarProps } from '../../types/layout';
+import type { NavLink } from '../../types/layout';
 
-export function Navbar({ links, logo, className = '' }: NavbarProps) {
+const navLinks: NavLink[] = [
+  { label: 'Home', href: '/' },
+  { label: 'About', href: '/about' },
+  { label: 'Services', href: '/services' },
+  { label: 'Contact', href: '/contact' },
+  { label: 'Tools', href: '/tools' },
+];
+
+export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
+  const logo = null; // Replace with actual logo component or image if available
   return (
-    <nav className={`bg-dark-surface border-b border-dark-border ${className}`}>
+    <nav className={`bg-dark-surface border-b border-dark-border`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -15,7 +23,7 @@ export function Navbar({ links, logo, className = '' }: NavbarProps) {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex md:space-x-8">
-            {links.map((link, index) => (
+            {navLinks.map((link, index) => (
               <a
                 key={index}
                 href={link.href}
@@ -44,7 +52,7 @@ export function Navbar({ links, logo, className = '' }: NavbarProps) {
       {isMobileMenuOpen && (
         <div className="md:hidden bg-dark-bg border-t border-dark-border">
           <div className="px-2 pt-2 pb-3 space-y-1">
-            {links.map((link, index) => (
+            {navLinks.map((link, index) => (
               <a
                 key={index}
                 href={link.href}

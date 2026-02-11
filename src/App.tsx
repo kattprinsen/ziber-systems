@@ -1,18 +1,9 @@
 import { Navbar, TwoColumnLayout, Column, Button } from './components/layout';
-import type { NavLink } from './types/layout';
-
-const navLinks: NavLink[] = [
-  { label: 'Home', href: '/' },
-  { label: 'About', href: '/about' },
-  { label: 'Services', href: '/services' },
-  { label: 'Contact', href: '/contact' },
-];
 
 function App() {
   return (
     <div className="min-h-screen bg-dark-bg">
-      <Navbar links={navLinks} />
-      
+      <Navbar />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <TwoColumnLayout
           leftColumn={
