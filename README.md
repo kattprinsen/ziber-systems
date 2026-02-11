@@ -1,23 +1,74 @@
-# Ziber Systems - Dark Mode UI
+# Ziber Systems - Full Stack Application
 
-A modern React application featuring a professionally designed dark-themed interface with responsive two-column layout and orange accent colors.
+A modern full-stack React application with Node.js backend featuring a professionally designed dark-themed interface, user management system, and RESTful API.
 
 ## Features
 
+### Frontend
 - ✨ **Dark Theme**: WCAG AA compliant dark color scheme with excellent contrast ratios
-- 📱 **Responsive Design**: Mobile-first two-column layout that stacks on mobile devices
+- 📱 **Responsive Design**: Mobile-first layout that adapts to all screen sizes
 - 🎨 **Orange Accents**: Vibrant orange (#FF6B35) accent color for interactive elements
+- 👥 **User Management**: Browse, search, and view detailed user profiles
+- 🔍 **Advanced Filtering**: Filter users by department, status, or search query
 - ♿ **Accessible**: Keyboard navigation, focus states, and screen reader support
-- ⚡ **Fast**: Built with Vite for lightning-fast development and optimized production builds
+- ⚡ **Fast**: Built with Vite for lightning-fast development
 - 🎯 **TypeScript**: Full type safety across all components
+
+### Backend
+- 🚀 **RESTful API**: Express.js with TypeScript
+- 📊 **User Data Management**: JSON-based data storage with caching
+- 🛡️ **Security**: Helmet.js for security headers, CORS configuration
+- 📝 **Request Logging**: Custom middleware for request tracking
+- ⚠️ **Error Handling**: Centralized error handling with proper status codes
+- 🔧 **Best Practices**: Service layer architecture, async/await patterns
 
 ## Tech Stack
 
-- **React 19.2.0** - UI framework
+### Frontend
+- **React 19.2.0** - UI framework with React Router for navigation
 - **TypeScript 5.9.3** - Type safety
 - **Vite 7.2.4** - Build tool and dev server
 - **Tailwind CSS 3.4** - Utility-first styling
-- **Vitest** - Testing framework
+
+### Backend
+- **Node.js** - Runtime environment
+- **Express 4.18** - Web framework
+- **TypeScript 5.3** - Type safety
+- **tsx** - TypeScript execution for development
+- **Helmet** - Security middleware
+- **CORS** - Cross-origin resource sharing
+
+## Project Structure
+
+```
+ziber-systems/
+├── backend/                 # Node.js backend
+│   ├── src/
+│   │   ├── controllers/    # Route controllers
+│   │   ├── data/          # JSON data files (users.json)
+│   │   ├── middleware/    # Express middleware
+│   │   ├── routes/        # API routes
+│   │   ├── services/      # Business logic layer
+│   │   ├── types/         # TypeScript types
+│   │   └── server.ts      # Express app setup
+│   ├── package.json
+│   └── tsconfig.json
+│
+├── src/                    # React frontend
+│   ├── components/
+│   │   ├── layout/        # Layout components (Navbar, Layout, etc.)
+│   │   └── users/         # User-related components (UserCard)
+│   ├── pages/             # Page components
+│   │   ├── UsersPage/     # Users listing page
+│   │   ├── UserDetailPage/# Individual user details
+│   │   ├── ToolsPage/
+│   │   └── ErrorPage/
+│   ├── services/          # API client and services
+│   ├── types/             # TypeScript types
+│   └── utils/             # Utility functions
+├── package.json
+└── vite.config.ts
+```
 
 ## Getting Started
 
@@ -28,26 +79,143 @@ A modern React application featuring a professionally designed dark-themed inter
 
 ### Installation
 
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd ziber-systems
+   ```
+
+2. **Install Frontend Dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Install Backend Dependencies**
+   ```bash
+   cd backend
+   npm install
+   cd ..
+   ```
+
+4. **Configure Environment Variables**
+   
+   Frontend - Create `.env` in root:
+   ```env
+   VITE_API_URL=http://localhost:3001/api
+   ```
+
+   Backend - Create `backend/.env`:
+   ```env
+   PORT=3001
+   FRONTEND_URL=http://localhost:5173
+   NODE_ENV=development
+   ```
+
+### Running the Application
+
+**Option 1: Run Both Servers Separately**
+
+Terminal 1 (Backend):
 ```bash
-# Install dependencies
-npm install
-
-# Start development server
+cd backend
 npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-
-# Run tests
-npm test
 ```
 
-## Component Usage
+Terminal 2 (Frontend):
+```bash
+npm run dev
+```
 
-### Navbar
+**Option 2: Run Both Servers in Background (PowerShell)**
+
+```powershell
+# Start backend
+cd backend
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "npm run dev"
+
+# Start frontend
+cd ..
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "npm run dev"
+```
+
+The application will be available at:
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:3001/api`
+
+### Building for Production
+
+**Frontend:**
+```bash
+npm run build
+npm run preview
+```
+
+**Backend:**
+```bash
+cd backend
+npm run build
+npm start
+```
+
+## API Endpoints
+
+### Health Check
+- `GET /api/health` - Server health check
+
+### Users
+- `GET /api/users` - Get all users
+  - Query params:
+    - `department` - Filter by department (e.g., "Engineering")
+    - `status` - Filter by status (active, inactive, on-leave)
+    - `search` - Search by name, email, role, or department
+- `GET /api/users/:id` - Get user by ID
+
+**Example Requests:**
+```bash
+# Get all users
+curl http://localhost:3001/api/users
+
+# Filter by department
+curl http://localhost:3001/api/users?department=Engineering
+
+# Search users
+curl http://localhost:3001/api/users?search=emma
+
+# Get specific user
+curl http://localhost:3001/api/users/user-001
+```
+
+## Features Overview
+
+### User Management
+- **Browse Users**: View all team members in a responsive card grid
+- **Search**: Real-time search across names, emails, roles, and departments
+- **Filter**: Filter users by department or employment status
+- **User Details**: Click any user card to view comprehensive profile information
+- **Status Indicators**: Visual badges showing user status (Active, Inactive, On Leave)
+
+### Data Structure
+Users are stored in `backend/src/data/users.json` with the following structure:
+```json
+{
+  "id": "unique-id",
+  "name": "Full Name",
+  "email": "email@example.com",
+  "role": "Job Title",
+  "department": "Department Name",
+  "avatar": "image-url",
+  "phone": "+46 70 123 4567",
+  "joinedDate": "2023-03-15",
+  "status": "active",
+  "bio": "User biography",
+  "skills": ["Skill 1", "Skill 2"],
+  "location": "City, Country"
+}
+```
+
+## Development
+
+### Frontend Scripts
 
 ```tsx
 import { Navbar } from './components/layout';

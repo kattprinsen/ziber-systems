@@ -4,10 +4,11 @@ import type { NavLink } from '../../types/layout';
 
 const navLinks: NavLink[] = [
   { label: 'Home', href: '/' },
+  { label: 'Users', href: '/users' },
+  { label: 'Tools', href: '/tools' },
   { label: 'About', href: '/about' },
   { label: 'Services', href: '/services' },
   { label: 'Contact', href: '/contact' },
-  { label: 'Tools', href: '/tools' },
 ];
 
 export function Navbar() {
