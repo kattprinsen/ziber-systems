@@ -11,6 +11,15 @@ export interface User {
   bio?: string;
   skills?: string[];
   location?: string;
+  currentSalary?: number;
+  salaryHistory?: SalaryHistoryEntry[];
+}
+
+export interface SalaryHistoryEntry {
+  salary: number;
+  effectiveDate: string;
+  updatedBy?: string;
+  notes?: string;
 }
 
 export interface ApiResponse<T> {
@@ -18,4 +27,5 @@ export interface ApiResponse<T> {
   data?: T;
   error?: string;
   message?: string;
+  details?: string[];
 }

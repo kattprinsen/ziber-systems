@@ -140,6 +140,31 @@ export const CONTRAST_RATIOS = {
 } as const;
 
 /**
+ * Salary calculation constants
+ */
+export const SALARY_CONSTANTS = {
+  MIN_SALARY: 0,
+  MAX_SALARY: 10_000_000,
+  WARNING_THRESHOLD_PERCENTAGE: 50,
+  DECIMAL_PRECISION: 0,
+  DEFAULT_CURRENCY: 'SEK',
+  DEFAULT_LOCALE: 'sv-SE',
+} as const;
+
+/**
+ * Validation error messages
+ */
+export const SALARY_ERROR_MESSAGES = {
+  NEGATIVE_VALUE: 'Salary must be a positive number',
+  INVALID_NUMBER: 'Please enter a valid salary amount',
+  EXCEEDS_MAX: `Salary exceeds maximum allowed value of ${SALARY_CONSTANTS.MAX_SALARY.toLocaleString('sv-SE')} kr`,
+  REQUIRED: 'Current salary is required for calculations',
+  NO_SALARY_DATA: 'Employee does not have salary information',
+  FUTURE_DATE: 'Effective date cannot be in the future',
+  INVALID_DATE: 'Please provide a valid date',
+} as const;
+
+/**
  * Utility function to merge Tailwind class names
  * @param classes - Array of class name strings
  * @returns Merged class name string
