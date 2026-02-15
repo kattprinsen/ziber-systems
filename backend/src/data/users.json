@@ -11,7 +11,20 @@
     "status": "active",
     "bio": "Passionate about creating elegant user interfaces and improving user experience. Specializes in React and modern web technologies.",
     "skills": ["React", "TypeScript", "CSS", "UI/UX Design", "Accessibility"],
-    "location": "Stockholm, Sweden"
+    "location": "Stockholm, Sweden",
+    "currentSalary": 85000.00,
+    "salaryHistory": [
+      {
+        "salary": 80000.00,
+        "effectiveDate": "2025-01-15",
+        "notes": "Annual review increase"
+      },
+      {
+        "salary": 75000.00,
+        "effectiveDate": "2024-01-10",
+        "notes": "Merit increase"
+      }
+    ]
   },
   {
     "id": "user-002",
@@ -25,7 +38,15 @@
     "status": "active",
     "bio": "Experienced backend engineer focused on building scalable and reliable systems. Advocates for clean code and best practices.",
     "skills": ["Node.js", "TypeScript", "PostgreSQL", "Docker", "AWS"],
-    "location": "Gothenburg, Sweden"
+    "location": "Gothenburg, Sweden",
+    "currentSalary": 90000.00,
+    "salaryHistory": [
+      {
+        "salary": 85000.00,
+        "effectiveDate": "2025-02-01",
+        "notes": "Promotion adjustment"
+      }
+    ]
   },
   {
     "id": "user-003",
@@ -39,7 +60,8 @@
     "status": "active",
     "bio": "Strategic thinker with a passion for building products that users love. Bridges the gap between business needs and technical execution.",
     "skills": ["Product Strategy", "Agile", "User Research", "Roadmapping", "Stakeholder Management"],
-    "location": "Stockholm, Sweden"
+    "location": "Stockholm, Sweden",
+    "currentSalary": 95000.00
   },
   {
     "id": "user-004",

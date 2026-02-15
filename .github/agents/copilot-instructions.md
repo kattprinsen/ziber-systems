@@ -3,6 +3,8 @@
 Auto-generated from all feature plans. Last updated: 2026-02-09
 
 ## Active Technologies
+- TypeScript 5.9.3 (frontend), TypeScript 5.3.3 (backend), React 19.2.0 + React 19.2.0, React Router 7.13.0, Vite 7.2.4, TailwindCSS 3.4.19, Express 4.18.2 (002-money-slider-tool)
+- JSON file-based storage (backend/src/data/users.json) - existing storage mechanism (002-money-slider-tool)
 
 - TypeScript 5.9.3, React 19.2.0 + React 19.2.0, React-DOM 19.2.0, Vite 7.2.4, Tailwind CSS (to be installed) (001-dark-ui-layout)
 
@@ -23,6 +25,7 @@ npm test; npm run lint
 TypeScript 5.9.3, React 19.2.0: Follow standard conventions
 
 ## Recent Changes
+- 002-money-slider-tool: Added TypeScript 5.9.3 (frontend), TypeScript 5.3.3 (backend), React 19.2.0 + React 19.2.0, React Router 7.13.0, Vite 7.2.4, TailwindCSS 3.4.19, Express 4.18.2
 
 - 001-dark-ui-layout: Added TypeScript 5.9.3, React 19.2.0 + React 19.2.0, React-DOM 19.2.0, Vite 7.2.4, Tailwind CSS (to be installed)
 
