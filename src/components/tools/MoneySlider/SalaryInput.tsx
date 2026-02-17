@@ -7,6 +7,7 @@ interface SalaryInputProps {
   disabled?: boolean;
   error?: string;
   className?: string;
+  mode?: 'amount' | 'percentage';
 }
 
 export function SalaryInput({
@@ -15,7 +16,8 @@ export function SalaryInput({
   currentSalary,
   disabled = false,
   error,
-  className = ''
+  className = '',
+  mode = 'amount'
 }: SalaryInputProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -29,6 +31,17 @@ export function SalaryInput({
     }
   };
 
+  const isPercentageMode = mode === 'percentage';
+  const label = isPercentageMode 
+    ? 'Percentage Increase' 
+    : 'Salary Increase Amount';
+  const placeholder = isPercentageMode
+    ? 'Enter percentage (e.g., 2.4)'
+    : 'Enter increase amount (e.g., 1500)';
+  const hint = isPercentageMode
+    ? 'Enter the percentage increase for the salary'
+    : 'Use arrow keys to adjust values precisely';
+
   return (
     <div className={`mb-4 ${className}`}>
       {currentSalary !== null && (
@@ -40,32 +53,39 @@ export function SalaryInput({
       )}
       
       <label 
-        htmlFor="proposed-salary" 
+        htmlFor="salary-input" 
         className="block text-sm font-medium mb-2 text-gray-200"
       >
-        Salary Increase Amount
+        {label}
       </label>
       
-      <input
-        id="proposed-salary"
-        type="number"
-        min="0"
-        step="1"
-        value={value ?? ''}
-        onChange={handleChange}
-        disabled={disabled}
-        className={`w-full px-3 py-2 border rounded-lg bg-gray-800 text-white focus:ring-1 focus:ring-orange-500 outline-none transition-colors ${
-          error ? 'border-red-500 focus:border-red-500' : 'border-gray-700 focus:border-orange-500'
-        }`}
-        placeholder="Enter increase amount (e.g., 1500)"
-        aria-label="Salary increase amount"
-        aria-invalid={!!error}
-        aria-describedby={error ? 'salary-error' : 'salary-hint'}
-      />
+      <div className="relative">
+        <input
+          id="salary-input"
+          type="number"
+          min="0"
+          step={isPercentageMode ? "0.1" : "1"}
+          value={value ?? ''}
+          onChange={handleChange}
+          disabled={disabled}
+          className={`w-full px-3 py-2 border rounded-lg bg-gray-800 text-white focus:ring-1 focus:ring-orange-500 outline-none transition-colors pr-10 ${
+            error ? 'border-red-500 focus:border-red-500' : 'border-gray-700 focus:border-orange-500'
+          }`}
+          placeholder={placeholder}
+          aria-label={label}
+          aria-invalid={!!error}
+          aria-describedby={error ? 'salary-error' : 'salary-hint'}
+        />
+        {isPercentageMode && (
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+            %
+          </span>
+        )}
+      </div>
       
       {!error && (
         <p id="salary-hint" className="mt-1 text-xs text-gray-500">
-          Use arrow keys to adjust values precisely
+          {hint}
         </p>
       )}
       

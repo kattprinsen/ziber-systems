@@ -31,6 +31,22 @@ export function calculatePercentageFromIncrease(
 }
 
 /**
+ * Calculate new salary based on percentage increase
+ */
+export function calculateSalaryByPercentage(
+  currentSalary: number,
+  percentageIncrease: number
+): number {
+  if (currentSalary === 0) {
+    return 0;
+  }
+  
+  const increaseAmount = (currentSalary * percentageIncrease) / 100;
+  const newSalary = currentSalary + increaseAmount;
+  return Number(newSalary.toFixed(2)); // 2 decimal precision
+}
+
+/**
  * Validate salary input value
  */
 export function validateSalaryInput(

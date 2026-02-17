@@ -4,7 +4,7 @@ import { SalaryInput } from './SalaryInput';
 import { PercentageDisplay } from './PercentageDisplay';
 import type { User } from '../../../types/user';
 import userService from '../../../services/userService';
-import { calculatePercentageFromIncrease, validateSalaryInput } from '../../../services/salaryCalculator';
+import { calculatePercentageFromIncrease, calculateSalaryByPercentage, validateSalaryInput } from '../../../services/salaryCalculator';
 import { SALARY_CONSTANTS } from '../../../utils/constants';
 
 export function MoneySlider() {
@@ -15,14 +15,24 @@ export function MoneySlider() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [increaseAmount, setIncreaseAmount] = useState<number | null>(null);
   const [validationError, setValidationError] = useState<string>('');
+  const [calculationMode, setCalculationMode] = useState<'amount' | 'percentage'>('amount');
   
   const selectedUser = users.find(u => u.id === selectedUserId);
   const currentSalary = selectedUser?.currentSalary ?? null;
   
-  // Calculate percentage change in real-time
-  const percentageChange = currentSalary !== null && increaseAmount !== null
-    ? calculatePercentageFromIncrease(currentSalary, increaseAmount)
-    : 0;
+  // Calculate percentage change or new salary based on mode
+  let percentageChange = 0;
+  let newSalary: number | null = null;
+  
+  if (currentSalary !== null && increaseAmount !== null && increaseAmount !== 0) {
+    if (calculationMode === 'amount') {
+      percentageChange = calculatePercentageFromIncrease(currentSalary, increaseAmount);
+      newSalary = currentSalary + increaseAmount;
+    } else {
+      newSalary = calculateSalaryByPercentage(currentSalary, increaseAmount);
+      percentageChange = increaseAmount;
+    }
+  }
 
   // Fetch users on mount
   useEffect(() => {
@@ -54,6 +64,13 @@ export function MoneySlider() {
   // Handle user selection
   const handleUserSelect = (userId: string) => {
     setSelectedUserId(userId);
+    setIncreaseAmount(null);
+    setValidationError('');
+  };
+
+  // Handle calculation mode change
+  const handleModeChange = (mode: 'amount' | 'percentage') => {
+    setCalculationMode(mode);
     setIncreaseAmount(null);
     setValidationError('');
   };
@@ -100,19 +117,48 @@ export function MoneySlider() {
       
       {selectedUser && (
         <>
+          {/* Calculation Mode Toggle */}
+          <div className="mb-6 flex gap-2">
+            <button
+              onClick={() => handleModeChange('amount')}
+              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                calculationMode === 'amount'
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+              }`}
+            >
+              By Amount
+            </button>
+            <button
+              onClick={() => handleModeChange('percentage')}
+              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                calculationMode === 'percentage'
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+              }`}
+            >
+              By Percentage
+            </button>
+          </div>
+          
           <SalaryInput
             value={increaseAmount}
             onChange={handleIncreaseChange}
             currentSalary={currentSalary}
             error={validationError}
+            mode={calculationMode}
           />
           
           <div className="mt-6 bg-gray-800 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-gray-200 mb-2">Salary Change</h3>
+            <h3 className="text-lg font-medium text-gray-200 mb-2">
+              {calculationMode === 'amount' ? 'Salary Change' : 'Salary Increase Result'}
+            </h3>
             <PercentageDisplay
               percentageChange={percentageChange}
               currentSalary={currentSalary}
               increaseAmount={increaseAmount}
+              newSalary={newSalary}
+              mode={calculationMode}
             />
           </div>
         </>

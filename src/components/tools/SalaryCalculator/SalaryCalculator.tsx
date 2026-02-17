@@ -6,13 +6,15 @@ import { PercentageDisplay } from '../MoneySlider/PercentageDisplay';
 import { TwoColumnLayout, Column } from '../../layout';
 import type { User } from '../../../types/user';
 import userService from '../../../services/userService';
-import { calculatePercentageFromIncrease, validateSalaryInput } from '../../../services/salaryCalculator';
+import { calculatePercentageFromIncrease, calculateSalaryByPercentage, validateSalaryInput } from '../../../services/salaryCalculator';
 import { SALARY_CONSTANTS } from '../../../utils/constants';
 
 type CalculationMode = 'increase' | 'comparison';
+type InputMode = 'amount' | 'percentage';
 
 export function SalaryCalculator() {
   const [mode, setMode] = useState<CalculationMode>('increase');
+  const [inputMode, setInputMode] = useState<InputMode>('amount');
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,10 +26,19 @@ export function SalaryCalculator() {
   const selectedUser = users.find(u => u.id === selectedUserId);
   const currentSalary = selectedUser?.currentSalary ?? null;
   
-  // Calculate percentage change in real-time
-  const percentageChange = currentSalary !== null && increaseAmount !== null
-    ? calculatePercentageFromIncrease(currentSalary, increaseAmount)
-    : 0;
+  // Calculate percentage change or new salary based on input mode
+  let percentageChange = 0;
+  let newSalary: number | null = null;
+  
+  if (currentSalary !== null && increaseAmount !== null && increaseAmount !== 0) {
+    if (inputMode === 'amount') {
+      percentageChange = calculatePercentageFromIncrease(currentSalary, increaseAmount);
+      newSalary = currentSalary + increaseAmount;
+    } else {
+      newSalary = calculateSalaryByPercentage(currentSalary, increaseAmount);
+      percentageChange = increaseAmount;
+    }
+  }
 
   // Fetch users on mount (for increase mode)
   useEffect(() => {
@@ -59,6 +70,13 @@ export function SalaryCalculator() {
   // Handle user selection
   const handleUserSelect = (userId: string) => {
     setSelectedUserId(userId);
+    setIncreaseAmount(null);
+    setValidationError('');
+  };
+
+  // Handle input mode change
+  const handleInputModeChange = (mode: InputMode) => {
+    setInputMode(mode);
     setIncreaseAmount(null);
     setValidationError('');
   };
@@ -200,6 +218,36 @@ export function SalaryCalculator() {
           />
           
           {selectedUser && (
+            <>
+              {/* Input Mode Toggle */}
+              <div className="mb-6 flex gap-2">
+                <button
+                  onClick={() => handleInputModeChange('amount')}
+                  className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                    inputMode === 'amount'
+                      ? 'bg-orange-500 text-white'
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  }`}
+                  aria-pressed={inputMode === 'amount'}
+                >
+                  By Amount
+                </button>
+                <button
+                  onClick={() => handleInputModeChange('percentage')}
+                  className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                    inputMode === 'percentage'
+                      ? 'bg-orange-500 text-white'
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  }`}
+                  aria-pressed={inputMode === 'percentage'}
+                >
+                  By Percentage
+                </button>
+              </div>
+            </>
+          )}
+          
+          {selectedUser && (
             <TwoColumnLayout
               gap="lg"
               leftColumn={
@@ -209,14 +257,19 @@ export function SalaryCalculator() {
                     onChange={handleIncreaseChange}
                     currentSalary={currentSalary}
                     error={validationError}
+                    mode={inputMode}
                   />
                   
                   <div className="mt-6 bg-gray-800 rounded-lg p-4">
-                    <h3 className="text-lg font-medium text-gray-200 mb-2">Salary Change</h3>
+                    <h3 className="text-lg font-medium text-gray-200 mb-2">
+                      {inputMode === 'amount' ? 'Salary Change' : 'Salary Increase Result'}
+                    </h3>
                     <PercentageDisplay
                       percentageChange={percentageChange}
                       currentSalary={currentSalary}
                       increaseAmount={increaseAmount}
+                      newSalary={newSalary}
+                      mode={inputMode}
                     />
                   </div>
                 </Column>
