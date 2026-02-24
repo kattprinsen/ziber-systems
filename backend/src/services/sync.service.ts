@@ -19,16 +19,11 @@ import type {
   SyncStatus,
   SyncError,
   SyncWarning,
-  SyncMetadata,
 } from '../types/sync.types.js';
 import userService from './user.service.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-// ============================================================================
-// Sync Service State
-// ============================================================================
 
 class SyncService {
   private usersFilePath: string;
@@ -381,40 +376,26 @@ class SyncService {
     }
   }
 
-  /**
-   * Convert Tidig employees to User format (MVP version).
-   * This is a basic conversion for Phase 3 (US1).
-   * Phase 5 (US3) will implement proper merge logic.
-   */
-  private convertTidigEmployeesToUsers(tidigEmployees: NormalizedEmployee[]): User[] {
-    return tidigEmployees.map((emp) => {
-      const syncMetadata: SyncMetadata = {
-        lastSync: new Date().toISOString(),
-        source: 'tidig',
-      };
-
-      const user: User = {
-        id: randomUUID(),
-        employeeID: emp.employeeID,  // Store Tidig employeeID for matching
-        name: emp.name || 'Unknown',
-        email: emp.email,
-        role: '',  // Local field, initially empty
-        department: '',  // Local field, initially empty
-        avatar: undefined,
-        phone: undefined,
-        joinedDate: new Date().toISOString(),
-        status: 'active',
-        bio: undefined,
-        skills: undefined,
-        location: undefined,
-        currentSalary: undefined,
-        salaryHistory: undefined,
-        // Note: syncStatus will be added in Phase 6 (US4)
-      };
-
-      return user;
-    });
-  }
+  // Note: legacy conversion helper kept for reference; currently unused.
+  // private convertTidigEmployeesToUsers(tidigEmployees: NormalizedEmployee[]): User[] {
+  //   return tidigEmployees.map((emp) => ({
+  //     id: randomUUID(),
+  //     employeeID: emp.employeeID,
+  //     name: emp.name || 'Unknown',
+  //     email: emp.email,
+  //     role: '',
+  //     department: '',
+  //     avatar: undefined,
+  //     phone: undefined,
+  //     joinedDate: new Date().toISOString(),
+  //     status: 'active',
+  //     bio: undefined,
+  //     skills: undefined,
+  //     location: undefined,
+  //     currentSalary: undefined,
+  //     salaryHistory: undefined,
+  //   }));
+  // }
 
   /**
    * Compare Tidig employees against local users to identify new ones.

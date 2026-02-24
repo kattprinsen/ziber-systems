@@ -144,7 +144,7 @@ export async function fetchEmployees(): Promise<FetchEmployeesResult> {
 export async function testConnection(): Promise<boolean> {
   try {
     console.log('[Tidig Service] Testing connection to /Api/Time...');
-    const response = await tidigClient.get('/Api/Time');
+    await tidigClient.get('/Api/Time');
     console.log('[Tidig Service] ✓ Connection test successful');
     return true;
   } catch (error) {
