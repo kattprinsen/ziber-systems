@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink as RouterNavLink } from 'react-router-dom';
 import type { NavLink } from '../../types/layout';
+import { SyncIndicator } from '../sync';
 
 const navLinks: NavLink[] = [
   { label: 'Home', href: '/' },
@@ -39,6 +40,11 @@ export function Navbar() {
                 {link.label}
               </RouterNavLink>
             ))}
+          </div>
+
+          {/* Sync Indicator (T071) */}
+          <div className="hidden md:flex items-center">
+            <SyncIndicator />
           </div>
 
           {/* Mobile Menu Button */}
