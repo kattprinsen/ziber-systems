@@ -6,6 +6,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
 import usersRouter from './routes/users.routes.js';
 import syncRouter from './routes/sync.routes.js';
+import timeRouter from './routes/time.routes.js';
 import syncService from './services/sync.service.js';
 import { setServerStartTime } from './controllers/sync.controller.js';
 
@@ -44,6 +45,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 // API Routes
 app.use('/api/users', usersRouter);
 app.use('/api/sync', syncRouter);  // T063: Sync status endpoints
+app.use('/api', timeRouter);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {
