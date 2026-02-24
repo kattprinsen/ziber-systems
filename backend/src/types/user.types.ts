@@ -1,5 +1,14 @@
+export interface SyncStatus {
+  lastSyncedAt?: string;  // ISO timestamp of last successful sync
+  source?: 'tidig' | 'manual';  // Origin of the user data
+  wasInactive?: boolean;  // Flag indicating if user was previously inactive
+  inactivatedAt?: string;  // ISO timestamp when user was marked inactive
+  reactivatedAt?: string;  // ISO timestamp when user was reactivated
+}
+
 export interface User {
   id: string;
+  employeeID?: string;  // Tidig employee ID (e.g., "SBQ") - used for sync matching
   name: string;
   email: string;
   role: string;
@@ -13,6 +22,7 @@ export interface User {
   location?: string;
   currentSalary?: number;
   salaryHistory?: SalaryHistoryEntry[];
+  syncStatus?: SyncStatus;  // Synchronization metadata
 }
 
 export interface SalaryHistoryEntry {
