@@ -23,6 +23,7 @@ export interface User {
   currentSalary?: number;
   salaryHistory?: SalaryHistoryEntry[];
   syncStatus?: SyncStatus;  // Synchronization metadata
+  hourlyRate?: number;  // Sales price in SEK/hour charged to clients
 }
 
 export interface SalaryHistoryEntry {

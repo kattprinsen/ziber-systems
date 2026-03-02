@@ -1,5 +1,6 @@
 export interface User {
   id: string;
+  employeeID?: string;  // Tidig employee ID — present in backend/users.json; added here for feature 006
   name: string;
   email: string;
   role: string;
@@ -12,6 +13,7 @@ export interface User {
   skills?: string[];
   location?: string;
   currentSalary?: number;
+  hourlyRate?: number;  // Sales price in SEK/hour charged to clients
   salaryHistory?: SalaryHistoryEntry[];
 }
 
