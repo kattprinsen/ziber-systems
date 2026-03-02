@@ -13,9 +13,9 @@ import type { NormalizedEmployee } from '../models/tidig.model.js';
  */
 const MOCK_EMPLOYEES: NormalizedEmployee[] = [
   {
-    employeeID: 'SBQ',
-    name: 'Simon Bergqvist',
-    email: 'sbq@company.local',
+    employeeID: 'C001',
+    name: 'Test User Alpha',
+    email: 'c001@consultant.local',
   },
   {
     employeeID: 'JDO',

@@ -73,7 +73,7 @@ interface SubTreeResponse {
 }
 
 interface TidigEmployee {
-  employeeID: string;      // Unique identifier (e.g., "SBQ")
+  employeeID: string;      // Unique identifier (e.g., "C001")
   name: string;            // Full name
   email: string;           // Email address
   // Additional fields TBD

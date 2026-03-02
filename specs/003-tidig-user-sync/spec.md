@@ -12,7 +12,7 @@ The system currently maintains a hardcoded list of users in `users.json`. This f
 
 ### Session 2026-02-23
 
-- Q: Which field from Tidig API uniquely identifies users for matching across systems? → A: employeeID (e.g., "SBQ" for Simon Bergqvist)
+- Q: Which field from Tidig API uniquely identifies users for matching across systems? → A: employeeID (e.g., "C001" for test user)
 - Q: What default values should be used for locally-managed fields when adding new users from Tidig? → A: Null/empty values for all local fields to explicitly indicate missing data and prevent incorrect calculations
 - Q: Should sync block application startup or run in background? → A: Fast-fail approach - attempt sync with short timeout (5 seconds), then start regardless. Display clear notification when sync fails so administrators are aware.
 - Q: How should users existing locally but not in Tidig be handled? → A: Mark as inactive - preserve user data but mark as inactive/not-in-Tidig status, allowing them to be filtered from active views while keeping historical data intact
@@ -127,7 +127,7 @@ As a system administrator, when there are discrepancies between local and Tidig 
 
 ### Key Entities
 
-- **User**: Represents an individual managed by the system. Contains both Tidig-sourced fields (identity, contact information, time reporting data) and locally-managed fields (salary, performance ratings, custom properties). Users are uniquely identified by their employeeID (e.g., "SBQ"), which remains consistent across synchronization operations and serves as the matching key between Tidig and local data. Users have an active/inactive status: active indicates they exist in Tidig, inactive indicates they exist only locally (e.g., former employees).
+- **User**: Represents an individual managed by the system. Contains both Tidig-sourced fields (identity, contact information, time reporting data) and locally-managed fields (salary, performance ratings, custom properties). Users are uniquely identified by their employeeID (e.g., "C001"), which remains consistent across synchronization operations and serves as the matching key between Tidig and local data. Users have an active/inactive status: active indicates they exist in Tidig, inactive indicates they exist only locally (e.g., former employees).
 
 - **Sync Log Entry**: Represents a record of a synchronization operation, including timestamp, users added/updated, errors encountered, and discrepancies identified. Used for audit trail and troubleshooting.
 
@@ -137,7 +137,7 @@ As a system administrator, when there are discrepancies between local and Tidig 
 
 - **Tidig API structure**: The 3 endpoints are: GET /Api/Time (time reporting data), GET /Api/Employee/TimePermission (employee time permissions), GET /Api/Employee/SubTree (employee hierarchy providing user details). SubTree endpoint likely returns the complete employee list with organizational structure.
 - **Authentication**: API key-based authentication via 'x-apikey' HTTP header, stored securely in backend environment configuration.
-- **User identification**: Tidig provides a stable employeeID (e.g., "SBQ" for Simon Bergqvist) that is used as the unique matching key between Tidig and local user records.
+- **User identification**: Tidig provides a stable employeeID (e.g., "C001" for test user) that is used as the unique matching key between Tidig and local user records.
 - **Data format**: Assuming Tidig API returns JSON formatted data with standard field names
 - **Network reliability**: Assuming synchronization occurs in environments with generally reliable internet connectivity, but handling temporary failures
 - **User lifecycle**: Users are rarely deleted from Tidig; when they leave the organization, they're marked inactive rather than removed

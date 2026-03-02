@@ -431,7 +431,7 @@ const TidigSubTreeResponseSchema = z.object({
 
 **Changes Required**:
 1. Add `employeeID` field to all existing users
-   - **Strategy**: Derive from name (e.g., "Simon Bergqvist" → "SBQ") or ask for manual mapping
+   - **Strategy**: Derive from name (e.g., "Test User" → "C001") or ask for manual mapping
    - **Alternative**: Leave null initially, populate during first sync (requires manual mapping)
 
 2. Add `syncStatus` field

@@ -18,8 +18,8 @@ that shows whether a margin rate has been configured.
 ## Prerequisites
 
 1. Backend and frontend are both running (see top-level `README.md`).
-2. The user you're testing has `employeeID` set in `users.json` (e.g., `"SBQ"` for  
-   Simon Bergqvist).
+2. The user you're testing has `employeeID` set in `users.json` (e.g., `"C001"` for  
+   test user Alpha).
 3. The Tidig API is accessible and has time entries for the test user in the current month.
 
 ---
@@ -31,15 +31,15 @@ Add `hourlyRate` to one or more users in `backend/src/data/users.json`:
 ```json
 {
   "id": "ad567be5-...",
-  "employeeID": "SBQ",
-  "name": "Simon Bergqvist",
+  "employeeID": "C001",
+  "name": "Test User Alpha",
   "currentSalary": 75000,
   "hourlyRate": 1250
 }
 ```
 
-All 15 active users in `users.json` already have `hourlyRate` seeded (SBQ: 1,250 SEK/h;
-CME: 1,150 SEK/h; all others: 1,000 SEK/h). Edit values as needed.
+All 15 active users in `users.json` already have `hourlyRate` seeded (C001: 1,250 SEK/h;
+C002: 1,150 SEK/h; all others: 1,000 SEK/h). Edit values as needed.
 
 ---
 
@@ -50,7 +50,7 @@ overhead or internal time. All other entries count toward billable revenue.
 
 | Entry type | `customerId` | Counted? |
 |------------|-------------|----------|
-| Inter IKEA project | `"682"` | ✅ Billable |
+| Customer Project A | `"682"` | ✅ Billable |
 | Internal meeting (Consid AB) | `"2"` | ❌ Non-billable |
 | Sick day / holiday (Consid AB) | `"2"` | ❌ Non-billable |
 
