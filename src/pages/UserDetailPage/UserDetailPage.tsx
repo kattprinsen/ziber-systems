@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import type { User } from '../../types/user';
 import userService from '../../services/userService';
-import { UserTimeSection } from '../../components/users';
+import { UserTimeSection, MarginContributionPanel } from '../../components/users';
 
 export function UserDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -225,6 +225,14 @@ export function UserDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Margin Contribution Panel — feature 006 */}
+      <MarginContributionPanel
+        userId={user.id}
+        employeeID={user.employeeID}
+        hourlyRate={user.hourlyRate}
+        currentSalary={user.currentSalary}
+      />
 
       {/* Tidig Time Section (container only; logic added in US1) */}
       <UserTimeSection userId={user.id} />

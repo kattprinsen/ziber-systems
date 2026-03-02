@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { User } from '../../types/user';
+import { MarginCardIndicator } from './MarginCardIndicator';
 
 interface UserCardProps {
   user: User;
@@ -87,6 +88,11 @@ export function UserCard({ user }: UserCardProps) {
               )}
             </div>
           )}
+
+          {/* Margin indicator — feature 006 */}
+          <div className="mt-3">
+            <MarginCardIndicator hourlyRate={user.hourlyRate} />
+          </div>
         </div>
       </div>
     </Link>
