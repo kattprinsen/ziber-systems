@@ -31,7 +31,23 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+<!--
+  ACTION REQUIRED: Validate this feature against all constitutional principles.
+  Mark each gate as ✅ PASS, ⚠️ REVIEW (needs justification), or ❌ FAIL (blocks feature).
+  See `.specify/memory/constitution.md` for full principle definitions.
+-->
+
+| Principle | Gate | Status | Notes |
+|-----------|------|--------|-------|
+| **I: Documentation Privacy** | No real business/customer names in specs, code, or mock data | [✅/⚠️/❌] | [Verify all examples use canonical aliases per constitution] |
+| **II: Spec-Driven Development** | Complete spec.md approved before implementation | [✅/⚠️/❌] | [Confirm spec.md completed and reviewed] |
+| **III: No Accidental Dependencies** | New packages justified; prefer existing dependencies | [✅/⚠️/❌] | [List new packages if any, with justification] |
+| **IV: Frontend Data Derivation** | Calculations on frontend unless performance requires backend | [✅/⚠️/❌] | [Document any backend computation endpoints] |
+| **V: Sensitive Data Handling** | No customer data in logs/errors; use redaction patterns | [✅/⚠️/❌] | [Verify logging code uses generic messages + request IDs only] |
+
+**Post-Design Re-check**: _(Fill after Phase 1: data-model.md, contracts/, quickstart.md)_
+- **Changes**: [What changed in design that affects constitution compliance]
+- **New Risks**: [Any new violations introduced during design phase]
 
 ## Project Structure
 
