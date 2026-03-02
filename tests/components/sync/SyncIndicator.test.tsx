@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, waitFor } from '@testing-library/react';
 import { SyncIndicator } from '../../../src/components/sync/SyncIndicator';
 import * as syncService from '../../../src/services/syncService';
 
