@@ -10,6 +10,13 @@ import { ApiResponse } from '../types/user.types.js';
 import { SyncStatusResponse } from '../types/sync.types.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 
+// Define a type for sync log entries (replace fields as appropriate)
+type SyncLogEntry = {
+  timestamp: string;
+  status: string;
+  details?: string;
+};
+
 // Server start time (set in server.ts)
 let serverStartTime = new Date().toISOString();
 
@@ -51,12 +58,12 @@ export const getSyncStatus = asyncHandler(
  * Future enhancement: Could store history of sync operations
  */
 export const getSyncLogs = asyncHandler(
-  async (_req: Request, res: Response<ApiResponse<any>>) => {
+  async (_req: Request, res: Response<ApiResponse<{ logs: SyncLogEntry[]; count: number }>>) => {
     const lastSyncLog = syncService.getLastSyncLog();
     
     // For now, return last log as an array
     // Future: Store sync history and return multiple logs
-    const logs = lastSyncLog ? [lastSyncLog] : [];
+    const logs: SyncLogEntry[] = lastSyncLog ? [lastSyncLog] : [];
 
     res.json({
       success: true,

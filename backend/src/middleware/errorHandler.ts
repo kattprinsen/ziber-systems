@@ -18,7 +18,6 @@ export const errorHandler = (
   err: Error | AppError,
   _req: Request,
   res: Response<ApiResponse<null>>,
-  _next: NextFunction
 ) => {
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({

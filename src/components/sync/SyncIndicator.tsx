@@ -61,7 +61,6 @@ export const SyncIndicator: React.FC<SyncIndicatorProps> = ({ className = '' }) 
 
   // Initial load (single call on mount)
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadSyncStatus();
   }, []);
 

@@ -13,6 +13,7 @@ export function UsersPage() {
 
   useEffect(() => {
     loadUsers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDepartment, selectedStatus, searchQuery]);
 
   const loadUsers = async () => {
