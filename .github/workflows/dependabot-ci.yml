@@ -59,10 +59,11 @@ jobs:
       - name: Lint backend
         run: npm run lint
         working-directory: backend
-
-      - name: Test backend
-        run: npm test
-        working-directory: backend
+      
+      # Uncomment lines when we have tests on backend
+      #- name: Test backend
+      #  run: npm test
+      #  working-directory: backend
 
       - name: Build backend
         run: npm run build
