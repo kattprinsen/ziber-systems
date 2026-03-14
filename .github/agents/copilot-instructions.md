@@ -1,4 +1,4 @@
-# ziber-systems Development Guidelines
+﻿# ziber-systems Development Guidelines
 
 Auto-generated from all feature plans. Last updated: 2026-02-09
 
@@ -13,6 +13,8 @@ Auto-generated from all feature plans. Last updated: 2026-02-09
 - `backend/src/data/users.json` (flat JSON file, manually edited) — `hourlyRate` field added (006-margin-contribution)
 - TypeScript 5.9 targeting Node.js 20 LTS for automation runners; React 19 + Vite 7 on the frontend; Node.js + Express on the backend. + Frontend: React, React Router, Vite, Vitest, Testing Library. Backend: Express, dotenv, zod, tsx, Vitest. CI/automation: Git-based workflow runner with official `actions/*` building blocks (no new npm runtime dependencies planned). (001-dependabot-ci)
 - File-based configuration and mock data only (for example, backend `data/users.json`); no database changes introduced by this feature. (001-dependabot-ci)
+- TypeScript 5.3 (backend), TypeScript ~5.9 (frontend) (007-group-performance-dashboard)
+- JSON files on filesystem — `backend/src/data/performance-config.json` (target config) + `backend/src/data/snapshots/{YYYY-MM}.json` (monthly snapshots). Consistent with existing `users.json` pattern. (007-group-performance-dashboard)
 
 - TypeScript 5.9.3, React 19.2.0 + React 19.2.0, React-DOM 19.2.0, Vite 7.2.4, Tailwind CSS (to be installed) (001-dark-ui-layout)
 
@@ -33,9 +35,9 @@ npm test; npm run lint
 TypeScript 5.9.3, React 19.2.0: Follow standard conventions
 
 ## Recent Changes
+- 007-group-performance-dashboard: Added TypeScript 5.3 (backend), TypeScript ~5.9 (frontend)
 - 001-dependabot-ci: Added TypeScript 5.9 targeting Node.js 20 LTS for automation runners; React 19 + Vite 7 on the frontend; Node.js + Express on the backend. + Frontend: React, React Router, Vite, Vitest, Testing Library. Backend: Express, dotenv, zod, tsx, Vitest. CI/automation: Git-based workflow runner with official `actions/*` building blocks (no new npm runtime dependencies planned).
 - 006-margin-contribution: Added TypeScript 5.x (frontend: React 19 + Vite; backend: Node.js 20 + Express) + React, React Router, Tailwind CSS (frontend); Express, Zod, axios (backend) — no new dependencies added by this feature
-- 005-remove-sync-polling: Added TypeScript 5.x with Node.js 20+ (backend), TypeScript 5.x with React 19 (frontend) + Express.js 4.x (backend); React 19, React Router 7, Vite (frontend)
 
 
 <!-- MANUAL ADDITIONS START -->
