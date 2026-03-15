@@ -1,0 +1,154 @@
+openapi: 3.0.3
+info:
+  title: Performance Config API
+  description: Endpoints for reading and updating the group performance target configuration
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3001/api
+    description: Local development
+
+paths:
+  /performance/config:
+    get:
+      summary: Get current performance target config
+      description: |
+        Returns the currently configured monthly billed-hours target for the group.
+        If no target has been set yet, `target` and `updatedAt` will be `null`.
+      operationId: getPerformanceConfig
+      responses:
+        "200":
+          description: Current configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigResponse"
+              examples:
+                configured:
+                  summary: Target is set
+                  value:
+                    success: true
+                    data:
+                      target: 480
+                      updatedAt: "2026-03-14T09:30:00.000Z"
+                unconfigured:
+                  summary: No target set yet
+                  value:
+                    success: true
+                    data:
+                      target: null
+                      updatedAt: null
+
+    put:
+      summary: Update the performance target
+      description: |
+        Sets a new monthly billed-hours target for the group. Overwrites the
+        previous value. The new value is persisted to disk immediately.
+        Pass `target: null` to clear the target.
+      operationId: updatePerformanceConfig
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfigUpdateRequest"
+            examples:
+              set_target:
+                summary: Set a target
+                value:
+                  target: 480
+              clear_target:
+                summary: Clear the target
+                value:
+                  target: null
+      responses:
+        "200":
+          description: Target updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigResponse"
+              example:
+                success: true
+                data:
+                  target: 480
+                  updatedAt: "2026-03-14T10:15:00.000Z"
+        "400":
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                negative_target:
+                  summary: Negative value rejected
+                  value:
+                    success: false
+                    error: "Target must be a positive number"
+                    details:
+                      - "target: Expected positive number, received -10"
+                non_numeric:
+                  summary: Non-numeric value rejected
+                  value:
+                    success: false
+                    error: "Invalid request body"
+                    details:
+                      - "target: Expected number or null, received string"
+
+components:
+  schemas:
+    PerformanceConfig:
+      type: object
+      required: [target, updatedAt]
+      properties:
+        target:
+          type: number
+          nullable: true
+          minimum: 0
+          description: |
+            Monthly billed-hours target for the entire group.
+            null means no target has been configured.
+          example: 480
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: ISO 8601 timestamp of the last update. null if never configured.
+          example: "2026-03-14T09:30:00.000Z"
+
+    ConfigUpdateRequest:
+      type: object
+      required: [target]
+      properties:
+        target:
+          type: number
+          nullable: true
+          minimum: 0
+          description: |
+            New target value in hours. Must be a positive number or null to clear.
+          example: 480
+
+    ConfigResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: "#/components/schemas/PerformanceConfig"
+
+    ErrorResponse:
+      type: object
+      required: [success, error]
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+        details:
+          type: array
+          items:
+            type: string
+          description: Optional field-level validation messages

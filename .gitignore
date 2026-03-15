@@ -26,3 +26,7 @@ dist-ssr
 
 # Local user data with real salaries
 backend/src/data/users.json
+
+# Performance snapshot data (real consultant hours)
+backend/src/data/snapshots/*.json
+backend/src/data/performance-config.json
