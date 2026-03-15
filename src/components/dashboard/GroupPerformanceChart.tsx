@@ -10,6 +10,7 @@ import {
   Cell,
 } from 'recharts';
 import type { ChartDataPoint } from '../../types/performance';
+import { SALARY_CONSTANTS } from '../../utils/constants';
 
 interface GroupPerformanceChartProps {
   data: ChartDataPoint[];
@@ -24,6 +25,12 @@ const BAR_SELECTED = '#818cf8';    // indigo-400 — selected/active bar
 const BAR_PARTIAL = '#a78bfa';     // violet-400 — partial/estimated data
 const BAR_EMPTY = '#374151';       // gray-700 — zero-fill placeholder
 const TARGET_COLOR = '#f59e0b';    // amber-500 — horizontal target line
+
+const currencyFormatter = new Intl.NumberFormat(SALARY_CONSTANTS.DEFAULT_LOCALE, {
+  style: 'currency',
+  currency: SALARY_CONSTANTS.DEFAULT_CURRENCY,
+  maximumFractionDigits: SALARY_CONSTANTS.DECIMAL_PRECISION,
+});
 
 function LoadingSkeleton() {
   return (
@@ -97,7 +104,14 @@ export function GroupPerformanceChart({
             const hours = typeof value === 'number' ? value : 0;
             if (payload?.hours === 0) return ['No data', 'Billed hours'];
             const partial = payload?.isPartial ? ' (partial)' : '';
-            return [`${hours.toFixed(1)} h${partial}`, 'Billed hours'];
+            const base = `${hours.toFixed(1)} h${partial}`;
+
+            if (typeof payload?.sek === 'number') {
+              const sekLabel = currencyFormatter.format(payload.sek);
+              return [`${base} • ${sekLabel}`, 'Billed hours + SEK'];
+            }
+
+            return [base, 'Billed hours'];
           }}
         />
         {target !== null && (

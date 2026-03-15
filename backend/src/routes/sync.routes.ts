@@ -5,7 +5,7 @@
  */
 
 import { Router } from 'express';
-import { getSyncStatus, getSyncLogs } from '../controllers/sync.controller.js';
+import { getSyncStatus, getSyncLogs, getTidigSubtree } from '../controllers/sync.controller.js';
 
 const router = Router();
 
@@ -22,5 +22,12 @@ router.get('/status', getSyncStatus);
  * @access  Public
  */
 router.get('/logs', getSyncLogs);
+
+/**
+ * @route   GET /api/sync/subtree
+ * @desc    Get Tidig employee subtree for SBQ derivation
+ * @access  Public (no sensitive data; structure only)
+ */
+router.get('/subtree', getTidigSubtree);
 
 export default router;

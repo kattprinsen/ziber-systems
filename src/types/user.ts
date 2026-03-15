@@ -15,6 +15,11 @@ export interface User {
   currentSalary?: number;
   hourlyRate?: number;  // Sales price in SEK/hour charged to clients
   salaryHistory?: SalaryHistoryEntry[];
+  /**
+   * Manually maintained hours per calendar month (YYYY-MM → hours).
+   * Mirrors backend/src/types/user.types.ts and backend/src/data/users.json.
+   */
+  monthlyHours?: Record<string, number>;
 }
 
 export interface SalaryHistoryEntry {

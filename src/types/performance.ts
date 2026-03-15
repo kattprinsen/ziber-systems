@@ -46,6 +46,8 @@ export interface ChartDataPoint {
   month: string;
   /** Total billed hours for that month (0 if no snapshot) */
   hours: number;
+   /** Optional total SEK for that month (SBQ group), if available */
+   sek?: number;
   /** Whether the snapshot is partial/estimated */
   isPartial: boolean;
   /** Original YYYY-MM key — used to correlate with selectedMonth */

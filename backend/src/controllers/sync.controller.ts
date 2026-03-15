@@ -9,6 +9,7 @@ import syncService from '../services/sync.service.js';
 import { ApiResponse } from '../types/user.types.js';
 import { SyncStatusResponse } from '../types/sync.types.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
+import { fetchEmployeeSubtree } from '../services/tidig.service.js';
 
 // Define a type for sync log entries (replace fields as appropriate)
 type SyncLogEntry = {
@@ -72,6 +73,34 @@ export const getSyncLogs = asyncHandler(
         count: logs.length,
       },
       message: `Retrieved ${logs.length} sync log(s)`,
+    });
+  }
+);
+
+/**
+ * GET /api/sync/subtree
+ *
+ * Exposes the Tidig employee subtree used by the frontend to derive
+ * SBQ employees. The structure is validated but otherwise left intact
+ * so the UI can compute hasChildren/leaf metadata as needed.
+ */
+export const getTidigSubtree = asyncHandler(
+  async (_req: Request, res: Response<ApiResponse<unknown>>) => {
+    const result = await fetchEmployeeSubtree();
+
+    if (!result.success || !result.subtree) {
+      res.status(502).json({
+        success: false,
+        error: 'Failed to fetch Tidig employee subtree',
+        details: result.errors,
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: result.subtree,
+      message: 'Tidig employee subtree fetched successfully',
     });
   }
 );

@@ -9,6 +9,7 @@ export interface SyncStatus {
 export interface User {
   id: string;
   employeeID?: string;  // Tidig employee ID (e.g., "SBQ") - used for sync matching
+  externalId?: string;  // Optional explicit external employee identifier (mirrors Tidig empId when present)
   name: string;
   email: string;
   role: string;
@@ -24,6 +25,11 @@ export interface User {
   salaryHistory?: SalaryHistoryEntry[];
   syncStatus?: SyncStatus;  // Synchronization metadata
   hourlyRate?: number;  // Sales price in SEK/hour charged to clients
+  /**
+   * Manually maintained hours per calendar month (YYYY-MM → hours).
+   * Used for SBQ group performance calculations on the home page.
+   */
+  monthlyHours?: Record<string, number>;
 }
 
 export interface SalaryHistoryEntry {

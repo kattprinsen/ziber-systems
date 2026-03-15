@@ -15,6 +15,10 @@ import type {
   PerformanceConfig,
   ChartDataPoint,
 } from '../../types/performance';
+import { fetchSbqLeafEmployees } from '../../services/syncService';
+import type { ExternalEmployeeNode } from '../../types/sync';
+import userService from '../../services/userService';
+import type { User } from '../../types/user';
 
 // ============================================================================
 // Constants
@@ -98,6 +102,8 @@ export function HomePage() {
   const [config, setConfig] = useState<PerformanceConfig | null>(null);
   const [configLoading, setConfigLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [sbqEmployees, setSbqEmployees] = useState<ExternalEmployeeNode[] | null>(null);
+  const [users, setUsers] = useState<User[] | null>(null);
 
   // ── Config fetch ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -108,6 +114,42 @@ export function HomePage() {
       .catch(() => { /* non-fatal — chart renders without target */ })
       .finally(() => { if (active) setConfigLoading(false); });
     return () => { active = false; };
+  }, []);
+
+  // ── SBQ employee subtree fetch ───────────────────────────────────────────
+  useEffect(() => {
+    let active = true;
+
+    fetchSbqLeafEmployees()
+      .then((employees) => {
+        if (active) setSbqEmployees(employees);
+      })
+      .catch(() => {
+        // Non-fatal: if subtree fetch fails, fall back to existing behavior
+        if (active) setSbqEmployees(null);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // ── Internal users fetch (for monthlyHours + rates) ─────────────────────
+  useEffect(() => {
+    let active = true;
+
+    userService
+      .getAllUsers()
+      .then((u) => {
+        if (active) setUsers(u);
+      })
+      .catch(() => {
+        if (active) setUsers(null);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   // ── Window snapshot fetching ──────────────────────────────────────────────
@@ -190,13 +232,80 @@ export function HomePage() {
   const selectedKey = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}`;
   const isWindowLoading = windowMonths.some((wm) => loadingKeys.has(wm.key));
 
+  const sbqEmployeeNames = new Set(
+    (sbqEmployees ?? []).map((e) => e.name)
+  );
+
+  const sbqEmployeeIds = new Set(
+    (sbqEmployees ?? []).map((e) => e.id)
+  );
+
+  function getGroupTotalsForMonth(monthKey: string, snapshot: MonthlySnapshot | null) {
+    if (users && sbqEmployeeIds.size > 0) {
+      let hours = 0;
+      let sek = 0;
+
+      for (const user of users) {
+        if (!user.employeeID || !sbqEmployeeIds.has(user.employeeID)) continue;
+
+        const monthHours = user.monthlyHours?.[monthKey] ?? 0;
+        if (monthHours <= 0) continue;
+
+        hours += monthHours;
+
+        if (typeof user.hourlyRate === 'number' && user.hourlyRate > 0) {
+          sek += monthHours * user.hourlyRate;
+        }
+      }
+
+      if (hours > 0) {
+        return { hours, sek: sek > 0 ? sek : undefined };
+      }
+      // Fall through to snapshot-based totals if all monthlyHours are zero
+    }
+
+    if (snapshot) {
+      if (sbqEmployeeNames.size === 0) {
+        return { hours: snapshot.totalBilledHours, sek: undefined };
+      }
+
+      const filteredEntries = snapshot.consultantEntries.filter((entry) =>
+        sbqEmployeeNames.has(entry.consultantName)
+      );
+
+      const hoursFromSnapshot = filteredEntries.reduce(
+        (sum, entry) => sum + entry.billedHours,
+        0
+      );
+
+      return { hours: hoursFromSnapshot, sek: undefined };
+    }
+
+    return { hours: 0, sek: undefined as number | undefined };
+  }
+
   const chartData: ChartDataPoint[] = windowMonths.map((wm) => {
     const snapshot = snapshotCache.get(wm.key) ?? null;
-    return snapshotToChartPoint(wm, snapshot);
+    const monthKey = wm.key;
+    const { hours, sek } = getGroupTotalsForMonth(monthKey, snapshot);
+
+    if (!snapshot) {
+      return { month: wm.label, hours, sek, isPartial: false, key: wm.key };
+    }
+    return {
+      month: wm.label,
+      hours,
+      sek,
+      isPartial: snapshot.isPartial,
+      key: wm.key,
+    };
   });
 
   const selectedSnapshot = snapshotCache.get(selectedKey) ?? null;
-  const consultantEntries = selectedSnapshot?.consultantEntries ?? [];
+  const baseEntries = selectedSnapshot?.consultantEntries ?? [];
+  const consultantEntries = sbqEmployeeNames.size === 0
+    ? baseEntries
+    : baseEntries.filter((entry) => sbqEmployeeNames.has(entry.consultantName));
 
   const allMissing =
     consultantEntries.length > 0 &&
