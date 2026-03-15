@@ -6,8 +6,6 @@
  */
 
 import { promises as fs } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
 import { randomUUID } from 'crypto';
 import { fetchEmployees } from './tidig.service.js';
 import { mergeUserData, hasUserChanged, getChangedFields } from './user-merge.service.js';
@@ -21,18 +19,14 @@ import type {
   SyncWarning,
 } from '../types/sync.types.js';
 import userService from './user.service.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { USERS_FILE_PATH, loadUsersFromFile } from '../utils/users-data.js';
 
 class SyncService {
-  private usersFilePath: string;
   private currentStatus: SyncStatus = 'idle';
   private isSyncing: boolean = false;
   private lastSyncLog: SyncLog | null = null;
 
   constructor() {
-    this.usersFilePath = join(__dirname, '../data/users.json');
   }
 
   // ==========================================================================
@@ -334,17 +328,7 @@ class SyncService {
    * Load users from users.json
    */
   private async loadUsers(): Promise<User[]> {
-    try {
-      const fileContent = await fs.readFile(this.usersFilePath, 'utf-8');
-      return JSON.parse(fileContent);
-    } catch (error) {
-      // If file doesn't exist, return empty array
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-        console.log('[Sync Service] users.json not found, will create new file');
-        return [];
-      }
-      throw error;
-    }
+    return loadUsersFromFile({ allowMissing: true });
   }
 
   /**
@@ -352,16 +336,16 @@ class SyncService {
    * This prevents corruption if the process crashes during write.
    */
   private async writeUsersAtomic(users: User[]): Promise<void> {
-    const tempFilePath = `${this.usersFilePath}.tmp`;
+    const tempFilePath = `${USERS_FILE_PATH}.tmp`;
 
     try {
       // Write to temporary file
       await fs.writeFile(tempFilePath, JSON.stringify(users, null, 2), 'utf-8');
 
       // Atomic rename
-      await fs.rename(tempFilePath, this.usersFilePath);
+      await fs.rename(tempFilePath, USERS_FILE_PATH);
 
-      console.log(`[Sync Service] ✓ Wrote ${users.length} users to ${this.usersFilePath}`);
+      console.log(`[Sync Service] ✓ Wrote ${users.length} users to ${USERS_FILE_PATH}`);
     } catch (error) {
       console.error('[Sync Service] ✗ Failed to write users.json:', error);
 

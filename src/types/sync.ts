@@ -60,3 +60,25 @@ export interface SyncStatusResponse {
   isInitialized: boolean;
   serverStartTime: string;
 }
+
+/**
+ * Raw Tidig employee node as returned by the SubTree endpoint.
+ * This mirrors the backend TidigEmployee schema fields we care about.
+ */
+export interface TidigEmployeeNodeRaw {
+  empId: string;
+  name: string;
+  children?: TidigEmployeeNodeRaw[] | null;
+  [key: string]: unknown;
+}
+
+/**
+ * Normalized external employee node used by the dashboard.
+ */
+export interface ExternalEmployeeNode {
+  id: string;
+  parentId: string | null;
+  name: string;
+  hasChildren: boolean;
+  children: ExternalEmployeeNode[];
+}

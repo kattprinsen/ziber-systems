@@ -1,18 +1,11 @@
-import { readFile } from 'fs/promises';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
 import { User } from '../types/user.types.js';
 import { AppError } from '../middleware/errorHandler.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { loadUsersFromFile } from '../utils/users-data.js';
 
 class UserService {
-  private usersFilePath: string;
   private usersCache: User[] | null = null;
 
   constructor() {
-    this.usersFilePath = join(__dirname, '../data/users.json');
   }
 
   private async loadUsers(): Promise<User[]> {
@@ -21,8 +14,7 @@ class UserService {
         return this.usersCache;
       }
 
-      const fileContent = await readFile(this.usersFilePath, 'utf-8');
-      this.usersCache = JSON.parse(fileContent);
+      this.usersCache = await loadUsersFromFile();
       return this.usersCache!;
     } catch (error) {
       console.error('Error loading users:', error);
