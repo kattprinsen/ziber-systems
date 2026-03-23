@@ -1,1 +1,0 @@
-export { SalaryCalculator } from './SalaryCalculator';

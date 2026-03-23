@@ -1,3 +1,0 @@
-# This file keeps the snapshots/ directory tracked in git.
-# Monthly snapshot JSON files are gitignored (they contain real consultant data).
-# See .gitignore: backend/src/data/snapshots/*.json
