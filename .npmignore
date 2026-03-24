@@ -1,0 +1,13 @@
+node_modules/
+dist/
+build/
+coverage/
+coverage-*/
+specs/
+.specify/
+.vscode/
+.github/
+tests/
+*.log
+.env
+.env.*

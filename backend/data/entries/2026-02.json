@@ -1,0 +1,20 @@
+[
+  {
+    "consultantId": "c1",
+    "month": "2026-02",
+    "billableHours": 244,
+    "nonBillableHours": 0
+  },
+  {
+    "consultantId": "c2",
+    "month": "2026-02",
+    "billableHours": 231,
+    "nonBillableHours": 0
+  },
+  {
+    "consultantId": "c3",
+    "month": "2026-02",
+    "billableHours": 342,
+    "nonBillableHours": 0
+  }
+]
