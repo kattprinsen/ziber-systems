@@ -175,11 +175,14 @@ export function initConsultantsPage(): void {
   if (!tableBody || !form) return;
 
   async function loadAndRender(): Promise<void> {
+    const body = tableBody;
+    if (!body) return;
+
     try {
       const consultants = await getConsultants();
-      tableBody.innerHTML = renderTableRows(consultants);
+      body.innerHTML = renderTableRows(consultants);
 
-      tableBody.querySelectorAll<HTMLButtonElement>("[data-status-toggle]").forEach((btn) => {
+      body.querySelectorAll<HTMLButtonElement>("[data-status-toggle]").forEach((btn) => {
         btn.addEventListener("click", async () => {
           const id = btn.dataset.id;
           if (!id) return;
@@ -193,7 +196,7 @@ export function initConsultantsPage(): void {
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error("Failed to load consultants", err);
-      tableBody.innerHTML = `
+      body.innerHTML = `
         <tr>
           <td colspan="5" class="px-3 py-3 text-center text-sm text-rose-400">
             Failed to load consultants.

@@ -1,7 +1,7 @@
-# Implementation Plan: Consultant Contribution Bookkeeping MVP
+# Implementation Plan: Consultant Contribution Analysis MVP
 
 **Branch**: `008-consultant-bookkeeping` | **Date**: 2026-03-23 | **Spec**: ../008-consultant-bookkeeping/spec.md  
-**Input**: Feature specification describing a solo-user consultant bookkeeping tool with monthly manual hour entry, individual and team views, and a minimal Node.js + TypeScript backend plus a framework-free Vite + TypeScript client with Tailwind.
+**Input**: Feature specification describing a solo-user consultant analysis tool with monthly manual hour entry, individual and team views, and a minimal Node.js + TypeScript backend plus a framework-free Vite + TypeScript client with Tailwind.
 
 ## Summary
 

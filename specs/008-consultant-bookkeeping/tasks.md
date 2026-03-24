@@ -1,4 +1,4 @@
-# Tasks: Consultant Contribution Bookkeeping MVP
+# Tasks: Consultant Contribution Analysis MVP
 
 **Input**: Design documents from `/specs/008-consultant-bookkeeping/`  
 **Prerequisites**: plan.md (present), spec.md (present); research.md, data-model.md, contracts/ optional for MVP.
@@ -70,8 +70,8 @@
 
 ### Tests (recommended)
 
-- [ ] T028 [P] [US1] Add unit tests for calculation functions in `backend/tests/unit/calculations.test.ts` covering revenue, cost approximation, margin, and utilization (including 0-hours edge cases).
-- [ ] T029 [US1] Add a simple integration test in `backend/tests/integration/entriesAndSummary.test.ts` that exercises creating entries and retrieving a summary for one month.
+- [X] T028 [P] [US1] Add unit tests for calculation functions in `backend/tests/unit/calculations.test.ts` covering revenue, cost approximation, margin, and utilization (including 0-hours edge cases).
+- [X] T029 [US1] Add a simple integration test in `backend/tests/integration/entriesAndSummary.test.ts` that exercises creating entries and retrieving a summary for one month.
 
 **Checkpoint**: Monthly hours can be entered and saved; current-month summary view works end to end.
 
@@ -83,14 +83,14 @@
 
 ### Backend
 
-- [ ] T040 [US2] Extend `consultantService.ts` with methods to create, update, list, and inactivate consultants while preserving historical MonthlyEntry records.
-- [ ] T041 [US2] Add consultant management API endpoints in `backend/src/api/routes/consultants.ts` for CRUD and status changes.
-- [ ] T042 [P] [US2] Ensure repository implementations handle status changes and maintain referential integrity with MonthlyEntry data.
+- [X] T040 [US2] Extend `consultantService.ts` with methods to create, update, list, and inactivate consultants while preserving historical MonthlyEntry records.
+- [X] T041 [US2] Add consultant management API endpoints in `backend/src/api/routes/consultants.ts` for CRUD and status changes.
+- [X] T042 [P] [US2] Ensure repository implementations handle status changes and maintain referential integrity with MonthlyEntry data.
 
 ### Frontend
 
-- [ ] T043 [P] [US2] Create `frontend/src/pages/ConsultantsPage.ts` to list consultants and show key fields (name, salary, hourlyRate, status).
-- [ ] T044 [P] [US2] Add form components in `frontend/src/components/` for creating/updating a consultant and toggling active/inactive status.
+- [X] T043 [P] [US2] Create `frontend/src/pages/ConsultantsPage.ts` to list consultants and show key fields (name, salary, hourlyRate, status).
+- [X] T044 [P] [US2] Add form components in `frontend/src/components/` for creating/updating a consultant and toggling active/inactive status.
 - [ ] T045 [US2] Integrate consultant management UI with `apiClient.ts`, updating lists and ensuring inactive consultants disappear from new months in `MonthlyHoursForm.vue` while remaining visible in historical views.
 
 ### Tests (recommended)
@@ -107,17 +107,17 @@
 
 ### Backend
 
-- [ ] T050 [US3] Extend `summaryService.ts` to compute summaries for a range of months and select the last three fully entered months.
-- [ ] T051 [US3] Add an API endpoint in `backend/src/api/routes/summary.ts` to return a 3-month rolling trend dataset for team metrics.
+- [X] T050 [US3] Extend `summaryService.ts` to compute summaries for a range of months and select the last three fully entered months.
+- [X] T051 [US3] Add an API endpoint in `backend/src/api/routes/summary.ts` to return a 3-month rolling trend dataset for team metrics.
 
 ### Frontend
 
-- [ ] T052 [P] [US3] Create `frontend/src/components/TrendView.ts` to visualize 3-month revenue, cost approximation, margin, and utilization (table or simple chart).
-- [ ] T053 [US3] Integrate `TrendView.ts` into `DashboardPage.ts` or a dedicated trends section, loading data from the new trend endpoint.
+- [X] T052 [P] [US3] Create `frontend/src/components/TrendView.ts` to visualize 3-month revenue, cost approximation, margin, and utilization (table or simple chart).
+- [X] T053 [US3] Integrate `TrendView.ts` into `DashboardPage.ts` or a dedicated trends section, loading data from the new trend endpoint.
 
 ### Tests (recommended)
 
-- [ ] T054 [US3] Add unit tests for the multi-month aggregation logic in `calculations.ts` or `summaryService.ts`.
+- [X] T054 [US3] Add unit tests for the multi-month aggregation logic in `calculations.ts` or `summaryService.ts`.
 
 **Checkpoint**: 3-month team trends are visible and consistent with single-month summaries.
 
@@ -127,10 +127,10 @@
 
 **Purpose**: Improve usability, reliability, and maintainability.
 
-- [ ] T060 [P] [Shared] Add minimal structured logging for key domain events (saving entries, managing consultants) in backend services.
-- [ ] T061 [P] [Shared] Refine dark industrial UI (spacing, typography, color balance) to keep focus on key metrics.
-- [ ] T062 [P] [Shared] Update or create `specs/008-consultant-bookkeeping/quickstart.md` with steps to run backend and frontend together.
-- [ ] T063 [Shared] Manual validation against success criteria SC-001–SC-005 from `spec.md` and document any gaps.
+- [X] T060 [P] [Shared] Add minimal structured logging for key domain events (saving entries, managing consultants) in backend services.
+- [X] T061 [P] [Shared] Refine dark industrial UI (spacing, typography, color balance) to keep focus on key metrics.
+- [X] T062 [P] [Shared] Update or create `specs/008-consultant-bookkeeping/quickstart.md` with steps to run backend and frontend together.
+- [X] T063 [Shared] Manual validation against success criteria SC-001–SC-005 from `spec.md` and document any gaps.
 
 ---
 

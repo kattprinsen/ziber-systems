@@ -4,6 +4,7 @@ import type { EntryService } from "../../services/entryService";
 import type { SummaryService } from "../../services/summaryService";
 import { createEntriesRouter } from "./entries";
 import { createConsultantsRouter } from "./consultants";
+import { createSummaryRouter } from "./summary";
 
 export interface ApiServices {
   consultantService: ConsultantService;
@@ -28,6 +29,8 @@ export function createRootRouter(services: ApiServices) {
   );
 
   router.use("/consultants", createConsultantsRouter(services.consultantService));
+
+  router.use("/summary", createSummaryRouter(services.summaryService));
 
   return router;
 }
