@@ -1,22 +1,21 @@
 import {
   getMonthlySummary,
+  getTeamTrend,
+  getConsultants,
   upsertEntry,
   type TeamSummary,
-  type UpsertEntryPayload
+  type TeamTrend,
+  type UpsertEntryPayload,
+  type ConsultantDto
 } from "../services/apiClient";
 import { renderConsultantTable } from "../components/ConsultantTable";
 import { renderTeamSummary } from "../components/TeamSummary";
+import { renderTrendView } from "../components/TrendView";
 
 interface SimpleConsultant {
   id: string;
   name: string;
 }
-
-const DEMO_CONSULTANTS: SimpleConsultant[] = [
-  { id: "c1", name: "Alice" },
-  { id: "c2", name: "Bob" },
-  { id: "c3", name: "Charlie" }
-];
 
 function getCurrentMonthValue(): string {
   const now = new Date();
@@ -27,32 +26,6 @@ function getCurrentMonthValue(): string {
 
 export function renderDashboardPage(): string {
   const month = getCurrentMonthValue();
-
-  const rows = DEMO_CONSULTANTS.map((c) => {
-    return `
-      <tr class="border-b border-slate-800 last:border-0">
-        <td class="px-3 py-2 text-sm text-slate-100">${c.name}</td>
-        <td class="px-3 py-2 text-right">
-          <input
-            type="number"
-            min="0"
-            step="0.5"
-            class="w-24 rounded bg-slate-900/70 px-2 py-1 text-right text-sm text-slate-100 border border-slate-700 focus:outline-none focus:ring-1 focus:ring-accent-amber"
-            name="billable-${c.id}"
-          />
-        </td>
-        <td class="px-3 py-2 text-right">
-          <input
-            type="number"
-            min="0"
-            step="0.5"
-            class="w-24 rounded bg-slate-900/70 px-2 py-1 text-right text-sm text-slate-100 border border-slate-700 focus:outline-none focus:ring-1 focus:ring-accent-amber"
-            name="nonbillable-${c.id}"
-          />
-        </td>
-      </tr>
-    `;
-  }).join("");
 
   return `
     <div class="space-y-6">
@@ -88,8 +61,12 @@ export function renderDashboardPage(): string {
                 <th class="px-3 py-2 font-medium text-right">Non-billable h</th>
               </tr>
             </thead>
-            <tbody>
-              ${rows}
+            <tbody id="monthly-hours-body">
+              <tr>
+                <td colspan="3" class="px-3 py-3 text-center text-sm text-slate-400">
+                  Loading active consultants...
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -121,6 +98,15 @@ export function renderDashboardPage(): string {
           </div>
         </div>
       </div>
+
+      <div class="space-y-2" id="trend-section">
+        <div class="text-xs uppercase tracking-wide text-slate-500">
+          3-month team trend
+        </div>
+        <div id="trend-view-root">
+          ${renderTrendView(null)}
+        </div>
+      </div>
     </div>
   `;
 }
@@ -133,26 +119,100 @@ export function initDashboardPage(): void {
     | HTMLFormElement
     | null;
 
+  let activeConsultants: SimpleConsultant[] = [];
+
+  async function loadActiveConsultants(): Promise<void> {
+    const tbody = document.getElementById("monthly-hours-body") as
+      | HTMLTableSectionElement
+      | null;
+    if (!tbody) return;
+
+    try {
+      const consultants: ConsultantDto[] = await getConsultants();
+      activeConsultants = consultants
+        .filter((c) => c.status === "active")
+        .map((c) => ({ id: c.id, name: c.name }));
+
+      if (!activeConsultants.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="3" class="px-3 py-3 text-center text-sm text-slate-400">
+              No active consultants yet. Add consultants on the Consultants tab.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = activeConsultants
+        .map((c) => {
+          return `
+            <tr class="border-b border-slate-800 last:border-0">
+              <td class="px-3 py-2 text-sm text-slate-100">${c.name}</td>
+              <td class="px-3 py-2 text-right">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  class="w-24 rounded bg-slate-900/70 px-2 py-1 text-right text-sm text-slate-100 border border-slate-700 focus:outline-none focus:ring-1 focus:ring-accent-amber"
+                  name="billable-${c.id}"
+                />
+              </td>
+              <td class="px-3 py-2 text-right">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  class="w-24 rounded bg-slate-900/70 px-2 py-1 text-right text-sm text-slate-100 border border-slate-700 focus:outline-none focus:ring-1 focus:ring-accent-amber"
+                  name="nonbillable-${c.id}"
+                />
+              </td>
+            </tr>
+          `;
+        })
+        .join("");
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to load consultants for monthly form", err);
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="3" class="px-3 py-3 text-center text-sm text-rose-400">
+            Failed to load consultants.
+          </td>
+        </tr>
+      `;
+    }
+  }
+
   async function refreshSummary(month: string): Promise<void> {
     const tableRoot = document.getElementById("consultant-table-root");
     const teamRoot = document.getElementById("team-summary-root");
-    if (!tableRoot || !teamRoot) return;
+    const trendRoot = document.getElementById("trend-view-root");
+    if (!tableRoot || !teamRoot || !trendRoot) return;
 
     const tableEl: HTMLElement = tableRoot;
     const teamEl: HTMLElement = teamRoot;
+    const trendEl: HTMLElement = trendRoot;
 
     try {
-      const summary = await getMonthlySummary(month);
-      renderSummaryInto(summary);
+      const [summary, trend] = await Promise.all([
+        getMonthlySummary(month),
+        getTeamTrend(month)
+      ] as const);
+      renderSummaryInto(summary, trend);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error("Failed to load monthly summary", err);
-      renderSummaryInto(null);
+      renderSummaryInto(null, null);
     }
 
-    function renderSummaryInto(summary: TeamSummary | null) {
+    function renderSummaryInto(
+      summary: TeamSummary | null,
+      trend: TeamTrend | null
+    ) {
       tableEl.innerHTML = renderConsultantTable(summary);
       teamEl.innerHTML = renderTeamSummary(summary);
+      trendEl.innerHTML = renderTrendView(trend);
     }
   }
 
@@ -163,7 +223,7 @@ export function initDashboardPage(): void {
 
       const payloads: UpsertEntryPayload[] = [];
 
-      for (const c of DEMO_CONSULTANTS) {
+      for (const c of activeConsultants) {
         const billableInput = form.elements.namedItem(
           `billable-${c.id}`
         ) as HTMLInputElement | null;
@@ -207,6 +267,6 @@ export function initDashboardPage(): void {
     });
 
     const initialMonth = monthInput.value || getCurrentMonthValue();
-    void refreshSummary(initialMonth);
+    void Promise.all([loadActiveConsultants(), refreshSummary(initialMonth)]);
   }
 }

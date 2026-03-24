@@ -68,6 +68,15 @@ export interface TeamSummary {
   averageUtilization: number;
 }
 
+export interface TeamTrendPoint {
+  month: string;
+  summary: TeamSummary;
+}
+
+export interface TeamTrend {
+  points: TeamTrendPoint[];
+}
+
 export interface UpsertEntryPayload {
   consultantId: string;
   month: string;
@@ -85,6 +94,10 @@ export function upsertEntry(payload: UpsertEntryPayload): Promise<void> {
 
 export function getMonthlySummary(month: string): Promise<TeamSummary> {
   return request<TeamSummary>(`/api/entries/summary/${month}`);
+}
+
+export function getTeamTrend(endMonth: string): Promise<TeamTrend> {
+  return request<TeamTrend>(`/api/summary/trend/${endMonth}`);
 }
 
 export function getConsultants(): Promise<ConsultantDto[]> {

@@ -1,9 +1,9 @@
-# Feature Specification: Consultant Contribution Bookkeeping MVP
+# Feature Specification: Consultant Contribution Analysis MVP
 
 **Feature Branch**: `008-consultant-bookkeeping`
 **Created**: 2026-03-23  
 **Status**: Draft  
-**Input**: Solo bookkeeping tool for tracking consultant contributions via monthly manual hour input (billable + non-billable), with individual and team views, using a minimalist Node.js + TypeScript backend plus a framework-free Vite + TypeScript client with Tailwind.
+**Input**: Solo analysis tool for tracking consultant contributions via monthly manual hour input (billable + non-billable), with individual and team views, using a minimalist Node.js + TypeScript backend plus a framework-free Vite + TypeScript client with Tailwind.
 
 ## User Scenarios & Testing (mandatory)
 
@@ -27,7 +27,7 @@ As the solo user, I want to input each consultant's billable and non-billable ho
 
 As the solo user, I want to add, update, and inactivate consultants so that the system reflects the current team composition without losing historical data.
 
-**Why this priority**: The team changes over time; being able to manage consultants is necessary to keep monthly bookkeeping accurate and avoid editing data files by hand.
+**Why this priority**: The team changes over time; being able to manage consultants is necessary to keep monthly analysis accurate and avoid editing data files by hand.
 
 **Independent Test**: I can create a new consultant, update salary/hourly rate, and mark a consultant as inactive while still being able to see their historical contributions in past months.
 

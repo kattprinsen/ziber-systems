@@ -10,6 +10,15 @@ export class ConsultantService {
 
   async upsert(consultant: Consultant): Promise<void> {
     await this.repo.save(consultant);
+    // Minimal structured logging for consultant changes
+    // eslint-disable-next-line no-console
+    console.log(
+      JSON.stringify({
+        event: "consultant.upserted",
+        consultantId: consultant.id,
+        status: consultant.status
+      })
+    );
   }
 
    async listActive(): Promise<Consultant[]> {
@@ -24,6 +33,14 @@ export class ConsultantService {
     }
     const updated: Consultant = { ...existing, status };
     await this.repo.save(updated);
+    // eslint-disable-next-line no-console
+    console.log(
+      JSON.stringify({
+        event: "consultant.statusChanged",
+        consultantId: id,
+        status
+      })
+    );
     return updated;
   }
 }

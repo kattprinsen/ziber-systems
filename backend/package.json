@@ -1,5 +1,5 @@
 {
-  "name": "consultant-bookkeeping-backend",
+  "name": "consultant-analysis-backend",
   "version": "0.1.0",
   "private": true,
   "main": "dist/server.js",
