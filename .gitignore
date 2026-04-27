@@ -6,3 +6,17 @@
 .github/**/*secret*
 .github/**/*credential*
 .github/**/*token*
+
+# Data directories (raw input and extracted stores — always sensitive)
+data/input/
+data/store/
+*.xlsx
+*.xls
+
+# Project-specific secrets and configuration values
+.env
+.env.local
+.env.*.local
+config/secrets.*
+config/constants.*
+# Note: .env.example and config/constants.example.* are intentionally NOT ignored
