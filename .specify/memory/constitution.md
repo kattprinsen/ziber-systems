@@ -1,13 +1,15 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 1.0.0 → 1.1.0
+Version change: 1.1.0 → 1.2.0
 Modified principles:
-  - I. Data Privacy & Sensitivity: added rule for project-config secrets (.env / constants file)
+  - I. Data Privacy & Sensitivity: unchanged
+  - II–V: unchanged
 Added sections:
-  - Data Classification: "Project Configuration Secrets" sub-section
-  - Required Gitignore Coverage: .env and constants file entries
-  - Code Review Checklist: new gate for secrets in config files
+  - Core Principles: VI. Test-Gate — Features Are Not Done Until Tests Pass (NON-NEGOTIABLE)
+  - Development & Contribution Workflow / Testing Standards: expanded with Definition of Done
+  - Code Review Checklist: new test-gate item
+  - Governance / Compliance: new test-gate compliance rule
 Removed sections: N/A
 Templates reviewed:
   - .specify/templates/plan-template.md ✅ (no outdated refs)
@@ -106,6 +108,23 @@ Rules:
 **Rationale**: Manual Excel placement means re-runs are common (e.g., a corrected file replaces
 an old one). Idempotency guarantees safety. Fast-fail validation prevents silently corrupt stores.
 
+### VI. Test-Gate — Features Are Not Done Until Tests Pass (NON-NEGOTIABLE)
+
+A feature is only considered complete when its tests are written, run, and pass. No feature
+MAY be merged or marked done while any of its tests are failing or absent.
+
+Rules:
+- Every new feature MUST include tests covering its acceptance scenarios before merge.
+- The full test suite MUST pass before a feature branch is merged into the main branch.
+- Tests MUST run against anonymized fixture data — never against real data stores.
+- A feature that changes existing behaviour MUST update the affected tests in the same PR;
+  disabling or deleting tests to make a build pass is explicitly forbidden.
+- Pipeline scripts (extractor, analyzer, reporter) MUST each have at minimum one integration
+  test that executes the script end-to-end and asserts on its output.
+
+**Rationale**: Tests are the only objective proof that a feature does what it claims and
+does not break what already works. Untested code is unfinished code.
+
 ## Data Classification & Access Control
 
 ### Sensitive Data (MUST NOT be committed or exposed)
@@ -172,6 +191,15 @@ as part of the same PR that introduces the directory.
   provider swap (JSON ↔ test double), groups of size 1 (suppression), and missing-month
   edge cases.
 
+### Definition of Done
+
+A feature is done when ALL of the following are true:
+
+1. All acceptance scenarios from the feature spec have corresponding passing tests.
+2. The full test suite passes with no skipped or disabled tests introduced by this feature.
+3. No test fixture contains real sensitive data.
+4. The feature has passed the Code Review Checklist below.
+
 ### Code Review Checklist
 
 Before merging any PR, reviewers MUST verify:
@@ -184,6 +212,8 @@ Before merging any PR, reviewers MUST verify:
 - [ ] No business configuration thresholds (margin goals, salary caps, rate benchmarks) hardcoded
       in committed source files — they MUST reference `.env` or the gitignored constants file
 - [ ] `.env.example` / `constants.example.*` updated if new config keys are introduced
+- [ ] All tests for this feature are written and pass (Principle VI — Definition of Done)
+- [ ] Full test suite passes; no tests disabled or deleted to achieve a green build
 
 ## Governance
 
@@ -207,5 +237,6 @@ Ziber Consultant Management System. Where conflicts exist, the Constitution take
 - Storage-touching PRs MUST include integration tests validating the abstraction (Principle III).
 - Any new metric MUST be implemented at both individual and group scope (Principle IV).
 - Script changes MUST be validated for idempotency (Principle V).
+- No PR MAY be merged unless the full test suite passes and all feature tests are present (Principle VI).
 
-**Version**: 1.1.0 | **Ratified**: 2026-04-27 | **Last Amended**: 2026-04-27
+**Version**: 1.2.0 | **Ratified**: 2026-04-27 | **Last Amended**: 2026-04-27
