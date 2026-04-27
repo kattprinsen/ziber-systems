@@ -1,0 +1,8 @@
+# Protect against accidental credential leakage from agent folders
+.github/**/.env
+.github/**/*.env
+.github/**/*.key
+.github/**/*.pem
+.github/**/*secret*
+.github/**/*credential*
+.github/**/*token*
