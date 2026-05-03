@@ -14,7 +14,7 @@
   "author": "kattprinsen",
   "type": "commonjs",
   "scripts": {
-    "dev": "tsx --watch src/index.ts",
+    "dev": "tsx --watch app/index.ts",
     "build": "tsc",
     "start": "node dist/index.js"
   },

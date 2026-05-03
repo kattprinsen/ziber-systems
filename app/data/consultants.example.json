@@ -1,0 +1,9 @@
+{
+    "consultants": {
+        "Sammy Scammy": {
+            "shortName": "EQR",
+            "salary": 54000,
+            "manager": "WTF"
+        }
+    }
+}

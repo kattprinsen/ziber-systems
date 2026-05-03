@@ -1,3 +1,4 @@
 # TypeScript Specifics
 node_modules
 .env
+consultants.json
