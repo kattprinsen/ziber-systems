@@ -15,7 +15,7 @@ interface ConsultantsData {
 // JSON main Loop
 const mainLoop = (data: ConsultantsData) => {
     for (const [name, record] of Object.entries(data.consultants)) {
-        return console.log(name, record.shortName, record.salary);
+        console.log(name, record.shortName, record.salary);
     }
 }
 
