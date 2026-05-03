@@ -1,0 +1,29 @@
+{
+  "name": "ziber-systems",
+  "version": "1.0.0",
+  "description": "Mangement System",
+  "homepage": "https://github.com/kattprinsen/ziber-systems#readme",
+  "bugs": {
+    "url": "https://github.com/kattprinsen/ziber-systems/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kattprinsen/ziber-systems.git"
+  },
+  "license": "ISC",
+  "author": "kattprinsen",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "tsx --watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2"
+  }
+}
