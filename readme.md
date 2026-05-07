@@ -1,3 +1,3 @@
-# New Diary Project
+# Household plant tracking system
 
 Hello World!
