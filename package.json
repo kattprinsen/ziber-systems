@@ -12,18 +12,22 @@
   },
   "license": "ISC",
   "author": "kattprinsen",
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
-    "dev": "tsx --watch app/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js"
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
-    "tsx": "^4.21.0",
-    "typescript": "^6.0.3"
-  },
-  "dependencies": {
-    "dotenv": "^17.4.2"
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "typescript": "^6.0.3",
+    "vite": "^6.0.0"
   }
 }
