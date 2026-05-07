@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import styles from './App.module.scss'
 
 interface HealthStatus {
   status: string
@@ -35,22 +36,24 @@ function App() {
   }, [])
 
   return (
-    <div>
-      <h1>Ziber Systems</h1>
-      <h2>Server Health</h2>
-      {loading && <p>Checking...</p>}
-      {error && <p style={{ color: 'red' }}>Error: {error}</p>}
-      {health && !loading && (
-        <ul>
-          <li>Status: {health.status}</li>
-          <li>Database: {health.db}</li>
-          <li>Timestamp: {health.timestamp}</li>
-          <li>Total checks recorded: {health.totalChecks}</li>
-        </ul>
-      )}
-      <button onClick={fetchHealth} disabled={loading}>
-        {loading ? 'Checking...' : 'Ping again'}
-      </button>
+    <div className={styles.page}>
+      <h1 className={styles.title}>Ziber Systems</h1>
+      <div className={styles.card}>
+        <h2 className={styles.cardTitle}>Server Health</h2>
+        {loading && <p className={styles.muted}>Checking...</p>}
+        {error && <p className={styles.error}>Error: {error}</p>}
+        {health && !loading && (
+          <ul className={styles.statusList}>
+            <li>Status: <span>{health.status}</span></li>
+            <li>Database: <span>{health.db}</span></li>
+            <li>Timestamp: <span>{health.timestamp}</span></li>
+            <li>Total checks recorded: <span>{health.totalChecks}</span></li>
+          </ul>
+        )}
+        <button className={styles.button} onClick={fetchHealth} disabled={loading}>
+          {loading ? 'Checking...' : 'Ping again'}
+        </button>
+      </div>
     </div>
   )
 }
