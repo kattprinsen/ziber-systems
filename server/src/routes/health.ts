@@ -11,7 +11,7 @@ health.get('/', async (c) => {
   await db.insert(healthChecks).values({ checkedAt: now })
 
   const [result] = await db.select({ total: count() }).from(healthChecks)
-
+  console.log("Healthcheck PING!")
   return c.json({
     status: 'ok',
     db: 'connected',
