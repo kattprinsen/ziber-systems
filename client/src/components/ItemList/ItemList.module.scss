@@ -1,0 +1,43 @@
+@use '../../styles/variables' as *;
+
+.muted {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+}
+
+.error {
+  font-size: $font-size-sm;
+  color: $color-error;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $space-4;
+  padding: $space-3 $space-4;
+  background: $color-background;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+}
+
+.name {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text;
+}
+
+.date {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  white-space: nowrap;
+}

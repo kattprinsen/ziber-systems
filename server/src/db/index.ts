@@ -9,7 +9,12 @@ sqlite.exec(`
   CREATE TABLE IF NOT EXISTS health_checks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     checked_at TEXT NOT NULL
-  )
+  );
+  CREATE TABLE IF NOT EXISTS items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
 `)
 
 export const db = drizzle(sqlite, { schema })
