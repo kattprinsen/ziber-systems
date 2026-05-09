@@ -24,8 +24,13 @@ client/
   vite.config.ts        # Proxies /api → localhost:3000 (no CORS in dev)
   index.html
   src/
+    declarations.d.ts   # Global type declarations (e.g. *.module.scss)
     main.tsx            # React root mount
     App.tsx             # Root component
+    api/                # One file per resource — typed fetch wrappers
+    components/         # One folder per component, co-located with styles
+    hooks/              # Custom hooks (use*.ts)
+    styles/             # Global SCSS variables and resets
 server/
   package.json
   tsconfig.json
@@ -49,9 +54,22 @@ server/
 ## Component Patterns
 
 - Props interface should be named `{ComponentName}Props`
-- Co-locate component-specific styles, hooks, and utils in the same folder as the component
+- Each component lives in its own folder under `src/components/{ComponentName}/`, co-located with its SCSS module
 - Prefer composition over prop drilling — use context or pass children when appropriate
 - Extract reusable logic into custom hooks (`use*.ts`) in a `src/hooks/` folder
+
+## API Layer (Client)
+
+- All server calls live in `src/api/` — one file per resource (e.g. `items.ts`)
+- Export a typed interface for each resource shape alongside the fetch functions
+- Throw on non-OK responses so callers can catch uniformly
+
+## Data Fetching & State
+
+- No external state management or form library by default — plain `useState` + custom hooks suffice
+- Each resource has a dedicated `use{Resource}` hook in `src/hooks/` that owns fetch, loading, error, and mutate logic
+- After a mutation (create/update/delete), re-fetch the list from the server to keep state in sync (no optimistic updates unless needed)
+- Introduce TanStack Query or a global state library only if caching/background-sync requirements justify it
 
 ## Server Patterns
 
@@ -59,6 +77,8 @@ server/
 - DB table schema goes in `server/src/db/schema.ts`; connection + `CREATE TABLE IF NOT EXISTS` bootstrap in `server/src/db/index.ts`
 - Route files export a `new Hono()` instance as default; mount with `app.route()`
 - Use `cors()` middleware from `hono/cors` on all routes
+- Validate request bodies at the route boundary before touching the DB; return `400` with `{ error: string }` on bad input
+- Use `.returning()` on Drizzle inserts to return the created row to the client
 
 ## Build & Dev
 
