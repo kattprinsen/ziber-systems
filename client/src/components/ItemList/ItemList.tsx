@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import type { Item } from '../../api/items'
 import styles from './ItemList.module.scss'
 
@@ -15,9 +16,11 @@ export const ItemList = ({ items, loading, error }: ItemListProps) => {
   return (
     <ul className={styles.list}>
       {items.map((item) => (
-        <li key={item.id} className={styles.item}>
-          <span className={styles.name}>{item.name}</span>
-          <span className={styles.date}>{new Date(item.createdAt).toLocaleString()}</span>
+        <li key={item.id}>
+          <Link to={`/item/${item.id}`} className={styles.item}>
+            <span className={styles.name}>{item.name}</span>
+            <span className={styles.date}>{new Date(item.createdAt).toLocaleString()}</span>
+          </Link>
         </li>
       ))}
     </ul>

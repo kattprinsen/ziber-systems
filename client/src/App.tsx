@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
+import { Routes, Route } from 'react-router-dom'
 import styles from './App.module.scss'
 import { ItemForm } from './components/ItemForm/ItemForm'
 import { ItemList } from './components/ItemList/ItemList'
 import { useItems } from './hooks/useItems'
+import { ItemDetailPage } from './pages/ItemDetailPage/ItemDetailPage'
 
 interface HealthStatus {
   status: string
@@ -11,7 +13,7 @@ interface HealthStatus {
   totalChecks: number
 }
 
-function App() {
+function Home() {
   const [health, setHealth] = useState<HealthStatus | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -66,6 +68,15 @@ function App() {
         </div>
       </div>
     </div>
+  )
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/item/:id" element={<ItemDetailPage />} />
+    </Routes>
   )
 }
 

@@ -1,0 +1,142 @@
+@use '../../styles/variables' as *;
+
+.page {
+  max-width: 640px;
+  margin: $space-16 auto;
+  padding: 0 $space-4;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-primary;
+  text-decoration: none;
+  margin-bottom: $space-6;
+
+  &:hover {
+    color: $color-primary-hover;
+    text-decoration: underline;
+  }
+}
+
+.card {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+  padding: $space-6;
+  box-shadow: $shadow-sm;
+}
+
+.title {
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $color-text;
+  margin-bottom: $space-2;
+}
+
+.meta {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin-bottom: $space-6;
+
+  span {
+    font-weight: $font-weight-medium;
+    color: $color-text;
+  }
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text;
+}
+
+.input {
+  padding: $space-2 $space-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  font-size: $font-size-base;
+  font-family: $font-family;
+  color: $color-text;
+  background: $color-surface;
+  outline: none;
+  transition: border-color 0.15s;
+
+  &:focus {
+    border-color: $color-primary;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: $space-3;
+}
+
+.button {
+  padding: $space-2 $space-6;
+  background: $color-primary;
+  color: #ffffff;
+  border: none;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  font-family: $font-family;
+  cursor: pointer;
+  transition: background-color 0.15s;
+
+  &:hover:not(:disabled) {
+    background: $color-primary-hover;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.buttonSecondary {
+  @extend .button;
+  background: transparent;
+  color: $color-primary;
+  border: 1px solid $color-border;
+
+  &:hover:not(:disabled) {
+    background: $color-background;
+    color: $color-primary-hover;
+  }
+}
+
+.muted {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+}
+
+.error {
+  font-size: $font-size-sm;
+  color: $color-error;
+}
+
+.success {
+  font-size: $font-size-sm;
+  color: $color-success;
+  font-weight: $font-weight-medium;
+}

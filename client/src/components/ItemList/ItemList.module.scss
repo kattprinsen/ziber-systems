@@ -28,6 +28,13 @@
   background: $color-background;
   border: 1px solid $color-border;
   border-radius: $radius-md;
+  text-decoration: none;
+  transition: border-color 0.15s, background-color 0.15s;
+
+  &:hover {
+    background: $color-surface;
+    border-color: $color-primary;
+  }
 }
 
 .name {
