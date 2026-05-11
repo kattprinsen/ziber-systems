@@ -7,6 +7,7 @@
 - **Build tool**: Vite 6
 - **Language**: TypeScript (strict mode, ESM)
 - **Package manager**: npm (workspaces monorepo)
+- **Routing**: `react-router-dom` — `BrowserRouter` wraps the app in `main.tsx`; routes defined with `<Routes>` / `<Route>` in `App.tsx`
 
 ### Server
 - **Runtime**: Node.js
@@ -39,6 +40,8 @@ server/
     db/
       index.ts          # SQLite + Drizzle connection and table init
       schema.ts         # Drizzle table definitions
+      seeds/            # JSON seed files for static reference data
+      seed.ts           # Idempotent seed script (run with npm run seed -w server)
     routes/             # One file per route group
 ```
 
@@ -79,6 +82,24 @@ server/
 - Use `cors()` middleware from `hono/cors` on all routes
 - Validate request bodies at the route boundary before touching the DB; return `400` with `{ error: string }` on bad input
 - Use `.returning()` on Drizzle inserts to return the created row to the client
+
+## Static / Seed Data
+
+- Curated reference data (e.g. plant catalogue) lives as a committed JSON file in `server/src/db/seeds/`
+- A `seed.ts` script reads the JSON and inserts rows idempotently (skip by unique field); run once with `npm run seed -w server`
+- Prefer owning static datasets over third-party APIs when the data is small, stable, and free to curate
+
+## Routing (Client)
+
+- `BrowserRouter` is mounted once in `main.tsx`
+- All routes are declared in `App.tsx` using `<Routes>` / `<Route>`
+- Pages live in `src/pages/{PageName}/` with a co-located SCSS module, same conventions as components
+- Use `NavLink` for navigation with active styling; use `Link` for plain navigation
+
+## SCSS
+
+- All SCSS modules must `@use '../../styles/variables' as *` (adjust depth as needed)
+- Use `@use 'sass:color'` and `color.adjust()` instead of the deprecated `darken()` / `lighten()` functions
 
 ## Build & Dev
 
