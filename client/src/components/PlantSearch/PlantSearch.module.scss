@@ -1,0 +1,104 @@
+@use '../../styles/variables' as *;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text;
+}
+
+.input {
+  padding: $space-2 $space-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  font-size: $font-size-base;
+  font-family: $font-family;
+  color: $color-text;
+  background: $color-surface;
+  outline: none;
+  transition: border-color 0.15s;
+
+  &:focus {
+    border-color: $color-primary;
+  }
+}
+
+.results {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.result {
+  width: 100%;
+  text-align: left;
+  background: $color-background;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: $space-3 $space-4;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  transition: border-color 0.15s, background-color 0.15s;
+  font-family: $font-family;
+
+  &:hover {
+    background: $color-surface;
+    border-color: $color-primary;
+  }
+}
+
+.commonName {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text;
+}
+
+.latinName {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  font-style: italic;
+}
+
+.meta {
+  display: flex;
+  gap: $space-2;
+  margin-top: $space-1;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 0.75rem;
+  font-weight: $font-weight-medium;
+  color: $color-primary;
+  background: rgba($pine-blue, 0.08);
+  padding: 0.125rem $space-2;
+  border-radius: $radius-sm;
+}
+
+.muted {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+}
+
+.error {
+  font-size: $font-size-sm;
+  color: $color-error;
+}
