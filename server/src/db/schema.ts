@@ -19,3 +19,11 @@ export const plants = sqliteTable('plants', {
   light: text('light', { enum: ['low', 'indirect', 'bright'] }).notNull(),
   description: text('description').notNull(),
 })
+
+export const userPlants = sqliteTable('user_plants', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  plantId: integer('plant_id').notNull().references(() => plants.id),
+  nickname: text('nickname'),
+  addedAt: text('added_at').notNull(),
+  lastWateredAt: text('last_watered_at'),
+})

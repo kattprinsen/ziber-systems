@@ -9,7 +9,36 @@
 .title {
   font-size: $font-size-3xl;
   font-weight: $font-weight-bold;
+  margin-bottom: $space-4;
+}
+
+.nav {
+  display: flex;
+  gap: $space-4;
   margin-bottom: $space-8;
+  border-bottom: 1px solid $color-border;
+  padding-bottom: $space-3;
+}
+
+.navLink {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text-muted;
+  text-decoration: none;
+  padding-bottom: $space-3;
+  margin-bottom: -$space-3;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+
+  &:hover {
+    color: $color-primary;
+  }
+}
+
+.navLinkActive {
+  @extend .navLink;
+  color: $color-primary;
+  border-bottom-color: $color-primary;
 }
 
 .card {

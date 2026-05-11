@@ -23,6 +23,13 @@ sqlite.exec(`
     light TEXT NOT NULL,
     description TEXT NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS user_plants (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    plant_id INTEGER NOT NULL REFERENCES plants(id),
+    nickname TEXT,
+    added_at TEXT NOT NULL,
+    last_watered_at TEXT
+  );
 `)
 
 export const db = drizzle(sqlite, { schema })

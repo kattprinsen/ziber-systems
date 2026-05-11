@@ -1,0 +1,134 @@
+@use '../../styles/variables' as *;
+
+.page {
+  max-width: 720px;
+  margin: $space-16 auto;
+  padding: 0 $space-4;
+  display: flex;
+  flex-direction: column;
+  gap: $space-8;
+}
+
+.title {
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  color: $color-text;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+.sectionTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: $color-text;
+}
+
+.confirmCard {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+  padding: $space-4;
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+.confirmText {
+  font-size: $font-size-sm;
+  color: $color-text;
+  margin: 0;
+}
+
+.confirmField {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text;
+}
+
+.optional {
+  font-weight: $font-weight-normal;
+  color: $color-text-muted;
+}
+
+.input {
+  padding: $space-2 $space-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  font-size: $font-size-base;
+  font-family: $font-family;
+  color: $color-text;
+  background: $color-surface;
+  outline: none;
+  transition: border-color 0.15s;
+
+  &:focus {
+    border-color: $color-primary;
+  }
+}
+
+.confirmActions {
+  display: flex;
+  gap: $space-3;
+}
+
+.button {
+  padding: $space-2 $space-6;
+  background: $color-primary;
+  color: #ffffff;
+  border: none;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  font-family: $font-family;
+  cursor: pointer;
+  transition: background-color 0.15s;
+
+  &:hover:not(:disabled) {
+    background: $color-primary-hover;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.buttonSecondary {
+  @extend .button;
+  background: transparent;
+  color: $color-primary;
+  border: 1px solid $color-border;
+
+  &:hover:not(:disabled) {
+    background: $color-background;
+  }
+}
+
+.grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: $space-4;
+}
+
+.muted {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+}
+
+.error {
+  font-size: $font-size-sm;
+  color: $color-error;
+}

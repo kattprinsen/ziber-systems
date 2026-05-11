@@ -1,0 +1,123 @@
+@use '../../styles/variables' as *;
+@use 'sass:color';
+
+.card {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+  padding: $space-4;
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  transition: border-color 0.15s;
+
+  &.overdue {
+    border-color: $color-error;
+  }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: $space-3;
+}
+
+.name {
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $color-text;
+  margin: 0;
+}
+
+.latin {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin: $space-1 0 0;
+}
+
+.description {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.meta {
+  display: flex;
+  gap: $space-2;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 0.75rem;
+  font-weight: $font-weight-medium;
+  color: $color-primary;
+  background: rgba($pine-blue, 0.08);
+  padding: 0.125rem $space-2;
+  border-radius: $radius-sm;
+}
+
+.badgeSoon {
+  color: color.adjust(#f39c12, $lightness: -5%);
+  background: rgba(#f39c12, 0.12);
+}
+
+.badgeOverdue {
+  color: $color-error;
+  background: rgba($color-error, 0.1);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  padding-top: $space-3;
+  border-top: 1px solid $color-border;
+}
+
+.lastWatered {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+}
+
+.waterButton {
+  padding: $space-1 $space-3;
+  background: $color-primary;
+  color: #ffffff;
+  border: none;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  font-family: $font-family;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  white-space: nowrap;
+
+  &:hover {
+    background: $color-primary-hover;
+  }
+}
+
+.removeButton {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: $color-text-muted;
+  font-size: $font-size-lg;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: $radius-sm;
+  transition: color 0.15s, background-color 0.15s;
+
+  &:hover {
+    color: $color-error;
+    background: rgba($color-error, 0.08);
+  }
+}

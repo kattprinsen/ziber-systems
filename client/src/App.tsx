@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, NavLink } from 'react-router-dom'
 import styles from './App.module.scss'
 import { ItemForm } from './components/ItemForm/ItemForm'
 import { ItemList } from './components/ItemList/ItemList'
 import { useItems } from './hooks/useItems'
 import { ItemDetailPage } from './pages/ItemDetailPage/ItemDetailPage'
+import { MyPlantsPage } from './pages/MyPlantsPage/MyPlantsPage'
 
 interface HealthStatus {
   status: string
@@ -44,6 +45,10 @@ function Home() {
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>Ziber Systems</h1>
+      <nav className={styles.nav}>
+        <NavLink to="/" end className={({ isActive }) => isActive ? styles.navLinkActive : styles.navLink}>Home</NavLink>
+        <NavLink to="/my-plants" className={({ isActive }) => isActive ? styles.navLinkActive : styles.navLink}>My Plants</NavLink>
+      </nav>
       <div className={styles.card}>
         <h2 className={styles.cardTitle}>Server Health</h2>
         {loading && <p className={styles.muted}>Checking...</p>}
@@ -76,6 +81,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/item/:id" element={<ItemDetailPage />} />
+      <Route path="/my-plants" element={<MyPlantsPage />} />
     </Routes>
   )
 }
