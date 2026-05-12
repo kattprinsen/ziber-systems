@@ -5,12 +5,6 @@ export const healthChecks = sqliteTable('health_checks', {
   checkedAt: text('checked_at').notNull(),
 })
 
-export const items = sqliteTable('items', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  name: text('name').notNull(),
-  createdAt: text('created_at').notNull(),
-})
-
 export const plants = sqliteTable('plants', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   commonName: text('common_name').notNull(),

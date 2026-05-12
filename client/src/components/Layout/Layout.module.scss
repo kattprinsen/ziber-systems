@@ -1,0 +1,33 @@
+@use '../../styles/variables' as *;
+
+.root {
+  min-height: 100vh;
+}
+
+.nav {
+  display: flex;
+  gap: $space-4;
+  border-bottom: 1px solid $color-border;
+  padding: 0 $space-8;
+}
+
+.navLink {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text-muted;
+  text-decoration: none;
+  padding: $space-3 0;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+
+  &:hover {
+    color: $color-primary;
+  }
+}
+
+.navLinkActive {
+  @extend .navLink;
+  color: $color-primary;
+  border-bottom-color: $color-primary;
+}
