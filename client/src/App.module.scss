@@ -1,18 +1,68 @@
 @use './styles/variables' as *;
 
 .page {
-  max-width: 640px;
-  margin: $space-16 auto;
+  max-width: 900px;
+  margin: $space-8 auto;
   padding: 0 $space-8;
+  display: flex;
+  flex-direction: column;
+  gap: $space-6;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-4;
 }
 
 .title {
   font-size: $font-size-3xl;
   font-weight: $font-weight-bold;
-  margin-bottom: $space-4;
+  color: $color-text;
 }
 
-.subtitle {
-  font-size: $font-size-base;
+.addButton {
+  display: inline-flex;
+  align-items: center;
+  padding: $space-2 $space-4;
+  background-color: $color-primary;
+  color: #fff;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  text-decoration: none;
+  transition: background-color 0.15s;
+
+  &:hover {
+    background-color: $color-primary-hover;
+  }
+}
+
+.link {
+  color: $color-primary;
+  text-decoration: underline;
+
+  &:hover {
+    color: $color-primary-hover;
+  }
+}
+
+.grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: $space-4;
+}
+
+.muted {
+  font-size: $font-size-sm;
   color: $color-text-muted;
+}
+
+.error {
+  font-size: $font-size-sm;
+  color: $color-error;
 }
