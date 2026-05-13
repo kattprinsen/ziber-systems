@@ -101,6 +101,17 @@ server/
 - All SCSS modules must `@use '../../styles/variables' as *` (adjust depth as needed)
 - Use `@use 'sass:color'` and `color.adjust()` instead of the deprecated `darken()` / `lighten()` functions
 
+## Discord Integration
+
+- Discord bot logic lives in `server/src/discord/` — one file per concern: `config.ts`, `api.ts`, `reminders.ts`, `interactions.ts`
+- `config.ts` reads env vars lazily via getters so dotenv has time to populate `process.env` before first use
+- Interactions endpoint at `POST /api/discord/interactions` — always verify Discord's Ed25519 signature before processing; use `webcrypto.subtle` (Node built-in) with `importKey('raw', ...)` — do NOT use `createVerify` from `crypto`, it cannot accept raw 32-byte keys directly
+- Scheduled reminders use `node-cron` started in `server/src/index.ts` after `dotenv/config` is imported
+- Bot sends one message per plant with an action-row button (`custom_id: 'water_plant:{id}'`); the interaction handler updates the DB and returns `UPDATE_MESSAGE` (type 7) to edit the original message in-place
+- In dev, a public tunnel (cloudflared) is required for Discord to reach the interactions endpoint — the URL changes on every quick-tunnel restart and must be updated in the Discord app settings
+- Add `POST /api/discord/reminders/trigger?force=true` as a dev-only manual trigger to test without waiting for the cron
+- Env vars: `DISCORD_BOT_TOKEN`, `DISCORD_PUBLIC_KEY`, `DISCORD_CHANNEL_ID` — template in `server/.env.example`
+
 ## Build & Dev
 
 ```bash

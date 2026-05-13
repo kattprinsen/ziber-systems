@@ -30,8 +30,8 @@ Add plants from a catalogue of ~100 common houseplants to your personal collecti
 ### Plant catalogue
 Searchable database of ~100 curated houseplants with common name, latin name, watering interval, light requirements, and a description. No third-party API dependency — data is owned and committed to the repo.
 
-### Items
-General-purpose item list with create and edit support. Each item has a detail page at `/item/:id`.
+### Discord reminders
+A daily scheduled job (8am) sends a Discord message for each plant that is overdue or due today. Each message includes a 💧 button — clicking it marks the plant as watered directly from Discord without opening the app.
 
 ## API routes
 
@@ -50,21 +50,33 @@ General-purpose item list with create and edit support. Each item has a detail p
 | `PATCH` | `/api/my-plants/:id/water` | Mark as watered now |
 | `DELETE` | `/api/my-plants/:id` | Remove from collection |
 
-### Items
+### Discord
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/api/items` | List all items |
-| `POST` | `/api/items` | Create an item (`{ name }`) |
-| `GET` | `/api/items/:id` | Get a single item |
-| `PUT` | `/api/items/:id` | Update an item (`{ name }`) |
+| `POST` | `/api/discord/interactions` | Discord interactions endpoint (button clicks) |
+| `POST` | `/api/discord/reminders/trigger` | Manually trigger reminders (`?force=true` to send for all plants) |
 
 ### Health
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/api/health` | Server + DB health check |
 
+## Discord integration setup
+
+1. Create an application at https://discord.com/developers/applications
+2. Under **Bot** — copy the token → `DISCORD_BOT_TOKEN`
+3. Under **General Information** — copy the public key → `DISCORD_PUBLIC_KEY`
+4. Invite the bot to your server (OAuth2 → URL Generator, scope `bot`, permission `Send Messages`)
+5. Copy a channel ID (right-click channel → Copy Channel ID, requires Developer Mode) → `DISCORD_CHANNEL_ID`
+6. Create `server/.env` from `server/.env.example` and fill in the three values
+7. Start a public tunnel: `& "C:\Program Files (x86)\cloudflared\cloudflared.exe" tunnel --url http://localhost:3000`
+8. In Discord app settings → **Interactions Endpoint URL**: `https://<tunnel-url>/api/discord/interactions`
+
+> The quick-tunnel URL changes on every restart — update the Discord setting each time. For a stable URL, set up a named Cloudflare tunnel.
+
 ## Tech stack
 
 - **Client**: React 19, TypeScript, Vite 6, react-router-dom, SCSS modules
-- **Server**: Node.js, Hono, Drizzle ORM, SQLite (`better-sqlite3`)
+- **Server**: Node.js, Hono, Drizzle ORM, SQLite (`better-sqlite3`), node-cron
+- **Discord**: Bot API (REST only, no gateway), Ed25519 signature verification via Node.js `webcrypto`
 - **Monorepo**: npm workspaces (`client/`, `server/`)
