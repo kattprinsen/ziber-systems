@@ -17,6 +17,7 @@ Client runs at `http://localhost:5173`, server at `http://localhost:3000`. The V
 | Command | Description |
 |---|---|
 | `npm run dev` | Start both client (Vite HMR) and server (`tsx --watch`) |
+| `npm run dev:discord` | Same as above + ngrok tunnel (required for Discord interactions) |
 | `npm run dev -w client` | Client only |
 | `npm run dev -w server` | Server only |
 | `npm run build` | Build client and server |
@@ -68,11 +69,14 @@ A daily scheduled job (8am) sends a Discord message for each plant that is overd
 3. Under **General Information** — copy the public key → `DISCORD_PUBLIC_KEY`
 4. Invite the bot to your server (OAuth2 → URL Generator, scope `bot`, permission `Send Messages`)
 5. Copy a channel ID (right-click channel → Copy Channel ID, requires Developer Mode) → `DISCORD_CHANNEL_ID`
-6. Create `server/.env` from `server/.env.example` and fill in the three values
-7. Start a public tunnel: `& "C:\Program Files (x86)\cloudflared\cloudflared.exe" tunnel --url http://localhost:3000`
-8. In Discord app settings → **Interactions Endpoint URL**: `https://<tunnel-url>/api/discord/interactions`
+6. Create a free [ngrok](https://ngrok.com) account:
+   - Install the [ngrok CLI](https://ngrok.com/download) and log in: `ngrok config add-authtoken <your-token>`
+   - Dashboard → **Domains** → create a free static domain → copy (without `https://`) → `NGROK_DOMAIN`
+7. Create `server/.env` from `server/.env.example` and fill in all values
+8. In Discord app settings → **Interactions Endpoint URL**: `https://<your-ngrok-domain>/api/discord/interactions`
+9. Start everything: `npm run dev:discord`
 
-> The quick-tunnel URL changes on every restart — update the Discord setting each time. For a stable URL, set up a named Cloudflare tunnel.
+> The ngrok static domain is permanent — you only need to set it in Discord once.
 
 ## Tech stack
 

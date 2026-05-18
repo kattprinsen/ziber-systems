@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx --watch src/index.ts",
+    "tunnel": "tsx src/tunnel.ts",
     "build": "tsc",
     "seed": "tsx src/db/seed.ts"
   },
