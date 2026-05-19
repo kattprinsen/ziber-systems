@@ -6,12 +6,14 @@ import {
   removeMyPlant,
   type MyPlant,
 } from '../api/my-plants'
+import { createPlant, type CreatePlantInput } from '../api/plants'
 
 interface UseMyPlantsResult {
   myPlants: MyPlant[]
   loading: boolean
   error: string | null
   add: (plantId: number, nickname?: string) => Promise<void>
+  addCustom: (input: CreatePlantInput, nickname?: string) => Promise<void>
   water: (id: number) => Promise<void>
   remove: (id: number) => Promise<void>
 }
@@ -42,6 +44,15 @@ export function useMyPlants(): UseMyPlantsResult {
     [load],
   )
 
+  const addCustom = useCallback(
+    async (input: CreatePlantInput, nickname?: string) => {
+      const plant = await createPlant(input)
+      await addMyPlant(plant.id, nickname)
+      load()
+    },
+    [load],
+  )
+
   const water = useCallback(
     async (id: number) => {
       await waterMyPlant(id)
@@ -58,5 +69,5 @@ export function useMyPlants(): UseMyPlantsResult {
     [load],
   )
 
-  return { myPlants, loading, error, add, water, remove }
+  return { myPlants, loading, error, add, addCustom, water, remove }
 }

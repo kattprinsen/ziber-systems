@@ -128,6 +128,67 @@
   color: $color-text-muted;
 }
 
+.tabs {
+  display: flex;
+  gap: $space-2;
+  border-bottom: 1px solid $color-border;
+  padding-bottom: 0;
+}
+
+.tab {
+  padding: $space-2 $space-4;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  font-family: $font-family;
+  color: $color-text-muted;
+  cursor: pointer;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+
+  &:hover {
+    color: $color-text;
+  }
+}
+
+.tabActive {
+  @extend .tab;
+  color: $color-primary;
+  border-bottom-color: $color-primary;
+}
+
+.customForm {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+  max-width: 480px;
+}
+
+.formRow {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.textarea {
+  @extend .input;
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+}
+
+.required {
+  color: $color-error;
+}
+
+.error {
+  font-size: $font-size-sm;
+  color: $color-error;
+  margin: 0;
+}
+
 .error {
   font-size: $font-size-sm;
   color: $color-error;
