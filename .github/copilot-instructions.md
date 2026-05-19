@@ -43,6 +43,7 @@ server/
       seeds/            # JSON seed files for static reference data
       seed.ts           # Idempotent seed script (run with npm run seed -w server)
     routes/             # One file per route group
+    tunnel.ts           # Spawns ngrok CLI to expose port 3000 via a static domain
 ```
 
 ## Code Style
@@ -108,19 +109,22 @@ server/
 - Interactions endpoint at `POST /api/discord/interactions` — always verify Discord's Ed25519 signature before processing; use `webcrypto.subtle` (Node built-in) with `importKey('raw', ...)` — do NOT use `createVerify` from `crypto`, it cannot accept raw 32-byte keys directly
 - Scheduled reminders use `node-cron` started in `server/src/index.ts` after `dotenv/config` is imported
 - Bot sends one message per plant with an action-row button (`custom_id: 'water_plant:{id}'`); the interaction handler updates the DB and returns `UPDATE_MESSAGE` (type 7) to edit the original message in-place
-- In dev, a public tunnel (cloudflared) is required for Discord to reach the interactions endpoint — the URL changes on every quick-tunnel restart and must be updated in the Discord app settings
+- In dev, an ngrok tunnel with a **static domain** exposes port 3000 so Discord can reach the interactions endpoint — use `npm run dev:discord` which spawns the ngrok CLI via `server/src/tunnel.ts`; do NOT use ngrok quick-tunnels (URL changes on every restart)
+- The ngrok tunnel uses the CLI directly (`spawn('ngrok', ['http', '--url=...', '3000'])`); do NOT use the `@ngrok/ngrok` SDK (process exits immediately after `ngrok.forward()` resolves)
 - Add `POST /api/discord/reminders/trigger?force=true` as a dev-only manual trigger to test without waiting for the cron
-- Env vars: `DISCORD_BOT_TOKEN`, `DISCORD_PUBLIC_KEY`, `DISCORD_CHANNEL_ID` — template in `server/.env.example`
+- Env vars: `DISCORD_BOT_TOKEN`, `DISCORD_PUBLIC_KEY`, `DISCORD_CHANNEL_ID`, `NGROK_DOMAIN` — template in `server/.env.example`
 
 ## Build & Dev
 
 ```bash
-npm run dev       # Start both client (Vite HMR) and server (tsx --watch) concurrently
-npm run build     # Build client and server
+npm run dev              # Start both client (Vite HMR) and server (tsx --watch) concurrently
+npm run dev:discord      # Same as above + ngrok tunnel (required for Discord interactions)
+npm run build            # Build client and server
 ```
 
 ```bash
-npm run dev -w client   # Client only
-npm run dev -w server   # Server only
+npm run dev -w client    # Client only
+npm run dev -w server    # Server only
+npm run tunnel -w server # ngrok tunnel only (via server/src/tunnel.ts)
 ```
 

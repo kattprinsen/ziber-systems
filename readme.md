@@ -28,6 +28,12 @@ Client runs at `http://localhost:5173`, server at `http://localhost:3000`. The V
 ### My Plants
 Add plants from a catalogue of ~100 common houseplants to your personal collection. Give them an optional nickname, mark them as watered, and see a countdown to their next watering. Cards turn red when a plant is overdue.
 
+### Custom plants
+Can't find your plant in the catalogue? Create a custom entry directly from the "Add a plant" page by filling in the name, watering interval, light requirements, and description.
+
+### Edit plants
+Click the edit button on any card to update the plant's details (name, latin name, watering interval, light, description) or change its nickname.
+
 ### Plant catalogue
 Searchable database of ~100 curated houseplants with common name, latin name, watering interval, light requirements, and a description. No third-party API dependency — data is owned and committed to the repo.
 
@@ -42,12 +48,15 @@ A daily scheduled job (8am) sends a Discord message for each plant that is overd
 | `GET` | `/api/plants` | List all plants |
 | `GET` | `/api/plants?q=monstera` | Search by common or latin name |
 | `GET` | `/api/plants/:id` | Get a single plant |
+| `POST` | `/api/plants` | Create a custom plant |
+| `PATCH` | `/api/plants/:id` | Update a plant's details |
 
 ### My Plants
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/api/my-plants` | List the user's collection (joined with plant data) |
 | `POST` | `/api/my-plants` | Add a plant (`{ plantId, nickname? }`) |
+| `PATCH` | `/api/my-plants/:id` | Update nickname |
 | `PATCH` | `/api/my-plants/:id/water` | Mark as watered now |
 | `DELETE` | `/api/my-plants/:id` | Remove from collection |
 
