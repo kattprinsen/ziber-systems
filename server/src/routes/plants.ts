@@ -58,4 +58,44 @@ plantsRoute.post('/', async (c) => {
   return c.json(created, 201)
 })
 
+plantsRoute.patch('/:id', async (c) => {
+  const id = Number(c.req.param('id'))
+  if (!Number.isInteger(id) || id < 1) return c.json({ error: 'Invalid id' }, 400)
+
+  const body = await c.req.json<Record<string, unknown>>()
+
+  const updates: Partial<{
+    commonName: string
+    latinName: string
+    wateringIntervalDays: number
+    light: 'low' | 'indirect' | 'bright'
+    description: string
+  }> = {}
+
+  if (typeof body.commonName === 'string' && body.commonName.trim())
+    updates.commonName = body.commonName.trim()
+  if (typeof body.latinName === 'string')
+    updates.latinName = body.latinName.trim()
+  const days = Number(body.wateringIntervalDays)
+  if (Number.isInteger(days) && days >= 1)
+    updates.wateringIntervalDays = days
+  const validLight = ['low', 'indirect', 'bright'] as const
+  if (validLight.includes(body.light as typeof validLight[number]))
+    updates.light = body.light as typeof validLight[number]
+  if (typeof body.description === 'string')
+    updates.description = body.description.trim()
+
+  if (Object.keys(updates).length === 0)
+    return c.json({ error: 'No valid fields to update' }, 400)
+
+  const [updated] = await db
+    .update(plants)
+    .set(updates)
+    .where(eq(plants.id, id))
+    .returning()
+
+  if (!updated) return c.json({ error: 'Not found' }, 404)
+  return c.json(updated)
+})
+
 export default plantsRoute

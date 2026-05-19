@@ -5,6 +5,7 @@ interface MyPlantCardProps {
   plant: MyPlant
   onWater: () => void
   onRemove: () => void
+  onEdit: () => void
 }
 
 function getDaysUntilWater(plant: MyPlant): number {
@@ -19,7 +20,7 @@ const lightLabel: Record<MyPlant['light'], string> = {
   bright: 'Bright light',
 }
 
-export const MyPlantCard = ({ plant, onWater, onRemove }: MyPlantCardProps) => {
+export const MyPlantCard = ({ plant, onWater, onRemove, onEdit }: MyPlantCardProps) => {
   const daysUntil = getDaysUntilWater(plant)
   const isOverdue = daysUntil <= 0
   const isDueSoon = daysUntil === 1
@@ -32,14 +33,24 @@ export const MyPlantCard = ({ plant, onWater, onRemove }: MyPlantCardProps) => {
           {plant.nickname && <p className={styles.latin}>{plant.commonName}</p>}
           <p className={styles.latin}><em>{plant.latinName}</em></p>
         </div>
-        <button
-          className={styles.removeButton}
-          onClick={onRemove}
-          aria-label="Remove plant"
-          title="Remove from collection"
-        >
-          ×
-        </button>
+        <div className={styles.actions}>
+          <button
+            className={styles.iconButton}
+            onClick={onEdit}
+            aria-label="Edit plant"
+            title="Edit plant"
+          >
+            ✎
+          </button>
+          <button
+            className={styles.removeButton}
+            onClick={onRemove}
+            aria-label="Remove plant"
+            title="Remove from collection"
+          >
+            ×
+          </button>
+        </div>
       </div>
 
       <p className={styles.description}>{plant.description}</p>

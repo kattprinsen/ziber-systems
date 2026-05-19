@@ -70,6 +70,27 @@ myPlantsRoute.patch('/:id/water', async (c) => {
   return c.json(updated)
 })
 
+// PATCH /api/my-plants/:id — update nickname
+myPlantsRoute.patch('/:id', async (c) => {
+  const id = Number(c.req.param('id'))
+  if (!Number.isInteger(id) || id < 1) return c.json({ error: 'Invalid id' }, 400)
+
+  const body = await c.req.json<{ nickname?: unknown }>()
+  const nickname =
+    typeof body.nickname === 'string' && body.nickname.trim()
+      ? body.nickname.trim()
+      : null
+
+  const [updated] = await db
+    .update(userPlants)
+    .set({ nickname })
+    .where(eq(userPlants.id, id))
+    .returning()
+
+  if (!updated) return c.json({ error: 'Not found' }, 404)
+  return c.json(updated)
+})
+
 // DELETE /api/my-plants/:id — remove from collection
 myPlantsRoute.delete('/:id', async (c) => {
   const id = Number(c.req.param('id'))

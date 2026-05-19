@@ -37,3 +37,13 @@ export async function createPlant(input: CreatePlantInput): Promise<Plant> {
   if (!res.ok) throw new Error(`Failed to create plant: ${res.status}`)
   return res.json() as Promise<Plant>
 }
+
+export async function updatePlant(id: number, input: Partial<CreatePlantInput>): Promise<Plant> {
+  const res = await fetch(`/api/plants/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  if (!res.ok) throw new Error(`Failed to update plant: ${res.status}`)
+  return res.json() as Promise<Plant>
+}

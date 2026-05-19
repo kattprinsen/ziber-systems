@@ -1,13 +1,15 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useNavigate } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import styles from './App.module.scss'
 import { Layout } from './components/Layout/Layout'
 import { MyPlantCard } from './components/MyPlantCard/MyPlantCard'
 import { MyPlantsPage } from './pages/MyPlantsPage/MyPlantsPage'
+import { EditPlantPage } from './pages/EditPlantPage/EditPlantPage'
 import { useMyPlants } from './hooks/useMyPlants'
 
 function HomePage() {
   const { myPlants, loading, error, water, remove } = useMyPlants()
+  const navigate = useNavigate()
 
   return (
     <div className={styles.page}>
@@ -33,6 +35,7 @@ function HomePage() {
                 plant={plant}
                 onWater={() => water(plant.id)}
                 onRemove={() => remove(plant.id)}
+                onEdit={() => navigate(`/plants/${plant.id}`)}
               />
             </li>
           ))}
@@ -48,6 +51,7 @@ function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/my-plants" element={<MyPlantsPage />} />
+        <Route path="/plants/:id" element={<EditPlantPage />} />
       </Route>
     </Routes>
   )
