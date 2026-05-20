@@ -33,6 +33,9 @@ export const EditPlantPage = () => {
         description: plant.description,
       })
     }
+    // plant?.id is intentional: re-initialise only when navigating to a different
+    // plant, not on every background re-fetch — which would wipe in-progress edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [plant?.id])
 
   if (loading) return <div className={styles.page}><p>Loading…</p></div>

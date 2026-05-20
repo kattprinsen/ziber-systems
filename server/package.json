@@ -6,6 +6,7 @@
     "dev": "tsx --watch src/index.ts",
     "tunnel": "tsx src/tunnel.ts",
     "build": "tsc",
+    "typecheck": "tsc --noEmit",
     "seed": "tsx src/db/seed.ts"
   },
   "dependencies": {
