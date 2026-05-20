@@ -102,6 +102,15 @@ server/
 - All SCSS modules must `@use '../../styles/variables' as *` (adjust depth as needed)
 - Use `@use 'sass:color'` and `color.adjust()` instead of the deprecated `darken()` / `lighten()` functions
 
+## Code Quality
+
+- ESLint flat config lives at the workspace root (`eslint.config.js`) — covers both `client/src` and `server/src` in one pass
+- Packages installed at root devDeps: `eslint`, `@eslint/js`, `typescript-eslint`, `eslint-plugin-react-hooks`, `globals`
+- Key rules: `@typescript-eslint/no-explicit-any` (error), `@typescript-eslint/no-unused-vars` (error, `_` prefix exempted), `react-hooks/rules-of-hooks` (error), `react-hooks/exhaustive-deps` (warn)
+- Server tsconfig has `noUnusedLocals: true` and `noUnusedParameters: true` (client tsconfig.app.json already had these)
+- `npm run lint` — lint both workspaces; `npm run triage` — typecheck + lint in parallel, exits non-zero on any failure
+- When a partial `useEffect` dep array is intentional (e.g. initialise-once-per-id pattern), add `// eslint-disable-next-line react-hooks/exhaustive-deps` with a comment explaining why — never suppress silently
+
 ## Discord Integration
 
 - Discord bot logic lives in `server/src/discord/` — one file per concern: `config.ts`, `api.ts`, `reminders.ts`, `interactions.ts`
@@ -114,12 +123,25 @@ server/
 - Add `POST /api/discord/reminders/trigger?force=true` as a dev-only manual trigger to test without waiting for the cron
 - Env vars: `DISCORD_BOT_TOKEN`, `DISCORD_PUBLIC_KEY`, `DISCORD_CHANNEL_ID`, `NGROK_DOMAIN` — template in `server/.env.example`
 
+## Production
+
+- Build: `npm run build` compiles client → `client/dist/` and server → `server/dist/`
+- Start: `NODE_ENV=production node server/dist/index.js` **from the project root** — Hono serves static files from `./client/dist` (relative to `process.cwd()`)
+- Static serving uses `serveStatic` from `@hono/node-server/serve-static`; guarded by `process.env.NODE_ENV === 'production'` so Vite handles it in dev
+- SPA fallback: a second `serveStatic` with `rewriteRequestPath: () => '/index.html'` ensures React Router handles unmatched routes (e.g. `/plants/1`)
+- SQLite `data.db` is created at `process.cwd()` — always run the server from the project root
+- Discord outbound reminders (cron) work fine on a local network; Discord interactions (button clicks) require a public URL — run ngrok even in production if hosted on LAN
+- Use `pm2` for process persistence on a server or Raspberry Pi: `pm2 start "npm run start" --name ziber && pm2 save && pm2 startup`
+
 ## Build & Dev
 
 ```bash
 npm run dev              # Start both client (Vite HMR) and server (tsx --watch) concurrently
 npm run dev:discord      # Same as above + ngrok tunnel (required for Discord interactions)
 npm run build            # Build client and server
+npm run start            # Run production build (NODE_ENV=production, from project root)
+npm run triage           # Typecheck both workspaces + lint — run before pushing
+npm run lint             # ESLint only
 ```
 
 ```bash

@@ -18,10 +18,11 @@ Client runs at `http://localhost:5173`, server at `http://localhost:3000`. The V
 |---|---|
 | `npm run dev` | Start both client (Vite HMR) and server (`tsx --watch`) |
 | `npm run dev:discord` | Same as above + ngrok tunnel (required for Discord interactions) |
-| `npm run triage` | Type-check both client and server — verify codebase integrity |
+| `npm run triage` | Typecheck both workspaces + lint — run before pushing |
+| `npm run build` | Build client and server |
+| `npm run start` | Run the production build (from project root) |
 | `npm run dev -w client` | Client only |
 | `npm run dev -w server` | Server only |
-| `npm run build` | Build client and server |
 | `npm run seed -w server` | Seed the plant catalogue (idempotent, safe to re-run) |
 
 ## Features
@@ -87,6 +88,31 @@ A daily scheduled job (8am) sends a Discord message for each plant that is overd
 9. Start everything: `npm run dev:discord`
 
 > The ngrok static domain is permanent — you only need to set it in Discord once.
+
+## Deploying (Raspberry Pi / local network)
+
+```bash
+# On the Pi — one time
+npm install
+npm run seed -w server
+cp server/.env.example server/.env  # fill in Discord keys
+
+# Build and start
+npm run build
+npm run start   # serves everything on port 3000
+```
+
+Access the app at `http://<pi-ip>:3000` or `http://raspberrypi.local:3000`.
+
+For persistence across reboots, use [pm2](https://pm2.keymetrics.io/):
+```bash
+npm install -g pm2
+pm2 start "npm run start" --name ziber
+pm2 save
+pm2 startup   # follow the printed command to enable on boot
+```
+
+> Discord outbound reminders work on a local network. Discord **interactions** (button clicks) require a public URL — run `npm run tunnel -w server` (ngrok) even in production if hosted on LAN.
 
 ## Tech stack
 

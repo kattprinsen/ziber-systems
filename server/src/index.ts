@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { serve } from '@hono/node-server'
+import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import cron from 'node-cron'
@@ -16,6 +17,14 @@ app.route('/api/health', health)
 app.route('/api/plants', plantsRoute)
 app.route('/api/my-plants', myPlantsRoute)
 app.route('/api/discord', discordRoute)
+
+// In production, serve the built React client and fall back to index.html
+// so React Router handles client-side navigation.
+// Run from the project root: NODE_ENV=production node server/dist/index.js
+if (process.env.NODE_ENV === 'production') {
+  app.use('/*', serveStatic({ root: './client/dist' }))
+  app.get('*', serveStatic({ root: './client/dist', rewriteRequestPath: () => '/index.html' }))
+}
 
 // Send watering reminders every day at 8:00am (server local time)
 cron.schedule('0 8 * * *', () => {
