@@ -96,6 +96,8 @@ server/
 - All routes are declared in `App.tsx` using `<Routes>` / `<Route>`
 - Pages live in `src/pages/{PageName}/` with a co-located SCSS module, same conventions as components
 - Use `NavLink` for navigation with active styling; use `Link` for plain navigation
+- Prefer action-oriented route names for action pages — e.g. `/add-plant` not `/my-plants`; UI routes do not need to mirror API resource paths
+- Current client routes: `/` (home/collection), `/add-plant` (add from catalogue), `/plants/:id` (edit plant)
 
 ## SCSS
 

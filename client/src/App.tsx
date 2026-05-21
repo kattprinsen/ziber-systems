@@ -15,7 +15,7 @@ function HomePage() {
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}>My Plants</h1>
-        <Link to="/my-plants" className={styles.addButton}>+ Add a plant</Link>
+        <Link to="/add-plant" className={styles.addButton}>+ Add a plant</Link>
       </div>
 
       {loading && <p className={styles.muted}>Loading…</p>}
@@ -23,7 +23,7 @@ function HomePage() {
 
       {!loading && myPlants.length === 0 && (
         <p className={styles.muted}>
-          No plants yet — <Link to="/my-plants" className={styles.link}>add your first one</Link>.
+          No plants yet — <Link to="/add-plant" className={styles.link}>add your first one</Link>.
         </p>
       )}
 
@@ -50,7 +50,7 @@ function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<HomePage />} />
-        <Route path="/my-plants" element={<MyPlantsPage />} />
+        <Route path="/add-plant" element={<MyPlantsPage />} />
         <Route path="/plants/:id" element={<EditPlantPage />} />
       </Route>
     </Routes>
