@@ -7,7 +7,7 @@ export const Layout = () => (
       <NavLink to="/" end className={({ isActive }) => (isActive ? styles.navLinkActive : styles.navLink)}>
         My Plants
       </NavLink>
-      <NavLink to="/my-plants" className={({ isActive }) => (isActive ? styles.navLinkActive : styles.navLink)}>
+      <NavLink to="/add-plant" className={({ isActive }) => (isActive ? styles.navLinkActive : styles.navLink)}>
         Add a plant
       </NavLink>
     </nav>
