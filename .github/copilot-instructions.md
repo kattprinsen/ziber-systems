@@ -131,9 +131,22 @@ server/
 - Start: `NODE_ENV=production node server/dist/index.js` **from the project root** — Hono serves static files from `./client/dist` (relative to `process.cwd()`)
 - Static serving uses `serveStatic` from `@hono/node-server/serve-static`; guarded by `process.env.NODE_ENV === 'production'` so Vite handles it in dev
 - SPA fallback: a second `serveStatic` with `rewriteRequestPath: () => '/index.html'` ensures React Router handles unmatched routes (e.g. `/plants/1`)
-- SQLite `data.db` is created at `process.cwd()` — always run the server from the project root
+- SQLite DB is stored at `data/data.db` relative to `process.cwd()` — always run the server from the project root; `mkdirSync('data', { recursive: true })` in `db/index.ts` ensures the directory exists on first start
 - Discord outbound reminders (cron) work fine on a local network; Discord interactions (button clicks) require a public URL — run ngrok even in production if hosted on LAN
-- Use `pm2` for process persistence on a server or Raspberry Pi: `pm2 start "npm run start" --name ziber && pm2 save && pm2 startup`
+- Use `pm2` for process persistence when deploying without Docker: `pm2 start "npm run start" --name ziber && pm2 save && pm2 startup`
+
+## Docker
+
+- Multi-stage build: `builder` stage (compiles everything + prunes devDeps), `runner` stage (copies compiled output only)
+- Base image: `node:22-slim` (Debian/glibc) — do NOT use Alpine; `better-sqlite3` has no prebuilt binaries for musl libc
+- `better-sqlite3` requires native compilation — install `python3 make g++` via `apt-get` in the **builder stage only**; build tools never reach the final image
+- SQLite data persists via a bind-mount: `./data:/app/data` in `docker-compose.yml` — Docker creates the directory automatically; do NOT bind-mount a file path (Docker creates it as a directory if it doesn't exist)
+- Env vars injected via `env_file: path: server/.env, required: false` — works with or without the file
+- No pm2 needed inside Docker — use `restart: unless-stopped` in compose
+- In the Docker image, `localhost:3000` serves both the React app (static files) and the API; there is no separate Vite server
+- Deploying an update: `git pull && docker compose up -d --build`
+- Cross-platform builds for Raspberry Pi (arm64): `docker buildx build --platform linux/arm64 -t ziber-systems:latest .` or build directly on the Pi
+- Seed the catalogue after first start: `docker compose exec app node server/dist/db/seed.js`
 
 ## Build & Dev
 

@@ -89,7 +89,27 @@ A daily scheduled job (8am) sends a Discord message for each plant that is overd
 
 > The ngrok static domain is permanent — you only need to set it in Discord once.
 
-## Deploying (Raspberry Pi / local network)
+## Deploying with Docker (recommended)
+
+```bash
+docker compose up -d --build
+docker compose exec app node server/dist/db/seed.js   # seed catalogue (first time only)
+```
+
+The app is available at `http://localhost:3000`. Both the React app and the API are served from the same port. The SQLite database is persisted in `./data/data.db` via a bind-mount.
+
+**Updating to a new version:**
+```bash
+git pull
+docker compose up -d --build
+```
+
+**Raspberry Pi (arm64):** build directly on the Pi, or cross-compile on your dev machine:
+```bash
+docker buildx build --platform linux/arm64 -t ziber-systems:latest .
+```
+
+## Deploying without Docker (Raspberry Pi / local network)
 
 ```bash
 # On the Pi — one time
