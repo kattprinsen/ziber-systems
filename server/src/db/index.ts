@@ -1,7 +1,9 @@
+import { mkdirSync } from 'node:fs'
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import * as schema from './schema.js'
 
+mkdirSync('data', { recursive: true })
 const sqlite = new Database('data/data.db')
 
 // Create tables if they don't exist
