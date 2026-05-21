@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    image: ziber-systems:latest
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persists the SQLite database across container restarts and updates.
+      # Docker creates this directory automatically on first start.
+      - ./data:/app/data
+    env_file:
+      # Reads DISCORD_BOT_TOKEN, DISCORD_PUBLIC_KEY, DISCORD_CHANNEL_ID, NGROK_DOMAIN
+      # from server/.env — skip this block if you inject env vars another way.
+      - path: server/.env
+        required: false

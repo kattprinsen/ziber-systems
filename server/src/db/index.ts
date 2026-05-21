@@ -2,7 +2,7 @@ import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import * as schema from './schema.js'
 
-const sqlite = new Database('data.db')
+const sqlite = new Database('data/data.db')
 
 // Create tables if they don't exist
 sqlite.exec(`
