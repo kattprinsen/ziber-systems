@@ -133,7 +133,9 @@ server/
 - SPA fallback: a second `serveStatic` with `rewriteRequestPath: () => '/index.html'` ensures React Router handles unmatched routes (e.g. `/plants/1`)
 - SQLite DB is stored at `data/data.db` relative to `process.cwd()` — always run the server from the project root; `mkdirSync('data', { recursive: true })` in `db/index.ts` ensures the directory exists on first start
 - Discord outbound reminders (cron) work fine on a local network; Discord interactions (button clicks) require a public URL — run ngrok even in production if hosted on LAN
+- Run ngrok as a separate pm2 process in production: `pm2 start "ngrok http --url=<NGROK_DOMAIN> 3000" --name tunnel && pm2 save`
 - Use `pm2` for process persistence when deploying without Docker: `pm2 start "npm run start" --name ziber && pm2 save && pm2 startup`
+- `dotenv` in `server/src/index.ts` explicitly resolves `server/.env` via `path.resolve(process.cwd(), 'server/.env')` with a fallback to root `.env` — this ensures env vars are loaded when running from the project root without Docker
 
 ## Docker
 
@@ -145,7 +147,8 @@ server/
 - No pm2 needed inside Docker — use `restart: unless-stopped` in compose
 - In the Docker image, `localhost:3000` serves both the React app (static files) and the API; there is no separate Vite server
 - Deploying an update: `git pull && docker compose up -d --build`
-- Cross-platform builds for Raspberry Pi (arm64): `docker buildx build --platform linux/arm64 -t ziber-systems:latest .` or build directly on the Pi
+- Cross-platform builds for Raspberry Pi 64-bit: `docker buildx build --platform linux/arm64 -t ziber-systems:latest .` or build directly on the Pi
+- For Raspberry Pi 3 with 32-bit OS (armv7l): use `--platform linux/arm/v7` — do NOT use `linux/arm64` which is 64-bit only
 - Seed the catalogue after first start: `docker compose exec app node server/dist/db/seed.js`
 
 ## Build & Dev

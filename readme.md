@@ -104,9 +104,14 @@ git pull
 docker compose up -d --build
 ```
 
-**Raspberry Pi (arm64):** build directly on the Pi, or cross-compile on your dev machine:
+**Raspberry Pi 64-bit (arm64):** build directly on the Pi, or cross-compile:
 ```bash
 docker buildx build --platform linux/arm64 -t ziber-systems:latest .
+```
+
+**Raspberry Pi 3 with 32-bit OS (armv7l):** use `linux/arm/v7` instead:
+```bash
+docker buildx build --platform linux/arm/v7 -t ziber-systems:latest .
 ```
 
 ## Deploying without Docker (Raspberry Pi / local network)
@@ -132,7 +137,11 @@ pm2 save
 pm2 startup   # follow the printed command to enable on boot
 ```
 
-> Discord outbound reminders work on a local network. Discord **interactions** (button clicks) require a public URL — run `npm run tunnel -w server` (ngrok) even in production if hosted on LAN.
+> Discord outbound reminders work on a local network. Discord **interactions** (button clicks) require a public URL — run ngrok as a pm2 process even in production if hosted on LAN:
+> ```bash
+> pm2 start "ngrok http --url=<your-ngrok-domain> 3000" --name tunnel
+> pm2 save
+> ```
 
 ## Tech stack
 
