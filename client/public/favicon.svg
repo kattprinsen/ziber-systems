@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Pot -->
+  <rect x="10" y="23" width="12" height="7" rx="2" fill="#a0785a"/>
+  <rect x="9" y="21" width="14" height="3" rx="1.5" fill="#b8896a"/>
+  <!-- Stem -->
+  <line x1="16" y1="21" x2="16" y2="13" stroke="#4a7c59" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Left leaf -->
+  <path d="M16 17 C13 14 9 14 9 10 C9 10 13 9 16 13" fill="#5a9e6f"/>
+  <!-- Right leaf -->
+  <path d="M16 14 C19 11 23 12 23 8 C23 8 19 7 16 11" fill="#4a8a5f"/>
+  <!-- Top leaf -->
+  <path d="M16 13 C15 9 16 5 16 5 C16 5 17 9 16 13" fill="#6ab87f"/>
+</svg>
