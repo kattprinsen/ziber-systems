@@ -1,6 +1,7 @@
 export interface MyPlant {
   id: number
   plantId: number
+  roomId: number | null
   nickname: string | null
   addedAt: string
   lastWateredAt: string | null
@@ -44,4 +45,13 @@ export async function updateMyPlantNickname(id: number, nickname: string | null)
     body: JSON.stringify({ nickname }),
   })
   if (!res.ok) throw new Error(`Failed to update plant: ${res.status}`)
+}
+
+export async function assignRoom(id: number, roomId: number | null): Promise<void> {
+  const res = await fetch(`/api/my-plants/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ roomId }),
+  })
+  if (!res.ok) throw new Error(`Failed to assign room: ${res.status}`)
 }

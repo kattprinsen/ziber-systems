@@ -89,6 +89,13 @@ server/
 - Use `cors()` middleware from `hono/cors` on all routes
 - Validate request bodies at the route boundary before touching the DB; return `400` with `{ error: string }` on bad input
 - Use `.returning()` on Drizzle inserts to return the created row to the client
+- **Production-safe column migrations**: SQLite has no `ALTER TABLE ADD COLUMN IF NOT EXISTS` — check with `PRAGMA table_info(<table>)` first, then run `ALTER TABLE` only if the column is absent. Keep this in `db/index.ts` directly after the `sqlite.exec()` bootstrap block:
+  ```typescript
+  const cols = sqlite.prepare('PRAGMA table_info(my_table)').all() as { name: string }[]
+  if (!cols.some((c) => c.name === 'new_column')) {
+    sqlite.exec('ALTER TABLE my_table ADD COLUMN new_column INTEGER')
+  }
+  ```
 
 ## Static / Seed Data
 

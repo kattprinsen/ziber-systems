@@ -39,6 +39,9 @@ Click the edit button on any card to update the plant's details (name, latin nam
 ### Plant catalogue
 Searchable database of ~100 curated houseplants with common name, latin name, watering interval, light requirements, and a description. No third-party API dependency — data is owned and committed to the repo.
 
+### Rooms / grouping
+Organise your collection by room (e.g. Living room, Bedroom). Create rooms from the home page filter bar, assign each plant to a room via a dropdown in the detail panel, and filter the plant list by room. Deleting a room unassigns its plants but does not remove them.
+
 ### Discord reminders
 A daily scheduled job (8am) sends a Discord message for each plant that is overdue or due today. Each message includes a 💧 button — clicking it marks the plant as watered directly from Discord without opening the app.
 
@@ -58,9 +61,16 @@ A daily scheduled job (8am) sends a Discord message for each plant that is overd
 |---|---|---|
 | `GET` | `/api/my-plants` | List the user's collection (joined with plant data) |
 | `POST` | `/api/my-plants` | Add a plant (`{ plantId, nickname? }`) |
-| `PATCH` | `/api/my-plants/:id` | Update nickname |
+| `PATCH` | `/api/my-plants/:id` | Update `nickname` and/or `roomId` |
 | `PATCH` | `/api/my-plants/:id/water` | Mark as watered now |
 | `DELETE` | `/api/my-plants/:id` | Remove from collection |
+
+### Rooms
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/rooms` | List all rooms (ordered by name) |
+| `POST` | `/api/rooms` | Create a room (`{ name: string }`) |
+| `DELETE` | `/api/rooms/:id` | Delete a room (unassigns plants first) |
 
 ### Discord
 | Method | Path | Description |

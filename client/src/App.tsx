@@ -6,28 +6,38 @@ import { Layout } from './components/Layout/Layout'
 import { MyPlantsPage } from './pages/MyPlantsPage/MyPlantsPage'
 import { EditPlantPage } from './pages/EditPlantPage/EditPlantPage'
 import { useMyPlants } from './hooks/useMyPlants'
+import { useRooms } from './hooks/useRooms'
 import { getDaysUntilWater, getWaterStatus } from './utils/plants'
 
 function HomePage() {
-  const { myPlants, loading, error, water, remove } = useMyPlants()
+  const { myPlants, loading, error, water, remove, setRoom } = useMyPlants()
+  const { rooms, create: createRoom } = useRooms()
   const navigate = useNavigate()
   const [selectedPlantId, setSelectedPlantId] = useState<number | null>(null)
+  const [roomFilter, setRoomFilter] = useState<number | null>(null)
+  const [showNewRoom, setShowNewRoom] = useState(false)
+  const [newRoomName, setNewRoomName] = useState('')
+
+  const filteredPlants = useMemo(
+    () => (roomFilter === null ? myPlants : myPlants.filter((p) => p.roomId === roomFilter)),
+    [myPlants, roomFilter],
+  )
 
   useEffect(() => {
-    if (myPlants.length === 0) {
+    if (filteredPlants.length === 0) {
       setSelectedPlantId(null)
       return
     }
-
-    const hasSelected = selectedPlantId !== null && myPlants.some((plant) => plant.id === selectedPlantId)
+    const hasSelected = selectedPlantId !== null && filteredPlants.some((p) => p.id === selectedPlantId)
     if (!hasSelected) {
-      setSelectedPlantId(myPlants[0].id)
+      setSelectedPlantId(filteredPlants[0].id)
     }
-  }, [myPlants, selectedPlantId])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredPlants])
 
   const selectedPlant = useMemo(
-    () => myPlants.find((plant) => plant.id === selectedPlantId) ?? null,
-    [myPlants, selectedPlantId],
+    () => filteredPlants.find((plant) => plant.id === selectedPlantId) ?? null,
+    [filteredPlants, selectedPlantId],
   )
 
   const selectedPlantDaysUntil = selectedPlant
@@ -35,6 +45,15 @@ function HomePage() {
     : null
 
   const selectedPlantStatus = selectedPlantDaysUntil !== null ? getWaterStatus(selectedPlantDaysUntil) : ''
+
+  async function handleCreateRoom(e: React.FormEvent) {
+    e.preventDefault()
+    const name = newRoomName.trim()
+    if (!name) return
+    await createRoom(name)
+    setNewRoomName('')
+    setShowNewRoom(false)
+  }
 
   return (
     <div className={styles.page}>
@@ -52,11 +71,60 @@ function HomePage() {
         </p>
       )}
 
+      {myPlants.length > 0 && (
+        <nav aria-label="Filter by room" className={styles.roomFilter}>
+          <button
+            className={`${styles.roomFilterBtn} ${roomFilter === null ? styles.roomFilterBtnActive : ''}`}
+            onClick={() => setRoomFilter(null)}
+            type="button"
+          >
+            All
+          </button>
+          {rooms.map((room) => (
+            <button
+              className={`${styles.roomFilterBtn} ${roomFilter === room.id ? styles.roomFilterBtnActive : ''}`}
+              key={room.id}
+              onClick={() => setRoomFilter(room.id)}
+              type="button"
+            >
+              {room.name}
+            </button>
+          ))}
+          {showNewRoom ? (
+            <form className={styles.roomAddForm} onSubmit={handleCreateRoom}>
+              <input
+                autoFocus
+                className={styles.roomAddInput}
+                onChange={(e) => setNewRoomName(e.target.value)}
+                placeholder="Room name"
+                value={newRoomName}
+              />
+              <button className={styles.roomFilterBtn} type="submit">Add</button>
+              <button
+                className={styles.roomFilterBtn}
+                onClick={() => { setShowNewRoom(false); setNewRoomName('') }}
+                type="button"
+              >
+                ✕
+              </button>
+            </form>
+          ) : (
+            <button className={styles.roomFilterBtn} onClick={() => setShowNewRoom(true)} type="button">
+              + Room
+            </button>
+          )}
+        </nav>
+      )}
+
+      {myPlants.length > 0 && roomFilter !== null && filteredPlants.length === 0 && (
+        <p className={styles.muted}>No plants in this room yet.</p>
+      )}
+
       {myPlants.length > 0 && selectedPlant && (
         <div className={styles.collectionLayout}>
           <section aria-label="Plant list" className={styles.listPanel}>
             <ul className={styles.plantList}>
-              {myPlants.map((plant) => {
+              {filteredPlants.map((plant) => {
                 const daysUntil = getDaysUntilWater(plant.lastWateredAt, plant.addedAt, plant.wateringIntervalDays)
                 const isOverdue = daysUntil <= 0
 
@@ -81,7 +149,7 @@ function HomePage() {
             </ul>
           </section>
 
-          <section className={styles.detailPanel} aria-live="polite">
+          <section aria-live="polite" className={styles.detailPanel}>
             <header className={styles.detailHeader}>
               <div>
                 <h2 className={styles.detailTitle}>{selectedPlant.nickname ?? selectedPlant.commonName}</h2>
@@ -104,6 +172,21 @@ function HomePage() {
               <div>
                 <dt>Last watered</dt>
                 <dd>{selectedPlant.lastWateredAt ? new Date(selectedPlant.lastWateredAt).toLocaleDateString() : 'Never'}</dd>
+              </div>
+              <div>
+                <dt>Room</dt>
+                <dd>
+                  <select
+                    className={styles.roomSelect}
+                    onChange={(e) => setRoom(selectedPlant.id, e.target.value ? Number(e.target.value) : null)}
+                    value={selectedPlant.roomId ?? ''}
+                  >
+                    <option value="">No room</option>
+                    {rooms.map((room) => (
+                      <option key={room.id} value={room.id}>{room.name}</option>
+                    ))}
+                  </select>
+                </dd>
               </div>
             </dl>
 

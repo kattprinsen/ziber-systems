@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/index.js'
-import { userPlants, plants } from '../db/schema.js'
+import { userPlants, plants, rooms } from '../db/schema.js'
 
 const myPlantsRoute = new Hono()
 
@@ -11,6 +11,7 @@ myPlantsRoute.get('/', async (c) => {
     .select({
       id: userPlants.id,
       plantId: userPlants.plantId,
+      roomId: userPlants.roomId,
       nickname: userPlants.nickname,
       addedAt: userPlants.addedAt,
       lastWateredAt: userPlants.lastWateredAt,
@@ -70,20 +71,42 @@ myPlantsRoute.patch('/:id/water', async (c) => {
   return c.json(updated)
 })
 
-// PATCH /api/my-plants/:id — update nickname
+// PATCH /api/my-plants/:id — update nickname and/or roomId
 myPlantsRoute.patch('/:id', async (c) => {
   const id = Number(c.req.param('id'))
   if (!Number.isInteger(id) || id < 1) return c.json({ error: 'Invalid id' }, 400)
 
-  const body = await c.req.json<{ nickname?: unknown }>()
-  const nickname =
-    typeof body.nickname === 'string' && body.nickname.trim()
-      ? body.nickname.trim()
-      : null
+  const body = await c.req.json<{ nickname?: unknown; roomId?: unknown }>()
+  const updates: { nickname?: string | null; roomId?: number | null } = {}
+
+  if ('nickname' in body) {
+    updates.nickname =
+      typeof body.nickname === 'string' && body.nickname.trim()
+        ? body.nickname.trim()
+        : null
+  }
+
+  if ('roomId' in body) {
+    if (body.roomId === null) {
+      updates.roomId = null
+    } else {
+      const roomId = Number(body.roomId)
+      if (!Number.isInteger(roomId) || roomId < 1) {
+        return c.json({ error: 'roomId must be a positive integer or null' }, 400)
+      }
+      const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId))
+      if (!room) return c.json({ error: 'Room not found' }, 404)
+      updates.roomId = roomId
+    }
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return c.json({ error: 'No valid fields to update' }, 400)
+  }
 
   const [updated] = await db
     .update(userPlants)
-    .set({ nickname })
+    .set(updates)
     .where(eq(userPlants.id, id))
     .returning()
 

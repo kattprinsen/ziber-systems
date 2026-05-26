@@ -11,6 +11,7 @@ import health from './routes/health.js'
 import plantsRoute from './routes/plants.js'
 import myPlantsRoute from './routes/my-plants.js'
 import discordRoute from './routes/discord.js'
+import roomsRoute from './routes/rooms.js'
 import { sendReminders } from './discord/reminders.js'
 
 const app = new Hono()
@@ -19,6 +20,7 @@ app.use('*', cors())
 app.route('/api/health', health)
 app.route('/api/plants', plantsRoute)
 app.route('/api/my-plants', myPlantsRoute)
+app.route('/api/rooms', roomsRoute)
 app.route('/api/discord', discordRoute)
 
 // In production, serve the built React client and fall back to index.html

@@ -12,6 +12,10 @@ sqlite.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     checked_at TEXT NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS rooms (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE
+  );
   CREATE TABLE IF NOT EXISTS plants (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     common_name TEXT NOT NULL,
@@ -28,5 +32,14 @@ sqlite.exec(`
     last_watered_at TEXT
   );
 `)
+
+// Safe migration: add room_id column to user_plants if not already present.
+// ALTER TABLE in SQLite has no IF NOT EXISTS, so we check PRAGMA table_info first.
+const userPlantsColumns = sqlite
+  .prepare('PRAGMA table_info(user_plants)')
+  .all() as { name: string }[]
+if (!userPlantsColumns.some((col) => col.name === 'room_id')) {
+  sqlite.exec('ALTER TABLE user_plants ADD COLUMN room_id INTEGER REFERENCES rooms(id)')
+}
 
 export const db = drizzle(sqlite, { schema })

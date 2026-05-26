@@ -1,0 +1,49 @@
+import { Hono } from 'hono'
+import { eq } from 'drizzle-orm'
+import { db } from '../db/index.js'
+import { rooms, userPlants } from '../db/schema.js'
+
+const roomsRoute = new Hono()
+
+// GET /api/rooms — list all rooms ordered by name
+roomsRoute.get('/', async (c) => {
+  const all = await db.select().from(rooms).orderBy(rooms.name)
+  return c.json(all)
+})
+
+// POST /api/rooms — create a room { name: string }
+roomsRoute.post('/', async (c) => {
+  const body = await c.req.json<{ name?: unknown }>()
+  if (typeof body.name !== 'string' || !body.name.trim()) {
+    return c.json({ error: 'name is required' }, 400)
+  }
+
+  const [created] = await db
+    .insert(rooms)
+    .values({ name: body.name.trim() })
+    .returning()
+
+  return c.json(created, 201)
+})
+
+// DELETE /api/rooms/:id — delete a room; unassigns any plants in it first
+roomsRoute.delete('/:id', async (c) => {
+  const id = Number(c.req.param('id'))
+  if (!Number.isInteger(id) || id < 1) return c.json({ error: 'Invalid id' }, 400)
+
+  await db
+    .update(userPlants)
+    .set({ roomId: null })
+    .where(eq(userPlants.roomId, id))
+
+  const [deleted] = await db
+    .delete(rooms)
+    .where(eq(rooms.id, id))
+    .returning()
+
+  if (!deleted) return c.json({ error: 'Not found' }, 404)
+
+  return c.json({ success: true })
+})
+
+export default roomsRoute

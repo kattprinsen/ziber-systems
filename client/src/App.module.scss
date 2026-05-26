@@ -254,3 +254,73 @@
   font-size: $font-size-sm;
   color: $color-error;
 }
+
+// Room filter bar
+.roomFilter {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $space-2;
+}
+
+.roomFilterBtn {
+  padding: $space-1 $space-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  background: $color-surface;
+  color: $color-text;
+  font-size: $font-size-sm;
+  cursor: pointer;
+
+  &:hover {
+    background: $color-background;
+  }
+}
+
+.roomFilterBtnActive {
+  background: $color-primary;
+  border-color: $color-primary;
+  color: #fff;
+
+  &:hover {
+    background: $color-primary-hover;
+    border-color: $color-primary-hover;
+  }
+}
+
+.roomAddForm {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+}
+
+.roomAddInput {
+  padding: $space-1 $space-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  background: $color-surface;
+  color: $color-text;
+  font-size: $font-size-sm;
+  width: 140px;
+
+  &:focus {
+    outline: 2px solid $color-primary;
+    outline-offset: 1px;
+  }
+}
+
+// Room select in detail panel
+.roomSelect {
+  padding: 2px $space-2;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  background: $color-surface;
+  color: $color-text;
+  font-size: $font-size-sm;
+  cursor: pointer;
+
+  &:focus {
+    outline: 2px solid $color-primary;
+    outline-offset: 1px;
+  }
+}

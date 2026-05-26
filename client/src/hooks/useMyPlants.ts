@@ -5,6 +5,7 @@ import {
   waterMyPlant,
   removeMyPlant,
   updateMyPlantNickname,
+  assignRoom,
   type MyPlant,
 } from '../api/my-plants'
 import { createPlant, updatePlant, type CreatePlantInput } from '../api/plants'
@@ -16,6 +17,7 @@ interface UseMyPlantsResult {
   add: (plantId: number, nickname?: string) => Promise<void>
   addCustom: (input: CreatePlantInput, nickname?: string) => Promise<void>
   update: (userPlantId: number, plantId: number, plantData: Partial<CreatePlantInput>, nickname: string | null) => Promise<void>
+  setRoom: (id: number, roomId: number | null) => Promise<void>
   water: (id: number) => Promise<void>
   remove: (id: number) => Promise<void>
 }
@@ -71,6 +73,14 @@ export function useMyPlants(): UseMyPlantsResult {
     [load],
   )
 
+  const setRoom = useCallback(
+    async (id: number, roomId: number | null) => {
+      await assignRoom(id, roomId)
+      load()
+    },
+    [load],
+  )
+
   const water = useCallback(
     async (id: number) => {
       await waterMyPlant(id)
@@ -87,5 +97,5 @@ export function useMyPlants(): UseMyPlantsResult {
     [load],
   )
 
-  return { myPlants, loading, error, add, addCustom, update, water, remove }
+  return { myPlants, loading, error, add, addCustom, update, setRoom, water, remove }
 }
