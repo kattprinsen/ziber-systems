@@ -1,4 +1,5 @@
 import type { MyPlant } from '../../api/my-plants'
+import { getDaysUntilWater } from '../../utils/plants'
 import styles from './MyPlantCard.module.scss'
 
 interface MyPlantCardProps {
@@ -8,12 +9,6 @@ interface MyPlantCardProps {
   onEdit: () => void
 }
 
-function getDaysUntilWater(plant: MyPlant): number {
-  const base = plant.lastWateredAt ?? plant.addedAt
-  const next = new Date(base).getTime() + plant.wateringIntervalDays * 24 * 60 * 60 * 1000
-  return Math.ceil((next - Date.now()) / (24 * 60 * 60 * 1000))
-}
-
 const lightLabel: Record<MyPlant['light'], string> = {
   low: 'Low light',
   indirect: 'Indirect light',
@@ -21,9 +16,17 @@ const lightLabel: Record<MyPlant['light'], string> = {
 }
 
 export const MyPlantCard = ({ plant, onWater, onRemove, onEdit }: MyPlantCardProps) => {
-  const daysUntil = getDaysUntilWater(plant)
+  const daysUntil = getDaysUntilWater(plant.lastWateredAt, plant.addedAt, plant.wateringIntervalDays)
   const isOverdue = daysUntil <= 0
   const isDueSoon = daysUntil === 1
+
+  let badgeClass = ''
+  if (isOverdue) badgeClass = styles.badgeOverdue
+  else if (isDueSoon) badgeClass = styles.badgeSoon
+
+  let waterLabel = `Water in ${daysUntil}d`
+  if (isOverdue) waterLabel = `Overdue by ${Math.abs(daysUntil)}d`
+  else if (daysUntil === 0) waterLabel = 'Water today'
 
   return (
     <div className={`${styles.card} ${isOverdue ? styles.overdue : ''}`}>
@@ -57,12 +60,8 @@ export const MyPlantCard = ({ plant, onWater, onRemove, onEdit }: MyPlantCardPro
 
       <div className={styles.meta}>
         <span className={styles.badge}>{lightLabel[plant.light]}</span>
-        <span className={`${styles.badge} ${isOverdue ? styles.badgeOverdue : isDueSoon ? styles.badgeSoon : ''}`}>
-          {isOverdue
-            ? `Overdue by ${Math.abs(daysUntil)}d`
-            : daysUntil === 0
-            ? 'Water today'
-            : `Water in ${daysUntil}d`}
+        <span className={`${styles.badge} ${badgeClass}`}>
+          {waterLabel}
         </span>
       </div>
 

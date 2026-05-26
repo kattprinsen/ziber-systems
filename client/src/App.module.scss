@@ -1,3 +1,4 @@
+@use 'sass:color';
 @use './styles/variables' as *;
 
 .page {
@@ -48,13 +49,200 @@
   }
 }
 
-.grid {
+.collectionLayout {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) 1fr;
+  gap: $space-4;
+  align-items: start;
+}
+
+.listPanel {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  overflow: hidden;
+}
+
+.plantList {
   list-style: none;
+  margin: 0;
   padding: 0;
+  max-height: 70vh;
+  overflow: auto;
+}
+
+.listItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  border: none;
+  border-bottom: 1px solid $color-border;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  padding: $space-3;
+
+  &:hover {
+    background: $color-background;
+  }
+}
+
+.listItemActive {
+  background: rgba($color-primary, 0.1);
+}
+
+.listItemMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.listItemName {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.listItemSub {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.listItemBadge {
+  flex-shrink: 0;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+  background: rgba($color-primary, 0.12);
+  border-radius: $radius-md;
+  padding: 2px $space-2;
+}
+
+.listItemBadgeOverdue {
+  color: $color-error;
+  background: rgba($color-error, 0.14);
+}
+
+.detailPanel {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: $space-4;
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+.detailHeader {
+  display: flex;
+  justify-content: space-between;
+}
+
+.detailTitle {
+  margin: 0;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $color-text;
+}
+
+.detailSub {
+  margin: $space-1 0 0;
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+}
+
+.detailDescription {
+  margin: 0;
+  font-size: $font-size-sm;
+  color: $color-text;
+}
+
+.detailMeta {
   margin: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: $space-4;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $space-3;
+
+  dt {
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+    margin-bottom: $space-1;
+  }
+
+  dd {
+    margin: 0;
+    font-size: $font-size-sm;
+    color: $color-text;
+    font-weight: $font-weight-medium;
+  }
+}
+
+.detailActions {
+  display: flex;
+  gap: $space-2;
+  flex-wrap: wrap;
+}
+
+.actionButton {
+  border: none;
+  border-radius: $radius-md;
+  padding: $space-2 $space-4;
+  cursor: pointer;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: #fff;
+  background: $color-primary;
+
+  &:hover {
+    background: $color-primary-hover;
+  }
+}
+
+.actionButtonSecondary {
+  @extend .actionButton;
+  color: $color-text;
+  background: $color-background;
+  border: 1px solid $color-border;
+
+  &:hover {
+    background: $color-surface;
+  }
+}
+
+.actionButtonDanger {
+  @extend .actionButton;
+  background: $color-error;
+
+  &:hover {
+    background: color.adjust($color-error, $lightness: -8%);
+  }
+}
+
+@media (max-width: 900px) {
+  .page {
+    padding: 0 $space-4;
+  }
+
+  .collectionLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .plantList {
+    max-height: 260px;
+  }
+
+  .detailMeta {
+    grid-template-columns: 1fr;
+  }
 }
 
 .muted {

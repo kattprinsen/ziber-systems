@@ -25,6 +25,8 @@ export default tseslint.config(
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
+      // Nested ternaries are hard to read — extract to a function instead
+      'no-nested-ternary': 'error',
     },
   },
 

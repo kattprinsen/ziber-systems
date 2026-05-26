@@ -62,6 +62,12 @@ server/
 - Prefer composition over prop drilling — use context or pass children when appropriate
 - Extract reusable logic into custom hooks (`use*.ts`) in a `src/hooks/` folder
 
+## Utilities (Client)
+
+- Shared pure functions (date math, formatting, label helpers) live in `client/src/utils/` — one file per concern (e.g. `plants.ts`)
+- Before writing a helper inside a component or hook, check `src/utils/` first — if it is or could be reused, extract it there
+- Utility functions are plain TypeScript, no JSX, no side effects
+
 ## API Layer (Client)
 
 - All server calls live in `src/api/` — one file per resource (e.g. `items.ts`)
@@ -108,7 +114,7 @@ server/
 
 - ESLint flat config lives at the workspace root (`eslint.config.js`) — covers both `client/src` and `server/src` in one pass
 - Packages installed at root devDeps: `eslint`, `@eslint/js`, `typescript-eslint`, `eslint-plugin-react-hooks`, `globals`
-- Key rules: `@typescript-eslint/no-explicit-any` (error), `@typescript-eslint/no-unused-vars` (error, `_` prefix exempted), `react-hooks/rules-of-hooks` (error), `react-hooks/exhaustive-deps` (warn)
+- Key rules: `@typescript-eslint/no-explicit-any` (error), `@typescript-eslint/no-unused-vars` (error, `_` prefix exempted), `react-hooks/rules-of-hooks` (error), `react-hooks/exhaustive-deps` (warn), `no-nested-ternary` (error)
 - Server tsconfig has `noUnusedLocals: true` and `noUnusedParameters: true` (client tsconfig.app.json already had these)
 - `npm run lint` — lint both workspaces; `npm run triage` — typecheck + lint in parallel, exits non-zero on any failure
 - When a partial `useEffect` dep array is intentional (e.g. initialise-once-per-id pattern), add `// eslint-disable-next-line react-hooks/exhaustive-deps` with a comment explaining why — never suppress silently
