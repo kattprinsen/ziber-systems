@@ -52,22 +52,29 @@ export async function sendReminders(forceAll = false): Promise<void> {
       ? 'due today'
       : `overdue by ${overdueDays} day${overdueDays === 1 ? '' : 's'}`
 
-    await sendMessage(discordConfig.channelId, {
-      content: `🌿 **${name}** needs watering!\n*${plant.latinName}* · ${statusText}`,
-      components: [
-        {
-          type: 1,
-          components: [
-            {
-              type: 2,
-              style: 1,
-              label: '💧 Mark as watered',
-              custom_id: `water_plant:${plant.id}`,
-            },
-          ],
-        },
-      ],
-    })
-    log.info({ userPlantId: plant.id, name, statusText }, 'Reminder sent')
+    try {
+      await sendMessage(discordConfig.channelId, {
+        content: `🌿 **${name}** needs watering!\n*${plant.latinName}* · ${statusText}`,
+        components: [
+          {
+            type: 1,
+            components: [
+              {
+                type: 2,
+                style: 1,
+                label: '💧 Mark as watered',
+                custom_id: `water_plant:${plant.id}`,
+              },
+            ],
+          },
+        ],
+      })
+      log.info({ userPlantId: plant.id, name, statusText }, 'Reminder sent')
+    } catch (err) {
+      log.error({ err, userPlantId: plant.id, name }, 'Failed to send reminder')
+    }
+
+    // Small delay between messages to stay within Discord rate limits
+    await new Promise((resolve) => setTimeout(resolve, 500))
   }
 }

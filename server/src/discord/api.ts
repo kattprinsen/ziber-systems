@@ -1,3 +1,4 @@
+import { log } from '../logger.js'
 import { discordConfig } from './config.js'
 
 const BASE = 'https://discord.com/api/v10'
@@ -11,6 +12,15 @@ async function discordFetch(path: string, init: RequestInit = {}): Promise<unkno
       ...(init.headers as Record<string, string> | undefined),
     },
   })
+
+  if (res.status === 429) {
+    const body = await res.json() as { retry_after?: number; global?: boolean }
+    const waitMs = Math.ceil((body.retry_after ?? 1) * 1000)
+    log.warn({ waitMs, global: body.global }, 'Discord rate limited — retrying after delay')
+    await new Promise((resolve) => setTimeout(resolve, waitMs))
+    return discordFetch(path, init)
+  }
+
   if (!res.ok) {
     const text = await res.text()
     throw new Error(`Discord API ${res.status}: ${text}`)

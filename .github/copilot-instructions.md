@@ -145,6 +145,8 @@ server/
 - The ngrok tunnel uses the CLI directly (`spawn('ngrok', ['http', '--url=...', '3000'])`); do NOT use the `@ngrok/ngrok` SDK (process exits immediately after `ngrok.forward()` resolves)
 - Add `POST /api/discord/reminders/trigger?force=true` as a dev-only manual trigger to test without waiting for the cron
 - Env vars: `DISCORD_BOT_TOKEN`, `DISCORD_PUBLIC_KEY`, `DISCORD_CHANNEL_ID`, `NGROK_DOMAIN` — template in `server/.env.example`
+- Discord's API is rate-limited per channel; when sending bulk messages add a 500ms delay between each send, and handle 429 responses by reading `retry_after` from the response body and waiting before retrying — `discordFetch` in `api.ts` handles this automatically
+- Wrap per-plant message sends in `try/catch` so one failure doesn't abort the whole batch
 
 ## Production
 
