@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { db } from '../db/index.js'
+import { log } from '../logger.js'
 import { userPlants, plants } from '../db/schema.js'
 import { discordConfig } from './config.js'
 import { sendMessage } from './api.js'
@@ -8,7 +9,7 @@ const DAY_MS = 24 * 60 * 60 * 1000
 
 export async function sendReminders(forceAll = false): Promise<void> {
   if (!discordConfig.botToken || !discordConfig.channelId) {
-    console.warn('[Discord] Missing DISCORD_BOT_TOKEN or DISCORD_CHANNEL_ID — reminders skipped')
+    log.warn('Missing DISCORD_BOT_TOKEN or DISCORD_CHANNEL_ID — reminders skipped')
     return
   }
 
@@ -36,11 +37,11 @@ export async function sendReminders(forceAll = false): Promise<void> {
   })
 
   if (due.length === 0) {
-    console.log('[Discord] No plants due today — no reminder sent')
+    log.info('No plants due today — no reminder sent')
     return
   }
 
-  console.log(`[Discord] Sending reminders for ${due.length} plant(s)`)
+  log.info({ count: due.length }, 'Sending watering reminders')
 
   for (const plant of due) {
     const name = plant.nickname ?? plant.commonName
@@ -67,5 +68,6 @@ export async function sendReminders(forceAll = false): Promise<void> {
         },
       ],
     })
+    log.info({ userPlantId: plant.id, name, statusText }, 'Reminder sent')
   }
 }

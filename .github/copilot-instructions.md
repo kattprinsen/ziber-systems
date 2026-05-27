@@ -126,6 +126,14 @@ server/
 - `npm run lint` — lint both workspaces; `npm run triage` — typecheck + lint in parallel, exits non-zero on any failure
 - When a partial `useEffect` dep array is intentional (e.g. initialise-once-per-id pattern), add `// eslint-disable-next-line react-hooks/exhaustive-deps` with a comment explaining why — never suppress silently
 
+## Logging
+
+- Structured logging via **pino** — import `log` from `./logger.js` (or adjust path); never use `console.log` / `console.error` in server code
+- `server/src/logger.ts` exports the shared `log` instance: pino-pretty in dev, raw JSON in prod
+- Log levels: `log.info` for normal operations, `log.warn` for expected-but-notable conditions (missing config, bad input), `log.error({ err }, 'message')` for caught exceptions — always pass the error object as `{ err }`
+- HTTP requests are logged automatically by the Hono `logger` middleware mounted in `index.ts`
+- In production, pm2 captures stdout/stderr: view with `pm2 logs ziber`; logs persist at `~/.pm2/logs/`
+
 ## Discord Integration
 
 - Discord bot logic lives in `server/src/discord/` — one file per concern: `config.ts`, `api.ts`, `reminders.ts`, `interactions.ts`

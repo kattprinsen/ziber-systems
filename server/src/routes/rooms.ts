@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/index.js'
+import { log } from '../logger.js'
 import { rooms, userPlants } from '../db/schema.js'
 
 const roomsRoute = new Hono()
@@ -23,6 +24,7 @@ roomsRoute.post('/', async (c) => {
     .values({ name: body.name.trim() })
     .returning()
 
+  log.info({ roomId: created.id, name: created.name }, 'Room created')
   return c.json(created, 201)
 })
 
@@ -43,6 +45,7 @@ roomsRoute.delete('/:id', async (c) => {
 
   if (!deleted) return c.json({ error: 'Not found' }, 404)
 
+  log.info({ roomId: id, name: deleted.name }, 'Room deleted')
   return c.json({ success: true })
 })
 

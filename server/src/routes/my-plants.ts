@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/index.js'
+import { log } from '../logger.js'
 import { userPlants, plants, rooms } from '../db/schema.js'
 
 const myPlantsRoute = new Hono()
@@ -51,6 +52,7 @@ myPlantsRoute.post('/', async (c) => {
     .values({ plantId, nickname, addedAt: now, lastWateredAt: null })
     .returning()
 
+  log.info({ userPlantId: created.id, plantId, nickname }, 'Plant added to collection')
   return c.json({ ...created, ...plant }, 201)
 })
 
@@ -68,6 +70,7 @@ myPlantsRoute.patch('/:id/water', async (c) => {
 
   if (!updated) return c.json({ error: 'Not found' }, 404)
 
+  log.info({ userPlantId: id, lastWateredAt: now }, 'Plant watered')
   return c.json(updated)
 })
 
@@ -111,6 +114,7 @@ myPlantsRoute.patch('/:id', async (c) => {
     .returning()
 
   if (!updated) return c.json({ error: 'Not found' }, 404)
+  log.info({ userPlantId: id, updates }, 'Plant updated')
   return c.json(updated)
 })
 
@@ -126,6 +130,7 @@ myPlantsRoute.delete('/:id', async (c) => {
 
   if (!deleted) return c.json({ error: 'Not found' }, 404)
 
+  log.info({ userPlantId: id }, 'Plant removed from collection')
   return c.json({ success: true })
 })
 

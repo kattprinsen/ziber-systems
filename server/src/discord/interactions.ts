@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { db } from '../db/index.js'
+import { log } from '../logger.js'
 import { userPlants, plants } from '../db/schema.js'
 
 interface DiscordInteraction {
@@ -45,6 +46,7 @@ export async function handleInteraction(body: DiscordInteraction): Promise<Inter
     if (customId.startsWith('water_plant:')) {
       const plantId = parseInt(customId.split(':')[1], 10)
       if (isNaN(plantId)) {
+        log.warn({ customId }, 'Discord button: invalid plant ID')
         return { type: CHANNEL_MESSAGE, data: { content: '❌ Invalid plant ID.', flags: EPHEMERAL } }
       }
 
@@ -55,6 +57,7 @@ export async function handleInteraction(body: DiscordInteraction): Promise<Inter
         .returning()
 
       if (updated.length === 0) {
+        log.warn({ userPlantId: plantId }, 'Discord button: plant not found')
         return { type: CHANNEL_MESSAGE, data: { content: '❌ Plant not found.', flags: EPHEMERAL } }
       }
 
@@ -65,6 +68,7 @@ export async function handleInteraction(body: DiscordInteraction): Promise<Inter
 
       const name = updated[0].nickname ?? plantRow?.commonName ?? 'Plant'
 
+      log.info({ userPlantId: plantId, name }, 'Plant watered via Discord')
       return {
         type: UPDATE_MESSAGE,
         data: {

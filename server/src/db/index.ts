@@ -1,6 +1,7 @@
 import { mkdirSync } from 'node:fs'
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
+import { log } from '../logger.js'
 import * as schema from './schema.js'
 
 mkdirSync('data', { recursive: true })
@@ -40,6 +41,9 @@ const userPlantsColumns = sqlite
   .all() as { name: string }[]
 if (!userPlantsColumns.some((col) => col.name === 'room_id')) {
   sqlite.exec('ALTER TABLE user_plants ADD COLUMN room_id INTEGER REFERENCES rooms(id)')
+  log.info('DB migration: added room_id column to user_plants')
+} else {
+  log.info('DB ready')
 }
 
 export const db = drizzle(sqlite, { schema })
