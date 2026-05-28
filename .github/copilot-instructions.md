@@ -174,6 +174,19 @@ server/
 - For Raspberry Pi 3 with 32-bit OS (armv7l): use `--platform linux/arm/v7` — do NOT use `linux/arm64` which is 64-bit only
 - Seed the catalogue after first start: `docker compose exec app node server/dist/db/seed.js`
 
+## Testing
+
+- **Framework**: Vitest — installed in both `client` and `server` workspaces
+- Client config: `client/vite.config.ts` imports from `vitest/config` (superset of `vite`) and includes a `test` block
+- Server config: `server/vitest.config.ts` — standalone config, `environment: 'node'`
+- Test files co-located with the code they test: `*.test.ts` next to the source file
+- `npm run test` — run all tests across both workspaces (sequential)
+- `npm run test -w client` / `npm run test -w server` — run one workspace
+- **Pure utils** (e.g. `client/src/utils/`): use `vi.useFakeTimers()` + `vi.setSystemTime()` to pin `Date.now()`
+- **Discord API** tests: mock `global.fetch` with `vi.stubGlobal`; mock `./config.js` with `vi.mock()`
+- **Interaction handler** tests: mock `'../db/index.js'` entirely using `vi.hoisted()` + `vi.mock()` to avoid loading `better-sqlite3`; build the Drizzle mock chain manually (`update→set→where→returning`, `select→from→where`)
+- Server `.js` import extensions resolve to `.ts` sources automatically in Vitest — no aliases needed
+
 ## Build & Dev
 
 ```bash
@@ -183,6 +196,7 @@ npm run build            # Build client and server
 npm run start            # Run production build (NODE_ENV=production, from project root)
 npm run triage           # Typecheck both workspaces + lint — run before pushing
 npm run lint             # ESLint only
+npm run test             # Run all tests (client then server)
 ```
 
 ```bash

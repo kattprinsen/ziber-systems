@@ -19,6 +19,7 @@ Client runs at `http://localhost:5173`, server at `http://localhost:3000`. The V
 | `npm run dev` | Start both client (Vite HMR) and server (`tsx --watch`) |
 | `npm run dev:discord` | Same as above + ngrok tunnel (required for Discord interactions) |
 | `npm run triage` | Typecheck both workspaces + lint — run before pushing |
+| `npm run test` | Run all tests (client then server) |
 | `npm run build` | Build client and server |
 | `npm run start` | Run the production build (from project root) |
 | `npm run dev -w client` | Client only |

@@ -23,7 +23,8 @@
     "build": "npm run build -w client && npm run build -w server",
     "start": "NODE_ENV=production node server/dist/index.js",
     "lint": "eslint client/src server/src",
-    "triage": "concurrently -n \"types:client,types:server,lint\" -c cyan,green,yellow --kill-others-on-fail \"npm run typecheck -w client\" \"npm run typecheck -w server\" \"npm run lint\""
+    "triage": "concurrently -n \"types:client,types:server,lint\" -c cyan,green,yellow --kill-others-on-fail \"npm run typecheck -w client\" \"npm run typecheck -w server\" \"npm run lint\"",
+    "test": "npm run test -w client && npm run test -w server"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
