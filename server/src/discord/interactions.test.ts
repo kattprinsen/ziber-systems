@@ -18,7 +18,7 @@ vi.mock('../db/index.js', () => ({
   db: { update: mocks.update, select: mocks.select },
 }))
 
-import { handleInteraction } from './interactions'
+import { handleInteraction } from './interactions.js'
 
 // Interaction type constants (mirrors the values in interactions.ts)
 const PING = 1

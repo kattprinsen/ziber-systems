@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { sendMessage } from './api'
+import { sendMessage } from './api.js'
 
 vi.mock('./config.js', () => ({
   discordConfig: {

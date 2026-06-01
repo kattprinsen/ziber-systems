@@ -1,7 +1,11 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import styles from './Layout.module.scss'
 
-export const Layout = () => (
+interface LayoutProps {
+  onLogout: () => void
+}
+
+export const Layout = ({ onLogout }: LayoutProps) => (
   <div className={styles.root}>
     <nav className={styles.nav}>
       <NavLink to="/" end className={({ isActive }) => (isActive ? styles.navLinkActive : styles.navLink)}>
@@ -10,6 +14,9 @@ export const Layout = () => (
       <NavLink to="/add-plant" className={({ isActive }) => (isActive ? styles.navLinkActive : styles.navLink)}>
         Add a plant
       </NavLink>
+      <button className={styles.logoutButton} onClick={onLogout} type="button">
+        Sign out
+      </button>
     </nav>
     <main>
       <Outlet />

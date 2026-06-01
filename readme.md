@@ -46,7 +46,17 @@ Organise your collection by room (e.g. Living room, Bedroom). Create rooms from 
 ### Discord reminders
 A daily scheduled job (8am) sends a Discord message for each plant that is overdue or due today. Each message includes a 💧 button — clicking it marks the plant as watered directly from Discord without opening the app.
 
+### Login / authentication
+A shared household password protects the app. The first thing you see is a login screen; a correct password sets a 30-day httpOnly session cookie. Sign out from the nav bar. The Discord interactions endpoint is exempt (it has its own signature verification).
+
 ## API routes
+
+### Auth
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/api/auth/login` | Log in (`{ password }`) — sets session cookie |
+| `POST` | `/api/auth/logout` | Clear session cookie |
+| `GET` | `/api/auth/me` | Check if current session is valid |
 
 ### Plants
 | Method | Path | Description |

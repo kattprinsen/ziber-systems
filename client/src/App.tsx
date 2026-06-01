@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Routes, Route, useNavigate } from 'react-router-dom'
+import { Routes, Route, useNavigate, Navigate } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import styles from './App.module.scss'
 import { Layout } from './components/Layout/Layout'
 import { MyPlantsPage } from './pages/MyPlantsPage/MyPlantsPage'
 import { EditPlantPage } from './pages/EditPlantPage/EditPlantPage'
+import LoginPage from './pages/LoginPage/LoginPage'
 import { useMyPlants } from './hooks/useMyPlants'
 import { useRooms } from './hooks/useRooms'
 import { getDaysUntilWater, getWaterStatus } from './utils/plants'
+import { checkAuth, logout } from './api/auth'
 
 function HomePage() {
   const { myPlants, loading, error, water, remove, setRoom } = useMyPlants()
@@ -209,12 +211,37 @@ function HomePage() {
 }
 
 function App() {
+  const [authed, setAuthed] = useState<boolean | null>(null)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    checkAuth().then((ok) => {
+      setAuthed(ok)
+      if (!ok) navigate('/login', { replace: true })
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleLogin = () => {
+    setAuthed(true)
+    navigate('/', { replace: true })
+  }
+
+  const handleLogout = async () => {
+    await logout()
+    setAuthed(false)
+    navigate('/login', { replace: true })
+  }
+
+  if (authed === null) return null // loading — avoid flash of content
+
   return (
     <Routes>
-      <Route element={<Layout />}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/add-plant" element={<MyPlantsPage />} />
-        <Route path="/plants/:id" element={<EditPlantPage />} />
+      <Route path="/login" element={authed ? <Navigate to="/" replace /> : <LoginPage onLogin={handleLogin} />} />
+      <Route element={<Layout onLogout={handleLogout} />}>
+        <Route path="/" element={authed ? <HomePage /> : <Navigate to="/login" replace />} />
+        <Route path="/add-plant" element={authed ? <MyPlantsPage /> : <Navigate to="/login" replace />} />
+        <Route path="/plants/:id" element={authed ? <EditPlantPage /> : <Navigate to="/login" replace />} />
       </Route>
     </Routes>
   )

@@ -110,7 +110,19 @@ server/
 - Pages live in `src/pages/{PageName}/` with a co-located SCSS module, same conventions as components
 - Use `NavLink` for navigation with active styling; use `Link` for plain navigation
 - Prefer action-oriented route names for action pages — e.g. `/add-plant` not `/my-plants`; UI routes do not need to mirror API resource paths
-- Current client routes: `/` (home/collection), `/add-plant` (add from catalogue), `/plants/:id` (edit plant)
+- Current client routes: `/` (home/collection), `/add-plant` (add from catalogue), `/plants/:id` (edit plant), `/login` (auth gate)
+
+## Authentication
+
+- Stateless shared-password cookie auth — no DB table, no JWT library
+- `AUTH_PASSWORD` env var = the household passphrase; `AUTH_SECRET` env var = a long random token (generate with `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))")`)
+- Login: `POST /api/auth/login` validates `{ password }`, sets an httpOnly `session` cookie (value = `AUTH_SECRET`, `sameSite: Lax`, `secure` in prod, 30-day `maxAge`)
+- `server/src/middleware/auth.ts` — `authMiddleware` checks the `session` cookie on all `/api/*` routes; exempt paths: `/api/auth/*` and `/api/discord/interactions` (has its own Ed25519 verification)
+- **Mount order in `index.ts` matters**: `app.route('/api/auth', authRoute)` must come before `app.use('/api/*', authMiddleware)` so the login route is reachable
+- Client auth state lives in `App` as `authed: boolean | null` (null = loading); `checkAuth()` is called once on mount; routes are guarded with `<Navigate to="/login" replace />`
+- On login success, call `onLogin()` callback (passed as prop to `LoginPage`) which sets `authed(true)` and navigates — do NOT navigate from `LoginPage` directly, the route guard will see stale state
+- Logout: `POST /api/auth/logout` clears the cookie; client sets `authed(false)` and redirects to `/login`
+- `server/.env.example` has templates for both env vars with generation instructions
 
 ## SCSS
 
@@ -144,7 +156,7 @@ server/
 - In dev, an ngrok tunnel with a **static domain** exposes port 3000 so Discord can reach the interactions endpoint — use `npm run dev:discord` which spawns the ngrok CLI via `server/src/tunnel.ts`; do NOT use ngrok quick-tunnels (URL changes on every restart)
 - The ngrok tunnel uses the CLI directly (`spawn('ngrok', ['http', '--url=...', '3000'])`); do NOT use the `@ngrok/ngrok` SDK (process exits immediately after `ngrok.forward()` resolves)
 - Add `POST /api/discord/reminders/trigger?force=true` as a dev-only manual trigger to test without waiting for the cron
-- Env vars: `DISCORD_BOT_TOKEN`, `DISCORD_PUBLIC_KEY`, `DISCORD_CHANNEL_ID`, `NGROK_DOMAIN` — template in `server/.env.example`
+- Env vars: `DISCORD_BOT_TOKEN`, `DISCORD_PUBLIC_KEY`, `DISCORD_CHANNEL_ID`, `NGROK_DOMAIN`, `AUTH_PASSWORD`, `AUTH_SECRET` — template in `server/.env.example`
 - Discord's API is rate-limited per channel; when sending bulk messages add a 500ms delay between each send, and handle 429 responses by reading `retry_after` from the response body and waiting before retrying — `discordFetch` in `api.ts` handles this automatically
 - Wrap per-plant message sends in `try/catch` so one failure doesn't abort the whole batch
 
@@ -185,7 +197,7 @@ server/
 - **Pure utils** (e.g. `client/src/utils/`): use `vi.useFakeTimers()` + `vi.setSystemTime()` to pin `Date.now()`
 - **Discord API** tests: mock `global.fetch` with `vi.stubGlobal`; mock `./config.js` with `vi.mock()`
 - **Interaction handler** tests: mock `'../db/index.js'` entirely using `vi.hoisted()` + `vi.mock()` to avoid loading `better-sqlite3`; build the Drizzle mock chain manually (`update→set→where→returning`, `select→from→where`)
-- Server `.js` import extensions resolve to `.ts` sources automatically in Vitest — no aliases needed
+- Server `.js` import extensions resolve to `.ts` sources automatically in Vitest — no aliases needed; however, TypeScript's `tsc --noEmit` still enforces `.js` extensions in test files (NodeNext resolution), so always use `'./foo.js'` not `'./foo'` in server test imports
 
 ## Build & Dev
 

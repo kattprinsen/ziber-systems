@@ -7,6 +7,7 @@
 .nav {
   display: flex;
   gap: $space-4;
+  align-items: center;
   border-bottom: 1px solid $color-border;
   padding: 0 $space-8;
 }
@@ -30,4 +31,21 @@
   @extend .navLink;
   color: $color-primary;
   border-bottom-color: $color-primary;
+}
+
+.logoutButton {
+  margin-left: auto;
+  padding: $space-1 $space-3;
+  background: transparent;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+
+  &:hover {
+    color: $color-primary;
+    border-color: $color-primary;
+  }
 }

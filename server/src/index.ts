@@ -9,6 +9,8 @@ import { cors } from 'hono/cors'
 import { logger as honoLogger } from 'hono/logger'
 import cron from 'node-cron'
 import { log } from './logger.js'
+import { authMiddleware } from './middleware/auth.js'
+import authRoute from './routes/auth.js'
 import health from './routes/health.js'
 import plantsRoute from './routes/plants.js'
 import myPlantsRoute from './routes/my-plants.js'
@@ -20,6 +22,11 @@ const app = new Hono()
 
 app.use('*', cors())
 app.use('*', honoLogger())
+
+// Auth route must be mounted before the auth middleware so /api/auth/login is reachable
+app.route('/api/auth', authRoute)
+app.use('/api/*', authMiddleware)
+
 app.route('/api/health', health)
 app.route('/api/plants', plantsRoute)
 app.route('/api/my-plants', myPlantsRoute)
