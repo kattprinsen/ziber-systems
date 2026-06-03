@@ -71,3 +71,29 @@ DISCORD_PUBLIC_KEY      # optional — for verifying interaction signatures
 ```
 
 In production, the server serves the built React client as static files from `client/dist/` with a catch-all fallback to `index.html` for client-side routing.
+
+## Production deployment (Raspberry Pi)
+
+The app runs on a Raspberry Pi on the local network.
+
+- **Host**: `192.168.0.13` (static IP set in `/etc/dhcpcd.conf`)
+- **Process manager**: PM2 — both the app and tunnel are registered and start on boot
+- **PM2 processes**: `ziber` (the app via `npm start`) and `tunnel` (ngrok via `npm run tunnel -w server`)
+- **Interactions endpoint**: ngrok exposes `https://<NGROK_DOMAIN>/api/discord/interactions` so Discord can reach the Pi. The domain is set via `NGROK_DOMAIN` in `server/.env` and must match the Interactions Endpoint URL in the Discord developer portal.
+
+### Useful commands on the Pi
+
+```bash
+pm2 list                  # check process status
+pm2 logs ziber            # app logs (cron errors, DB, reminders)
+pm2 logs tunnel           # ngrok connection status
+curl http://localhost:4040/api/tunnels   # verify ngrok tunnel is live
+pm2 restart ziber tunnel  # restart both after a config/env change
+```
+
+### If Discord notifications stop working
+
+1. Check `pm2 logs ziber` for `EAI_AGAIN` (DNS failure) or `Missing DISCORD_BOT_TOKEN`
+2. Check `pm2 logs tunnel` / `curl localhost:4040/api/tunnels` to verify ngrok is connected
+3. Confirm the ngrok URL in the Discord developer portal matches `NGROK_DOMAIN`
+4. If DNS is broken: `echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf` then `pm2 restart ziber tunnel`
