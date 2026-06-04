@@ -76,7 +76,7 @@ In production, the server serves the built React client as static files from `cl
 
 The app runs on a Raspberry Pi on the local network.
 
-- **Host**: `192.168.0.13` (static IP set in `/etc/dhcpcd.conf`)
+- **Host**: Static IP set in `/etc/dhcpcd.conf` on the Pi
 - **Process manager**: PM2 — both the app and tunnel are registered and start on boot
 - **PM2 processes**: `ziber` (the app via `npm start`) and `tunnel` (ngrok via `npm run tunnel -w server`)
 - **Interactions endpoint**: ngrok exposes `https://<NGROK_DOMAIN>/api/discord/interactions` so Discord can reach the Pi. The domain is set via `NGROK_DOMAIN` in `server/.env` and must match the Interactions Endpoint URL in the Discord developer portal.
