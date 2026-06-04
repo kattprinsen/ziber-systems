@@ -64,7 +64,8 @@ rooms           — named locations (e.g. "Kitchen") for grouping userPlants
 Server reads from `server/.env` (then falls back to root `.env`):
 
 ```
-AUTH_SECRET             # shared password for the session cookie
+AUTH_PASSWORD           # the password users type on the login screen
+AUTH_SECRET             # the session cookie value (internal, never typed — make it a long random string)
 DISCORD_BOT_TOKEN       # optional — Discord bot token for reminders
 DISCORD_CHANNEL_ID      # optional — channel to post reminders to
 DISCORD_PUBLIC_KEY      # optional — for verifying interaction signatures

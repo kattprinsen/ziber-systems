@@ -15,7 +15,8 @@ auth.post('/login', async (c) => {
   setCookie(c, 'session', process.env.AUTH_SECRET ?? '', {
     httpOnly: true,
     sameSite: 'Lax',
-    secure: process.env.NODE_ENV === 'production',
+    // Only require HTTPS if explicitly configured — avoids breaking HTTP access on the local Pi
+    secure: process.env.SECURE_COOKIES === 'true',
     path: '/',
     // 30-day session
     maxAge: 60 * 60 * 24 * 30,
