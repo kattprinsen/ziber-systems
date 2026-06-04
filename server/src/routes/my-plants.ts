@@ -56,7 +56,7 @@ myPlantsRoute.post('/', async (c) => {
   return c.json({ ...created, ...plant }, 201)
 })
 
-// PATCH /api/my-plants/:id/water — mark as watered now
+// PATCH /api/my-plants/:id/water — mark as watered now (also clears any active snooze)
 myPlantsRoute.patch('/:id/water', async (c) => {
   const id = Number(c.req.param('id'))
   if (!Number.isInteger(id) || id < 1) return c.json({ error: 'Invalid id' }, 400)
@@ -64,13 +64,34 @@ myPlantsRoute.patch('/:id/water', async (c) => {
   const now = new Date().toISOString()
   const [updated] = await db
     .update(userPlants)
-    .set({ lastWateredAt: now })
+    .set({ lastWateredAt: now, snoozedUntil: null })
     .where(eq(userPlants.id, id))
     .returning()
 
   if (!updated) return c.json({ error: 'Not found' }, 404)
 
   log.info({ userPlantId: id, lastWateredAt: now }, 'Plant watered')
+  return c.json(updated)
+})
+
+// PATCH /api/my-plants/:id/snooze — push the next watering reminder by 1 day
+myPlantsRoute.patch('/:id/snooze', async (c) => {
+  const id = Number(c.req.param('id'))
+  if (!Number.isInteger(id) || id < 1) return c.json({ error: 'Invalid id' }, 400)
+
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const snoozedUntil = tomorrow.toISOString()
+
+  const [updated] = await db
+    .update(userPlants)
+    .set({ snoozedUntil })
+    .where(eq(userPlants.id, id))
+    .returning()
+
+  if (!updated) return c.json({ error: 'Not found' }, 404)
+
+  log.info({ userPlantId: id, snoozedUntil }, 'Plant snoozed')
   return c.json(updated)
 })
 

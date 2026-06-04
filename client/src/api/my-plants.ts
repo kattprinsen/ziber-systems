@@ -5,6 +5,7 @@ export interface MyPlant {
   nickname: string | null
   addedAt: string
   lastWateredAt: string | null
+  snoozedUntil: string | null
   commonName: string
   latinName: string
   wateringIntervalDays: number
@@ -31,6 +32,11 @@ export async function addMyPlant(plantId: number, nickname?: string): Promise<My
 export async function waterMyPlant(id: number): Promise<void> {
   const res = await fetch(`/api/my-plants/${id}/water`, { method: 'PATCH' })
   if (!res.ok) throw new Error(`Failed to mark as watered: ${res.status}`)
+}
+
+export async function snoozeMyPlant(id: number): Promise<void> {
+  const res = await fetch(`/api/my-plants/${id}/snooze`, { method: 'PATCH' })
+  if (!res.ok) throw new Error(`Failed to snooze plant: ${res.status}`)
 }
 
 export async function removeMyPlant(id: number): Promise<void> {

@@ -51,6 +51,25 @@ describe('getDaysUntilWater', () => {
     expect(getDaysUntilWater(lastWateredAt, addedAt, 7)).toBe(6)
   })
 
+  it('returns snooze days when snoozedUntil is later than the schedule', () => {
+    // due today (0 days), but snoozed until tomorrow → should return 1
+    const lastWateredAt = '2026-05-21T12:00:00.000Z' // 7 days ago, interval 7 → due today
+    const snoozedUntil = '2026-05-29T12:00:00.000Z'  // tomorrow
+    expect(getDaysUntilWater(lastWateredAt, '2026-05-01T00:00:00Z', 7, snoozedUntil)).toBe(1)
+  })
+
+  it('ignores snoozedUntil when schedule is later', () => {
+    // 3 days ago, interval 7 → 4 days left; snoozed until tomorrow → schedule wins
+    const lastWateredAt = '2026-05-25T12:00:00.000Z'
+    const snoozedUntil = '2026-05-29T12:00:00.000Z' // tomorrow
+    expect(getDaysUntilWater(lastWateredAt, '2026-05-01T00:00:00Z', 7, snoozedUntil)).toBe(4)
+  })
+
+  it('ignores null snoozedUntil', () => {
+    const lastWateredAt = '2026-05-25T12:00:00.000Z'
+    expect(getDaysUntilWater(lastWateredAt, '2026-05-01T00:00:00Z', 7, null)).toBe(4)
+  })
+
   it('handles longer watering intervals', () => {
     // watered yesterday, interval 30 → 29 days left
     const lastWateredAt = '2026-05-27T12:00:00.000Z'

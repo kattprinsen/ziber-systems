@@ -65,6 +65,12 @@ export async function sendReminders(forceAll = false): Promise<void> {
                 label: '💧 Mark as watered',
                 custom_id: `water_plant:${plant.id}`,
               },
+              {
+                type: 2,
+                style: 2,
+                label: '😴 Snooze 1 day',
+                custom_id: `snooze_plant:${plant.id}`,
+              },
             ],
           },
         ],

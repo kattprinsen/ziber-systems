@@ -77,6 +77,45 @@ export async function handleInteraction(body: DiscordInteraction): Promise<Inter
         },
       }
     }
+
+    if (customId.startsWith('snooze_plant:')) {
+      const plantId = parseInt(customId.split(':')[1], 10)
+      if (isNaN(plantId)) {
+        log.warn({ customId }, 'Discord button: invalid plant ID for snooze')
+        return { type: CHANNEL_MESSAGE, data: { content: '❌ Invalid plant ID.', flags: EPHEMERAL } }
+      }
+
+      const tomorrow = new Date()
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      const snoozedUntil = tomorrow.toISOString()
+
+      const updated = await db
+        .update(userPlants)
+        .set({ snoozedUntil })
+        .where(eq(userPlants.id, plantId))
+        .returning()
+
+      if (updated.length === 0) {
+        log.warn({ userPlantId: plantId }, 'Discord button: plant not found for snooze')
+        return { type: CHANNEL_MESSAGE, data: { content: '❌ Plant not found.', flags: EPHEMERAL } }
+      }
+
+      const [plantRow] = await db
+        .select({ commonName: plants.commonName })
+        .from(plants)
+        .where(eq(plants.id, updated[0].plantId))
+
+      const name = updated[0].nickname ?? plantRow?.commonName ?? 'Plant'
+
+      log.info({ userPlantId: plantId, name, snoozedUntil }, 'Plant snoozed via Discord')
+      return {
+        type: UPDATE_MESSAGE,
+        data: {
+          content: `😴 **${name}** snoozed for 1 day.`,
+          components: [],
+        },
+      }
+    }
   }
 
   return { type: PONG }

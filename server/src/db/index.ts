@@ -34,16 +34,21 @@ sqlite.exec(`
   );
 `)
 
-// Safe migration: add room_id column to user_plants if not already present.
-// ALTER TABLE in SQLite has no IF NOT EXISTS, so we check PRAGMA table_info first.
+// Safe migrations: ALTER TABLE has no IF NOT EXISTS in SQLite, so we check PRAGMA table_info first.
 const userPlantsColumns = sqlite
   .prepare('PRAGMA table_info(user_plants)')
   .all() as { name: string }[]
+
 if (!userPlantsColumns.some((col) => col.name === 'room_id')) {
   sqlite.exec('ALTER TABLE user_plants ADD COLUMN room_id INTEGER REFERENCES rooms(id)')
   log.info('DB migration: added room_id column to user_plants')
-} else {
-  log.info('DB ready')
 }
+
+if (!userPlantsColumns.some((col) => col.name === 'snoozed_until')) {
+  sqlite.exec('ALTER TABLE user_plants ADD COLUMN snoozed_until TEXT')
+  log.info('DB migration: added snoozed_until column to user_plants')
+}
+
+log.info('DB ready')
 
 export const db = drizzle(sqlite, { schema })
