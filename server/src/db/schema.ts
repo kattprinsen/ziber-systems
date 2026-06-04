@@ -26,4 +26,5 @@ export const userPlants = sqliteTable('user_plants', {
   nickname: text('nickname'),
   addedAt: text('added_at').notNull(),
   lastWateredAt: text('last_watered_at'),
+  snoozedUntil: text('snoozed_until'),
 })

@@ -4,10 +4,18 @@ export function getDaysUntilWater(
   lastWateredAt: string | null,
   addedAt: string,
   wateringIntervalDays: number,
+  snoozedUntil?: string | null,
 ): number {
   const base = lastWateredAt ?? addedAt
   const next = new Date(base).getTime() + wateringIntervalDays * DAY_MS
-  return Math.ceil((next - Date.now()) / DAY_MS)
+  const daysFromSchedule = Math.ceil((next - Date.now()) / DAY_MS)
+
+  if (snoozedUntil) {
+    const daysFromSnooze = Math.ceil((new Date(snoozedUntil).getTime() - Date.now()) / DAY_MS)
+    return Math.max(daysFromSchedule, daysFromSnooze)
+  }
+
+  return daysFromSchedule
 }
 
 export function getWaterStatus(daysUntil: number): string {

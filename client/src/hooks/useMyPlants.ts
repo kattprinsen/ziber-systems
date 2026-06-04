@@ -3,6 +3,7 @@ import {
   fetchMyPlants,
   addMyPlant,
   waterMyPlant,
+  snoozeMyPlant,
   removeMyPlant,
   updateMyPlantNickname,
   assignRoom,
@@ -19,6 +20,7 @@ interface UseMyPlantsResult {
   update: (userPlantId: number, plantId: number, plantData: Partial<CreatePlantInput>, nickname: string | null) => Promise<void>
   setRoom: (id: number, roomId: number | null) => Promise<void>
   water: (id: number) => Promise<void>
+  snooze: (id: number) => Promise<void>
   remove: (id: number) => Promise<void>
 }
 
@@ -89,6 +91,14 @@ export function useMyPlants(): UseMyPlantsResult {
     [load],
   )
 
+  const snooze = useCallback(
+    async (id: number) => {
+      await snoozeMyPlant(id)
+      load()
+    },
+    [load],
+  )
+
   const remove = useCallback(
     async (id: number) => {
       await removeMyPlant(id)
@@ -97,5 +107,5 @@ export function useMyPlants(): UseMyPlantsResult {
     [load],
   )
 
-  return { myPlants, loading, error, add, addCustom, update, setRoom, water, remove }
+  return { myPlants, loading, error, add, addCustom, update, setRoom, water, snooze, remove }
 }

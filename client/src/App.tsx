@@ -12,7 +12,7 @@ import { getDaysUntilWater, getWaterStatus } from './utils/plants'
 import { checkAuth, logout } from './api/auth'
 
 function HomePage() {
-  const { myPlants, loading, error, water, remove, setRoom } = useMyPlants()
+  const { myPlants, loading, error, water, snooze, remove, setRoom } = useMyPlants()
   const { rooms, create: createRoom } = useRooms()
   const navigate = useNavigate()
   const [selectedPlantId, setSelectedPlantId] = useState<number | null>(null)
@@ -43,7 +43,7 @@ function HomePage() {
   )
 
   const selectedPlantDaysUntil = selectedPlant
-    ? getDaysUntilWater(selectedPlant.lastWateredAt, selectedPlant.addedAt, selectedPlant.wateringIntervalDays)
+    ? getDaysUntilWater(selectedPlant.lastWateredAt, selectedPlant.addedAt, selectedPlant.wateringIntervalDays, selectedPlant.snoozedUntil)
     : null
 
   const selectedPlantStatus = selectedPlantDaysUntil !== null ? getWaterStatus(selectedPlantDaysUntil) : ''
@@ -127,7 +127,7 @@ function HomePage() {
           <section aria-label="Plant list" className={styles.listPanel}>
             <ul className={styles.plantList}>
               {filteredPlants.map((plant) => {
-                const daysUntil = getDaysUntilWater(plant.lastWateredAt, plant.addedAt, plant.wateringIntervalDays)
+                const daysUntil = getDaysUntilWater(plant.lastWateredAt, plant.addedAt, plant.wateringIntervalDays, plant.snoozedUntil)
                 const isOverdue = daysUntil < 0
 
                 return (
@@ -196,6 +196,11 @@ function HomePage() {
               <button className={styles.actionButton} onClick={() => water(selectedPlant.id)} type="button">
                 Mark watered
               </button>
+              {selectedPlantDaysUntil !== null && selectedPlantDaysUntil <= 0 && (
+                <button className={styles.actionButtonSecondary} onClick={() => snooze(selectedPlant.id)} type="button">
+                  Snooze 1 day
+                </button>
+              )}
               <button className={styles.actionButtonSecondary} onClick={() => navigate(`/plants/${selectedPlant.id}`)} type="button">
                 Edit
               </button>
