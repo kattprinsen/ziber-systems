@@ -128,7 +128,7 @@ function HomePage() {
             <ul className={styles.plantList}>
               {filteredPlants.map((plant) => {
                 const daysUntil = getDaysUntilWater(plant.lastWateredAt, plant.addedAt, plant.wateringIntervalDays)
-                const isOverdue = daysUntil <= 0
+                const isOverdue = daysUntil < 0
 
                 return (
                   <li key={plant.id}>
@@ -142,7 +142,7 @@ function HomePage() {
                         {plant.nickname && <span className={styles.listItemSub}>{plant.commonName}</span>}
                       </span>
                       <span className={`${styles.listItemBadge} ${isOverdue ? styles.listItemBadgeOverdue : ''}`}>
-                        {isOverdue ? `+${Math.abs(daysUntil)}d` : `${daysUntil}d`}
+                        {isOverdue ? `+${Math.abs(daysUntil)}d` : daysUntil === 0 ? 'today' : `${daysUntil}d`}
                       </span>
                     </button>
                   </li>

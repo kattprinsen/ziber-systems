@@ -11,10 +11,11 @@ export function getDaysUntilWater(
 }
 
 export function getWaterStatus(daysUntil: number): string {
-  if (daysUntil <= 0) {
+  if (daysUntil < 0) {
     const overdue = Math.abs(daysUntil)
     return `Overdue by ${overdue} day${overdue === 1 ? '' : 's'}`
   }
+  if (daysUntil === 0) return 'Water today'
   if (daysUntil === 1) return 'Water tomorrow'
   return `Water in ${daysUntil} days`
 }

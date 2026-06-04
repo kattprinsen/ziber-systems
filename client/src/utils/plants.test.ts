@@ -77,7 +77,7 @@ describe('getWaterStatus', () => {
     expect(getWaterStatus(-30)).toBe('Overdue by 30 days')
   })
 
-  it('returns overdue for 0 (due moment passed)', () => {
-    expect(getWaterStatus(0)).toBe('Overdue by 0 days')
+  it('returns "Water today" for 0 days', () => {
+    expect(getWaterStatus(0)).toBe('Water today')
   })
 })
