@@ -5,10 +5,12 @@
   "scripts": {
     "dev": "tsx --watch src/index.ts",
     "tunnel": "tsx src/tunnel.ts",
-    "build": "tsc",
+    "build": "tsc && cp -r drizzle dist/drizzle",
     "typecheck": "tsc --noEmit",
     "seed": "tsx src/db/seed.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@hono/node-server": "^1.0.0",
@@ -24,6 +26,7 @@
     "@types/better-sqlite3": "^7.0.0",
     "@types/node": "^22.0.0",
     "@types/node-cron": "^3.0.11",
+    "drizzle-kit": "^0.31.10",
     "tsx": "^4.0.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.7"
