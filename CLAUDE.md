@@ -29,6 +29,10 @@ npx vitest run server/src/discord/api.test.ts   # single test file
 
 # DB seed
 npm run seed -w server
+
+# DB migrations (drizzle-kit)
+npm run db:generate -w server   # generate a new migration after changing schema.ts
+npm run db:studio -w server     # open Drizzle Studio to browse the DB
 ```
 
 ## Architecture
