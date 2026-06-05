@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { eq, like, or } from 'drizzle-orm'
 import { db } from '../db/index.js'
 import { plants } from '../db/schema.js'
+import type { InsertPlant, LightLevel } from '../types.js'
 
 const plantsRoute = new Hono()
 
@@ -44,9 +45,9 @@ plantsRoute.post('/', async (c) => {
   }
 
   const latinName = typeof body.latinName === 'string' ? body.latinName.trim() : ''
-  const validLight = ['low', 'indirect', 'bright'] as const
-  const light = validLight.includes(body.light as typeof validLight[number])
-    ? (body.light as typeof validLight[number])
+  const validLight: LightLevel[] = ['low', 'indirect', 'bright']
+  const light: LightLevel = validLight.includes(body.light as LightLevel)
+    ? (body.light as LightLevel)
     : 'indirect'
   const description = typeof body.description === 'string' ? body.description.trim() : ''
 
@@ -64,13 +65,7 @@ plantsRoute.patch('/:id', async (c) => {
 
   const body = await c.req.json<Record<string, unknown>>()
 
-  const updates: Partial<{
-    commonName: string
-    latinName: string
-    wateringIntervalDays: number
-    light: 'low' | 'indirect' | 'bright'
-    description: string
-  }> = {}
+  const updates: Partial<InsertPlant> = {}
 
   if (typeof body.commonName === 'string' && body.commonName.trim())
     updates.commonName = body.commonName.trim()
@@ -79,9 +74,9 @@ plantsRoute.patch('/:id', async (c) => {
   const days = Number(body.wateringIntervalDays)
   if (Number.isInteger(days) && days >= 1)
     updates.wateringIntervalDays = days
-  const validLight = ['low', 'indirect', 'bright'] as const
-  if (validLight.includes(body.light as typeof validLight[number]))
-    updates.light = body.light as typeof validLight[number]
+  const validLight: LightLevel[] = ['low', 'indirect', 'bright']
+  if (validLight.includes(body.light as LightLevel))
+    updates.light = body.light as LightLevel
   if (typeof body.description === 'string')
     updates.description = body.description.trim()
 

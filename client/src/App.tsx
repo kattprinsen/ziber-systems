@@ -11,6 +11,12 @@ import { useRooms } from './hooks/useRooms'
 import { getDaysUntilWater, getWaterStatus } from './utils/plants'
 import { checkAuth, logout } from './api/auth'
 
+function getBadgeLabel(isOverdue: boolean, daysUntil: number): string {
+  if (isOverdue) return `+${Math.abs(daysUntil)}d`
+  if (daysUntil === 0) return 'today'
+  return `${daysUntil}d`
+}
+
 function HomePage() {
   const { myPlants, loading, error, water, snooze, remove, setRoom } = useMyPlants()
   const { rooms, create: createRoom } = useRooms()
@@ -142,7 +148,7 @@ function HomePage() {
                         {plant.nickname && <span className={styles.listItemSub}>{plant.commonName}</span>}
                       </span>
                       <span className={`${styles.listItemBadge} ${isOverdue ? styles.listItemBadgeOverdue : ''}`}>
-                        {isOverdue ? `+${Math.abs(daysUntil)}d` : daysUntil === 0 ? 'today' : `${daysUntil}d`}
+                        {getBadgeLabel(isOverdue, daysUntil)}
                       </span>
                     </button>
                   </li>

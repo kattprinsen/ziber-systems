@@ -1,3 +1,4 @@
+// Mirror of MyPlant in server/src/types.ts — keep in sync if the schema changes.
 export interface MyPlant {
   id: number
   plantId: number

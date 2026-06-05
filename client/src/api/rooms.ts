@@ -1,3 +1,4 @@
+// Mirror of Room in server/src/types.ts — keep in sync if the schema changes.
 export interface Room {
   id: number
   name: string

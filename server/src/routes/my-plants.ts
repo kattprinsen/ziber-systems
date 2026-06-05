@@ -3,12 +3,13 @@ import { eq } from 'drizzle-orm'
 import { db } from '../db/index.js'
 import { log } from '../logger.js'
 import { userPlants, plants, rooms } from '../db/schema.js'
+import type { MyPlant } from '../types.js'
 
 const myPlantsRoute = new Hono()
 
 // GET /api/my-plants — list all user plants joined with plant data
 myPlantsRoute.get('/', async (c) => {
-  const rows = await db
+  const rows: MyPlant[] = await db
     .select({
       id: userPlants.id,
       plantId: userPlants.plantId,
@@ -16,6 +17,7 @@ myPlantsRoute.get('/', async (c) => {
       nickname: userPlants.nickname,
       addedAt: userPlants.addedAt,
       lastWateredAt: userPlants.lastWateredAt,
+      snoozedUntil: userPlants.snoozedUntil,
       commonName: plants.commonName,
       latinName: plants.latinName,
       wateringIntervalDays: plants.wateringIntervalDays,

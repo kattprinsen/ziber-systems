@@ -1,3 +1,4 @@
+// Mirror of Plant in server/src/types.ts — keep in sync if the schema changes.
 export interface Plant {
   id: number
   commonName: string
