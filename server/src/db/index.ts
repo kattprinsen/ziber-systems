@@ -12,8 +12,10 @@ const sqlite = new Database('data/data.db')
 
 export const db = drizzle(sqlite, { schema })
 
-// Resolve the migrations folder relative to this compiled file (dist/db/index.js → dist/drizzle)
-const migrationsFolder = join(fileURLToPath(import.meta.url), '../..', 'drizzle')
+// Resolve server/drizzle/ relative to this file — works for both:
+//   dev:  src/db/index.ts  → up 3 levels → server/drizzle/
+//   prod: dist/db/index.js → up 3 levels → server/drizzle/
+const migrationsFolder = join(fileURLToPath(import.meta.url), '../../..', 'drizzle')
 
 migrate(db, { migrationsFolder })
 log.info('DB ready')
