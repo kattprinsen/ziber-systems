@@ -309,6 +309,46 @@
   }
 }
 
+// Watering history
+.history {
+  border-top: 1px solid $color-border;
+  padding-top: $space-4;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.historyTitle {
+  margin: 0;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-muted;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.historyList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.historyItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: $font-size-sm;
+  color: $color-text;
+}
+
+.historyMeta {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+}
+
 // Room select in detail panel
 .roomSelect {
   padding: 2px $space-2;

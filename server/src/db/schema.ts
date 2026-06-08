@@ -1,4 +1,5 @@
 import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core'
+import type { AnySQLiteColumn } from 'drizzle-orm/sqlite-core'
 
 export const healthChecks = sqliteTable('health_checks', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -27,4 +28,12 @@ export const userPlants = sqliteTable('user_plants', {
   addedAt: text('added_at').notNull(),
   lastWateredAt: text('last_watered_at'),
   snoozedUntil: text('snoozed_until'),
+})
+
+export const wateringEvents = sqliteTable('watering_events', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userPlantId: integer('user_plant_id').notNull().references((): AnySQLiteColumn => userPlants.id),
+  wateredAt: text('watered_at').notNull(),
+  source: text('source', { enum: ['manual', 'discord'] }).notNull(),
+  wateredBy: text('watered_by'),
 })

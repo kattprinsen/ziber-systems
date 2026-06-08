@@ -9,6 +9,7 @@ import LoginPage from './pages/LoginPage/LoginPage'
 import { useMyPlants } from './hooks/useMyPlants'
 import { useRooms } from './hooks/useRooms'
 import { getDaysUntilWater, getWaterStatus } from './utils/plants'
+import { fetchPlantHistory, type WateringEvent } from './api/my-plants'
 import { checkAuth, logout } from './api/auth'
 
 function getBadgeLabel(isOverdue: boolean, daysUntil: number): string {
@@ -25,6 +26,8 @@ function HomePage() {
   const [roomFilter, setRoomFilter] = useState<number | null>(null)
   const [showNewRoom, setShowNewRoom] = useState(false)
   const [newRoomName, setNewRoomName] = useState('')
+  const [history, setHistory] = useState<WateringEvent[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
 
   const filteredPlants = useMemo(
     () => (roomFilter === null ? myPlants : myPlants.filter((p) => p.roomId === roomFilter)),
@@ -47,6 +50,15 @@ function HomePage() {
     () => filteredPlants.find((plant) => plant.id === selectedPlantId) ?? null,
     [filteredPlants, selectedPlantId],
   )
+
+  useEffect(() => {
+    if (selectedPlantId === null) { setHistory([]); return }
+    setHistoryLoading(true)
+    fetchPlantHistory(selectedPlantId)
+      .then(setHistory)
+      .catch(() => setHistory([]))
+      .finally(() => setHistoryLoading(false))
+  }, [selectedPlantId, myPlants]) // re-fetch when myPlants changes (i.e. after watering)
 
   const selectedPlantDaysUntil = selectedPlant
     ? getDaysUntilWater(selectedPlant.lastWateredAt, selectedPlant.addedAt, selectedPlant.wateringIntervalDays, selectedPlant.snoozedUntil)
@@ -214,6 +226,28 @@ function HomePage() {
                 Remove
               </button>
             </div>
+
+            <section className={styles.history}>
+              <h3 className={styles.historyTitle}>Watering history</h3>
+              {historyLoading && <p className={styles.muted}>Loading…</p>}
+              {!historyLoading && history.length === 0 && (
+                <p className={styles.muted}>No watering events recorded yet.</p>
+              )}
+              {!historyLoading && history.length > 0 && (
+                <ul className={styles.historyList}>
+                  {history.map((event) => (
+                    <li key={event.id} className={styles.historyItem}>
+                      <span>💧 {new Date(event.wateredAt).toLocaleDateString()}</span>
+                      <span className={styles.historyMeta}>
+                        {event.source === 'discord'
+                          ? `discord${event.wateredBy ? `: ${event.wateredBy}` : ''}`
+                          : 'manual'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
           </section>
         </div>
       )}

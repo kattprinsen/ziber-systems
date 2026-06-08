@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { db } from '../db/index.js'
 import { log } from '../logger.js'
-import { userPlants, plants } from '../db/schema.js'
+import { userPlants, plants, wateringEvents } from '../db/schema.js'
 
 interface DiscordInteraction {
   type: number
@@ -9,6 +9,8 @@ interface DiscordInteraction {
     custom_id: string
     component_type: number
   }
+  member?: { user: { username: string } }
+  user?: { username: string }
 }
 
 interface InteractionResponse {
@@ -42,6 +44,7 @@ export async function handleInteraction(body: DiscordInteraction): Promise<Inter
 
   if (body.type === MESSAGE_COMPONENT && body.data?.component_type === BUTTON) {
     const customId = body.data.custom_id
+    const discordUsername = body.member?.user.username ?? body.user?.username ?? null
 
     if (customId.startsWith('water_plant:')) {
       const plantId = parseInt(customId.split(':')[1], 10)
@@ -50,9 +53,10 @@ export async function handleInteraction(body: DiscordInteraction): Promise<Inter
         return { type: CHANNEL_MESSAGE, data: { content: '❌ Invalid plant ID.', flags: EPHEMERAL } }
       }
 
+      const now = new Date().toISOString()
       const updated = await db
         .update(userPlants)
-        .set({ lastWateredAt: new Date().toISOString() })
+        .set({ lastWateredAt: now, snoozedUntil: null })
         .where(eq(userPlants.id, plantId))
         .returning()
 
@@ -61,6 +65,13 @@ export async function handleInteraction(body: DiscordInteraction): Promise<Inter
         return { type: CHANNEL_MESSAGE, data: { content: '❌ Plant not found.', flags: EPHEMERAL } }
       }
 
+      await db.insert(wateringEvents).values({
+        userPlantId: plantId,
+        wateredAt: now,
+        source: 'discord',
+        wateredBy: discordUsername,
+      })
+
       const [plantRow] = await db
         .select({ commonName: plants.commonName })
         .from(plants)
@@ -68,7 +79,7 @@ export async function handleInteraction(body: DiscordInteraction): Promise<Inter
 
       const name = updated[0].nickname ?? plantRow?.commonName ?? 'Plant'
 
-      log.info({ userPlantId: plantId, name }, 'Plant watered via Discord')
+      log.info({ userPlantId: plantId, name, discordUsername }, 'Plant watered via Discord')
       return {
         type: UPDATE_MESSAGE,
         data: {
