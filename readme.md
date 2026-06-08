@@ -43,6 +43,9 @@ Searchable database of ~100 curated houseplants with common name, latin name, wa
 ### Rooms / grouping
 Organise your collection by room (e.g. Living room, Bedroom). Create rooms from the home page filter bar, assign each plant to a room via a dropdown in the detail panel, and filter the plant list by room. Deleting a room unassigns its plants but does not remove them.
 
+### Watering history
+Every watering event is recorded with a timestamp, source (`manual` or `discord`), and — for Discord — the username of who pressed the button. The full history is shown in the detail panel for each plant.
+
 ### Discord reminders
 A daily scheduled job (8am) sends a Discord message for each plant that is overdue or due today. Each message includes a 💧 button — clicking it marks the plant as watered directly from Discord without opening the app.
 
@@ -74,6 +77,8 @@ A shared household password protects the app. The first thing you see is a login
 | `POST` | `/api/my-plants` | Add a plant (`{ plantId, nickname? }`) |
 | `PATCH` | `/api/my-plants/:id` | Update `nickname` and/or `roomId` |
 | `PATCH` | `/api/my-plants/:id/water` | Mark as watered now |
+| `PATCH` | `/api/my-plants/:id/snooze` | Snooze watering reminder by 1 day |
+| `GET` | `/api/my-plants/:id/history` | Watering event history (newest first) |
 | `DELETE` | `/api/my-plants/:id` | Remove from collection |
 
 ### Rooms
