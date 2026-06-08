@@ -1,3 +1,12 @@
+// Mirror of WateringEvent in server/src/types.ts — keep in sync if the schema changes.
+export interface WateringEvent {
+  id: number
+  userPlantId: number
+  wateredAt: string
+  source: 'manual' | 'discord'
+  wateredBy: string | null
+}
+
 // Mirror of MyPlant in server/src/types.ts — keep in sync if the schema changes.
 export interface MyPlant {
   id: number
@@ -33,6 +42,12 @@ export async function addMyPlant(plantId: number, nickname?: string): Promise<My
 export async function waterMyPlant(id: number): Promise<void> {
   const res = await fetch(`/api/my-plants/${id}/water`, { method: 'PATCH' })
   if (!res.ok) throw new Error(`Failed to mark as watered: ${res.status}`)
+}
+
+export async function fetchPlantHistory(id: number): Promise<WateringEvent[]> {
+  const res = await fetch(`/api/my-plants/${id}/history`)
+  if (!res.ok) throw new Error(`Failed to fetch history: ${res.status}`)
+  return res.json() as Promise<WateringEvent[]>
 }
 
 export async function snoozeMyPlant(id: number): Promise<void> {

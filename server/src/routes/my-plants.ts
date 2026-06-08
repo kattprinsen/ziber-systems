@@ -2,8 +2,8 @@ import { Hono } from 'hono'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/index.js'
 import { log } from '../logger.js'
-import { userPlants, plants, rooms } from '../db/schema.js'
-import type { MyPlant } from '../types.js'
+import { userPlants, plants, rooms, wateringEvents } from '../db/schema.js'
+import type { MyPlant, WateringEvent } from '../types.js'
 
 const myPlantsRoute = new Hono()
 
@@ -72,8 +72,24 @@ myPlantsRoute.patch('/:id/water', async (c) => {
 
   if (!updated) return c.json({ error: 'Not found' }, 404)
 
+  await db.insert(wateringEvents).values({ userPlantId: id, wateredAt: now, source: 'manual', wateredBy: null })
+
   log.info({ userPlantId: id, lastWateredAt: now }, 'Plant watered')
   return c.json(updated)
+})
+
+// GET /api/my-plants/:id/history — watering history for a plant (newest first)
+myPlantsRoute.get('/:id/history', async (c) => {
+  const id = Number(c.req.param('id'))
+  if (!Number.isInteger(id) || id < 1) return c.json({ error: 'Invalid id' }, 400)
+
+  const events: WateringEvent[] = await db
+    .select()
+    .from(wateringEvents)
+    .where(eq(wateringEvents.userPlantId, id))
+    .orderBy(wateringEvents.wateredAt)
+
+  return c.json(events.reverse())
 })
 
 // PATCH /api/my-plants/:id/snooze — push the next watering reminder by 1 day
