@@ -41,7 +41,7 @@ Click the edit button on any card to update the plant's details (name, latin nam
 Searchable database of ~100 curated houseplants with common name, latin name, watering interval, light requirements, and a description. No third-party API dependency — data is owned and committed to the repo.
 
 ### Rooms / grouping
-Organise your collection by room (e.g. Living room, Bedroom). Create rooms from the home page filter bar, assign each plant to a room via a dropdown in the detail panel, and filter the plant list by room. Deleting a room unassigns its plants but does not remove them.
+Organise your collection by room (e.g. Living room, Bedroom). A room is required when adding a plant — select an existing room or create a new one inline without leaving the page. Rooms can also be created from the home page filter bar, and re-assigned via a dropdown in the detail panel. Filter the plant list by room. Deleting a room unassigns its plants but does not remove them.
 
 ### Watering history
 Every watering event is recorded with a timestamp, source (`manual` or `discord`), and — for Discord — the username of who pressed the button. The full history is shown in the detail panel for each plant.
@@ -74,7 +74,7 @@ A shared household password protects the app. The first thing you see is a login
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/api/my-plants` | List the user's collection (joined with plant data) |
-| `POST` | `/api/my-plants` | Add a plant (`{ plantId, nickname? }`) |
+| `POST` | `/api/my-plants` | Add a plant (`{ plantId, roomId, nickname? }`) |
 | `PATCH` | `/api/my-plants/:id` | Update `nickname` and/or `roomId` |
 | `PATCH` | `/api/my-plants/:id/water` | Mark as watered now |
 | `PATCH` | `/api/my-plants/:id/snooze` | Snooze watering reminder by 1 day |

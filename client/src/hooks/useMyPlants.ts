@@ -15,8 +15,8 @@ interface UseMyPlantsResult {
   myPlants: MyPlant[]
   loading: boolean
   error: string | null
-  add: (plantId: number, nickname?: string) => Promise<void>
-  addCustom: (input: CreatePlantInput, nickname?: string) => Promise<void>
+  add: (plantId: number, roomId: number, nickname?: string) => Promise<void>
+  addCustom: (input: CreatePlantInput, roomId: number, nickname?: string) => Promise<void>
   update: (userPlantId: number, plantId: number, plantData: Partial<CreatePlantInput>, nickname: string | null) => Promise<void>
   setRoom: (id: number, roomId: number | null) => Promise<void>
   water: (id: number) => Promise<void>
@@ -43,17 +43,17 @@ export function useMyPlants(): UseMyPlantsResult {
   }, [load])
 
   const add = useCallback(
-    async (plantId: number, nickname?: string) => {
-      await addMyPlant(plantId, nickname)
+    async (plantId: number, roomId: number, nickname?: string) => {
+      await addMyPlant(plantId, roomId, nickname)
       load()
     },
     [load],
   )
 
   const addCustom = useCallback(
-    async (input: CreatePlantInput, nickname?: string) => {
+    async (input: CreatePlantInput, roomId: number, nickname?: string) => {
       const plant = await createPlant(input)
-      await addMyPlant(plant.id, nickname)
+      await addMyPlant(plant.id, roomId, nickname)
       load()
     },
     [load],

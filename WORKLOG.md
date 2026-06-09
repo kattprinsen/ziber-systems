@@ -4,6 +4,24 @@ A running dev diary of sessions working on this project.
 
 ---
 
+DATE      : 2026-06-09
+TIME      : ~local session
+SESSION   : 003
+
+LOG
+---
+1. Added requirement: a room must be selected when adding a plant (user feedback)
+2. Updated POST /api/my-plants server route to require roomId and validate it exists
+3. Updated addMyPlant client API function to accept roomId as a required parameter
+4. Updated useMyPlants hook — add and addCustom now thread roomId through to the API
+5. Added room selector (required) to both the search confirm card and the custom plant form in MyPlantsPage
+6. Inline "create a room" input initially only shown when no rooms exist — then extended to always show
+7. Refactored handleCreateRoom to call createRoomApi directly (gets id back) instead of re-fetching all rooms
+8. Exposed reload from useRooms hook so MyPlantsPage can refresh the room list after creation
+9. New room is auto-selected in the dropdown immediately after creation
+
+---
+
 DATE      : 2026-06-08
 TIME      : ~local session
 SESSION   : 002

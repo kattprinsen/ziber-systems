@@ -29,11 +29,11 @@ export async function fetchMyPlants(): Promise<MyPlant[]> {
   return res.json() as Promise<MyPlant[]>
 }
 
-export async function addMyPlant(plantId: number, nickname?: string): Promise<MyPlant> {
+export async function addMyPlant(plantId: number, roomId: number, nickname?: string): Promise<MyPlant> {
   const res = await fetch('/api/my-plants', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ plantId, nickname }),
+    body: JSON.stringify({ plantId, roomId, nickname }),
   })
   if (!res.ok) throw new Error(`Failed to add plant: ${res.status}`)
   return res.json() as Promise<MyPlant>

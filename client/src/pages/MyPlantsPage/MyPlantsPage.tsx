@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMyPlants } from '../../hooks/useMyPlants'
+import { useRooms } from '../../hooks/useRooms'
+import { createRoom as createRoomApi } from '../../api/rooms'
 import { PlantSearch } from '../../components/PlantSearch/PlantSearch'
 import type { Plant } from '../../api/plants'
 import styles from './MyPlantsPage.module.scss'
@@ -18,28 +20,55 @@ const defaultCustomForm = {
 
 export const MyPlantsPage = () => {
   const { add, addCustom } = useMyPlants()
+  const { rooms, reload: reloadRooms } = useRooms()
   const navigate = useNavigate()
   const [view, setView] = useState<View>('search')
 
   // Search flow
   const [pendingPlant, setPendingPlant] = useState<Plant | null>(null)
   const [nickname, setNickname] = useState('')
+  const [selectedRoomId, setSelectedRoomId] = useState<number | ''>('')
   const [adding, setAdding] = useState(false)
 
   // Custom plant flow
   const [customForm, setCustomForm] = useState(defaultCustomForm)
+  const [customRoomId, setCustomRoomId] = useState<number | ''>('')
   const [customError, setCustomError] = useState<string | null>(null)
+
+  // Inline new-room creation (shared)
+  const [newRoomName, setNewRoomName] = useState('')
+  const [creatingRoom, setCreatingRoom] = useState(false)
+  const [newRoomError, setNewRoomError] = useState<string | null>(null)
+
+  const handleCreateRoom = async (onCreated: (id: number) => void) => {
+    const name = newRoomName.trim()
+    if (!name) return
+    setCreatingRoom(true)
+    setNewRoomError(null)
+    try {
+      const created = await createRoomApi(name)
+      reloadRooms()
+      onCreated(created.id)
+      setNewRoomName('')
+    } catch {
+      setNewRoomError('Failed to create room.')
+    } finally {
+      setCreatingRoom(false)
+    }
+  }
 
   const handleSelect = (plant: Plant) => {
     setPendingPlant(plant)
     setNickname('')
+    setSelectedRoomId('')
   }
 
   const handleConfirmAdd = async () => {
     if (!pendingPlant) return
+    if (!selectedRoomId) return
     setAdding(true)
     try {
-      await add(pendingPlant.id, nickname.trim() || undefined)
+      await add(pendingPlant.id, selectedRoomId, nickname.trim() || undefined)
       navigate('/')
     } finally {
       setAdding(false)
@@ -59,6 +88,10 @@ export const MyPlantsPage = () => {
       setCustomError('Watering interval must be a whole number of days (at least 1).')
       return
     }
+    if (!customRoomId) {
+      setCustomError('Room is required.')
+      return
+    }
 
     setAdding(true)
     try {
@@ -70,6 +103,7 @@ export const MyPlantsPage = () => {
           light: customForm.light,
           description: customForm.description.trim() || undefined,
         },
+        customRoomId,
         customForm.nickname.trim() || undefined,
       )
       navigate('/')
@@ -84,6 +118,8 @@ export const MyPlantsPage = () => {
     setPendingPlant(null)
     setCustomError(null)
     setCustomForm(defaultCustomForm)
+    setCustomRoomId('')
+    setSelectedRoomId('')
   }
 
   return (
@@ -117,6 +153,47 @@ export const MyPlantsPage = () => {
                 {pendingPlant.wateringIntervalDays} days.
               </p>
               <div className={styles.confirmField}>
+                <label htmlFor="room" className={styles.label}>
+                  Room <span className={styles.required}>*</span>
+                </label>
+                <select
+                  id="room"
+                  value={selectedRoomId}
+                  onChange={(e) => setSelectedRoomId(e.target.value ? Number(e.target.value) : '')}
+                  className={styles.input}
+                >
+                  <option value="">Select a room…</option>
+                  {rooms.map((r) => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.confirmField}>
+                <label htmlFor="new-room" className={styles.label}>
+                  Or create a new room
+                </label>
+                <div className={styles.inlineRow}>
+                  <input
+                    id="new-room"
+                    type="text"
+                    value={newRoomName}
+                    onChange={(e) => setNewRoomName(e.target.value)}
+                    placeholder="e.g. Living room"
+                    className={styles.input}
+                    autoComplete="off"
+                  />
+                  <button
+                    type="button"
+                    className={styles.buttonSecondary}
+                    onClick={() => handleCreateRoom(setSelectedRoomId)}
+                    disabled={creatingRoom || !newRoomName.trim()}
+                  >
+                    {creatingRoom ? 'Creating…' : 'Create'}
+                  </button>
+                </div>
+                {newRoomError && <p className={styles.error}>{newRoomError}</p>}
+              </div>
+              <div className={styles.confirmField}>
                 <label htmlFor="nickname" className={styles.label}>
                   Nickname <span className={styles.optional}>(optional)</span>
                 </label>
@@ -134,7 +211,7 @@ export const MyPlantsPage = () => {
                 <button
                   className={styles.button}
                   onClick={handleConfirmAdd}
-                  disabled={adding}
+                  disabled={adding || !selectedRoomId}
                 >
                   {adding ? 'Adding…' : 'Add to collection'}
                 </button>
@@ -242,6 +319,42 @@ export const MyPlantsPage = () => {
                 className={styles.input}
                 autoComplete="off"
               />
+            </div>
+
+            <div className={styles.formRow}>
+              <label htmlFor="custom-room" className={styles.label}>
+                Room <span className={styles.required}>*</span>
+              </label>
+              <select
+                id="custom-room"
+                value={customRoomId}
+                onChange={(e) => setCustomRoomId(e.target.value ? Number(e.target.value) : '')}
+                className={styles.input}
+              >
+                <option value="">Select a room…</option>
+                {rooms.map((r) => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </select>
+              <div className={styles.inlineRow}>
+                <input
+                  type="text"
+                  value={newRoomName}
+                  onChange={(e) => setNewRoomName(e.target.value)}
+                  placeholder="Or create new: e.g. Living room"
+                  className={styles.input}
+                  autoComplete="off"
+                />
+                <button
+                  type="button"
+                  className={styles.buttonSecondary}
+                  onClick={() => handleCreateRoom(setCustomRoomId)}
+                  disabled={creatingRoom || !newRoomName.trim()}
+                >
+                  {creatingRoom ? 'Creating…' : 'Create'}
+                </button>
+              </div>
+              {newRoomError && <p className={styles.error}>{newRoomError}</p>}
             </div>
 
             {customError && <p className={styles.error}>{customError}</p>}

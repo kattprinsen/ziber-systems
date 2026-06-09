@@ -33,15 +33,23 @@ myPlantsRoute.get('/', async (c) => {
 
 // POST /api/my-plants — add a plant to the collection
 myPlantsRoute.post('/', async (c) => {
-  const body = await c.req.json<{ plantId?: unknown; nickname?: unknown }>()
+  const body = await c.req.json<{ plantId?: unknown; roomId?: unknown; nickname?: unknown }>()
 
   const plantId = Number(body.plantId)
   if (!Number.isInteger(plantId) || plantId < 1) {
     return c.json({ error: 'plantId is required and must be a positive integer' }, 400)
   }
 
+  const roomId = Number(body.roomId)
+  if (!Number.isInteger(roomId) || roomId < 1) {
+    return c.json({ error: 'roomId is required and must be a positive integer' }, 400)
+  }
+
   const [plant] = await db.select().from(plants).where(eq(plants.id, plantId))
   if (!plant) return c.json({ error: 'Plant not found' }, 404)
+
+  const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId))
+  if (!room) return c.json({ error: 'Room not found' }, 404)
 
   const nickname =
     typeof body.nickname === 'string' && body.nickname.trim()
@@ -51,10 +59,10 @@ myPlantsRoute.post('/', async (c) => {
   const now = new Date().toISOString()
   const [created] = await db
     .insert(userPlants)
-    .values({ plantId, nickname, addedAt: now, lastWateredAt: null })
+    .values({ plantId, roomId, nickname, addedAt: now, lastWateredAt: null })
     .returning()
 
-  log.info({ userPlantId: created.id, plantId, nickname }, 'Plant added to collection')
+  log.info({ userPlantId: created.id, plantId, roomId, nickname }, 'Plant added to collection')
   return c.json({ ...created, ...plant }, 201)
 })
 
