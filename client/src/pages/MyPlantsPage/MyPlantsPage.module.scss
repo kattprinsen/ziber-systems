@@ -189,7 +189,13 @@
   margin: 0;
 }
 
-.error {
-  font-size: $font-size-sm;
-  color: $color-error;
+.inlineRow {
+  display: flex;
+  gap: $space-2;
+  align-items: flex-start;
+  margin-top: $space-2;
+
+  .input {
+    flex: 1;
+  }
 }

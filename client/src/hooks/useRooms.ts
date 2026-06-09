@@ -6,6 +6,7 @@ interface UseRoomsResult {
   loading: boolean
   create: (name: string) => Promise<void>
   remove: (id: number) => Promise<void>
+  reload: () => void
 }
 
 export function useRooms(): UseRoomsResult {
@@ -40,5 +41,5 @@ export function useRooms(): UseRoomsResult {
     [load],
   )
 
-  return { rooms, loading, create, remove }
+  return { rooms, loading, create, remove, reload: load }
 }
