@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
-import { fetchRooms, createRoom, deleteRoom, type Room } from '../api/rooms'
+import { fetchRooms, createRoom, renameRoom, deleteRoom, type Room } from '../api/rooms'
 
 interface UseRoomsResult {
   rooms: Room[]
   loading: boolean
   create: (name: string) => Promise<void>
+  rename: (id: number, name: string) => Promise<void>
   remove: (id: number) => Promise<void>
   reload: () => void
 }
@@ -33,6 +34,14 @@ export function useRooms(): UseRoomsResult {
     [load],
   )
 
+  const rename = useCallback(
+    async (id: number, name: string) => {
+      await renameRoom(id, name)
+      load()
+    },
+    [load],
+  )
+
   const remove = useCallback(
     async (id: number) => {
       await deleteRoom(id)
@@ -41,5 +50,5 @@ export function useRooms(): UseRoomsResult {
     [load],
   )
 
-  return { rooms, loading, create, remove, reload: load }
+  return { rooms, loading, create, rename, remove, reload: load }
 }
