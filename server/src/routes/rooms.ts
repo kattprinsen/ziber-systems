@@ -28,6 +28,28 @@ roomsRoute.post('/', async (c) => {
   return c.json(created, 201)
 })
 
+// PATCH /api/rooms/:id — rename a room { name: string }
+roomsRoute.patch('/:id', async (c) => {
+  const id = Number(c.req.param('id'))
+  if (!Number.isInteger(id) || id < 1) return c.json({ error: 'Invalid id' }, 400)
+
+  const body = await c.req.json<{ name?: unknown }>()
+  if (typeof body.name !== 'string' || !body.name.trim()) {
+    return c.json({ error: 'name is required' }, 400)
+  }
+
+  const [updated] = await db
+    .update(rooms)
+    .set({ name: body.name.trim() })
+    .where(eq(rooms.id, id))
+    .returning()
+
+  if (!updated) return c.json({ error: 'Not found' }, 404)
+
+  log.info({ roomId: id, name: updated.name }, 'Room renamed')
+  return c.json(updated)
+})
+
 // DELETE /api/rooms/:id — delete a room; unassigns any plants in it first
 roomsRoute.delete('/:id', async (c) => {
   const id = Number(c.req.param('id'))

@@ -4,6 +4,24 @@ A running dev diary of sessions working on this project.
 
 ---
 
+DATE      : 2026-06-11
+TIME      : ~local session
+SESSION   : 004
+
+LOG
+---
+1. Discussed missing room management UX — decided to build a dedicated /rooms page rather than inline editing on the home page
+2. Added PATCH /api/rooms/:id endpoint to the server for renaming rooms (with unique-name constraint handled naturally by SQLite)
+3. Added renameRoom() to client api/rooms.ts
+4. Added rename() method to useRooms hook
+5. Created RoomsPage (pages/RoomsPage/) with full CRUD: list rooms, inline rename per row, delete with confirmation, and an add-room form
+6. Styled RoomsPage to match the rest of the app using existing SCSS variables
+7. Registered /rooms route in App.tsx and added "Rooms" nav link in Layout.tsx
+8. Home page left untouched — room filter bar and inline room creation remain as-is
+9. Verified in browser with npm run dev; triage (typecheck + lint) passed clean
+
+---
+
 DATE      : 2026-06-09
 TIME      : ~local session
 SESSION   : 003
