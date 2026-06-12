@@ -22,6 +22,8 @@ interface InteractionResponse {
   }
 }
 
+type ButtonHandler = (id: string, username: string | null) => Promise<InteractionResponse>
+
 // Interaction types
 const PING = 1
 const MESSAGE_COMPONENT = 3
@@ -37,6 +39,108 @@ const CHANNEL_MESSAGE = 4
 // Message flags
 const EPHEMERAL = 64
 
+// Registry: keyed by "action:domain"
+const handlers = new Map<string, ButtonHandler>()
+
+export function registerButtonHandler(action: string, domain: string, handler: ButtonHandler): void {
+  handlers.set(`${action}:${domain}`, handler)
+}
+
+function parseCustomId(customId: string): { action: string; domain: string; id: string } | null {
+  const parts = customId.split(':')
+
+  // New format: action:domain:id (e.g. "water:plant:42")
+  if (parts.length === 3) {
+    return { action: parts[0], domain: parts[1], id: parts[2] }
+  }
+
+  // Legacy format: water_plant:42, snooze_plant:42
+  if (parts.length === 2) {
+    if (customId.startsWith('water_plant:')) return { action: 'water', domain: 'plant', id: parts[1] }
+    if (customId.startsWith('snooze_plant:')) return { action: 'snooze', domain: 'plant', id: parts[1] }
+  }
+
+  return null
+}
+
+// Plant: water
+registerButtonHandler('water', 'plant', async (id, username) => {
+  const plantId = parseInt(id, 10)
+  if (isNaN(plantId)) {
+    log.warn({ id }, 'Discord button: invalid plant ID')
+    return { type: CHANNEL_MESSAGE, data: { content: '❌ Invalid plant ID.', flags: EPHEMERAL } }
+  }
+
+  const now = new Date().toISOString()
+  const updated = await db
+    .update(userPlants)
+    .set({ lastWateredAt: now, snoozedUntil: null })
+    .where(eq(userPlants.id, plantId))
+    .returning()
+
+  if (updated.length === 0) {
+    log.warn({ userPlantId: plantId }, 'Discord button: plant not found')
+    return { type: CHANNEL_MESSAGE, data: { content: '❌ Plant not found.', flags: EPHEMERAL } }
+  }
+
+  await db.insert(wateringEvents).values({
+    userPlantId: plantId,
+    wateredAt: now,
+    source: 'discord',
+    wateredBy: username,
+  })
+
+  const [plantRow] = await db
+    .select({ commonName: plants.commonName })
+    .from(plants)
+    .where(eq(plants.id, updated[0].plantId))
+
+  const name = updated[0].nickname ?? plantRow?.commonName ?? 'Plant'
+  log.info({ userPlantId: plantId, name, username }, 'Plant watered via Discord')
+
+  return {
+    type: UPDATE_MESSAGE,
+    data: { content: `✅ **${name}** marked as watered!`, components: [] },
+  }
+})
+
+// Plant: snooze
+registerButtonHandler('snooze', 'plant', async (id, _username) => {
+  const plantId = parseInt(id, 10)
+  if (isNaN(plantId)) {
+    log.warn({ id }, 'Discord button: invalid plant ID for snooze')
+    return { type: CHANNEL_MESSAGE, data: { content: '❌ Invalid plant ID.', flags: EPHEMERAL } }
+  }
+
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const snoozedUntil = tomorrow.toISOString()
+
+  const updated = await db
+    .update(userPlants)
+    .set({ snoozedUntil })
+    .where(eq(userPlants.id, plantId))
+    .returning()
+
+  if (updated.length === 0) {
+    log.warn({ userPlantId: plantId }, 'Discord button: plant not found for snooze')
+    return { type: CHANNEL_MESSAGE, data: { content: '❌ Plant not found.', flags: EPHEMERAL } }
+  }
+
+  const [plantRow] = await db
+    .select({ commonName: plants.commonName })
+    .from(plants)
+    .where(eq(plants.id, updated[0].plantId))
+
+  const name = updated[0].nickname ?? plantRow?.commonName ?? 'Plant'
+  log.info({ userPlantId: plantId, name, snoozedUntil }, 'Plant snoozed via Discord')
+
+  return {
+    type: UPDATE_MESSAGE,
+    data: { content: `😴 **${name}** snoozed for 1 day.`, components: [] },
+  }
+})
+
 export async function handleInteraction(body: DiscordInteraction): Promise<InteractionResponse> {
   if (body.type === PING) {
     return { type: PONG }
@@ -44,89 +148,23 @@ export async function handleInteraction(body: DiscordInteraction): Promise<Inter
 
   if (body.type === MESSAGE_COMPONENT && body.data?.component_type === BUTTON) {
     const customId = body.data.custom_id
-    const discordUsername = body.member?.user.username ?? body.user?.username ?? null
+    const username = body.member?.user.username ?? body.user?.username ?? null
+    const parsed = parseCustomId(customId)
 
-    if (customId.startsWith('water_plant:')) {
-      const plantId = parseInt(customId.split(':')[1], 10)
-      if (isNaN(plantId)) {
-        log.warn({ customId }, 'Discord button: invalid plant ID')
-        return { type: CHANNEL_MESSAGE, data: { content: '❌ Invalid plant ID.', flags: EPHEMERAL } }
-      }
-
-      const now = new Date().toISOString()
-      const updated = await db
-        .update(userPlants)
-        .set({ lastWateredAt: now, snoozedUntil: null })
-        .where(eq(userPlants.id, plantId))
-        .returning()
-
-      if (updated.length === 0) {
-        log.warn({ userPlantId: plantId }, 'Discord button: plant not found')
-        return { type: CHANNEL_MESSAGE, data: { content: '❌ Plant not found.', flags: EPHEMERAL } }
-      }
-
-      await db.insert(wateringEvents).values({
-        userPlantId: plantId,
-        wateredAt: now,
-        source: 'discord',
-        wateredBy: discordUsername,
-      })
-
-      const [plantRow] = await db
-        .select({ commonName: plants.commonName })
-        .from(plants)
-        .where(eq(plants.id, updated[0].plantId))
-
-      const name = updated[0].nickname ?? plantRow?.commonName ?? 'Plant'
-
-      log.info({ userPlantId: plantId, name, discordUsername }, 'Plant watered via Discord')
-      return {
-        type: UPDATE_MESSAGE,
-        data: {
-          content: `✅ **${name}** marked as watered!`,
-          components: [],
-        },
-      }
+    if (!parsed) {
+      log.warn({ customId }, 'Discord button: unrecognised custom_id format')
+      return { type: PONG }
     }
 
-    if (customId.startsWith('snooze_plant:')) {
-      const plantId = parseInt(customId.split(':')[1], 10)
-      if (isNaN(plantId)) {
-        log.warn({ customId }, 'Discord button: invalid plant ID for snooze')
-        return { type: CHANNEL_MESSAGE, data: { content: '❌ Invalid plant ID.', flags: EPHEMERAL } }
-      }
+    const key = `${parsed.action}:${parsed.domain}`
+    const handler = handlers.get(key)
 
-      const tomorrow = new Date()
-      tomorrow.setDate(tomorrow.getDate() + 1)
-      const snoozedUntil = tomorrow.toISOString()
-
-      const updated = await db
-        .update(userPlants)
-        .set({ snoozedUntil })
-        .where(eq(userPlants.id, plantId))
-        .returning()
-
-      if (updated.length === 0) {
-        log.warn({ userPlantId: plantId }, 'Discord button: plant not found for snooze')
-        return { type: CHANNEL_MESSAGE, data: { content: '❌ Plant not found.', flags: EPHEMERAL } }
-      }
-
-      const [plantRow] = await db
-        .select({ commonName: plants.commonName })
-        .from(plants)
-        .where(eq(plants.id, updated[0].plantId))
-
-      const name = updated[0].nickname ?? plantRow?.commonName ?? 'Plant'
-
-      log.info({ userPlantId: plantId, name, snoozedUntil }, 'Plant snoozed via Discord')
-      return {
-        type: UPDATE_MESSAGE,
-        data: {
-          content: `😴 **${name}** snoozed for 1 day.`,
-          components: [],
-        },
-      }
+    if (!handler) {
+      log.warn({ key, customId }, 'Discord button: no handler registered')
+      return { type: PONG }
     }
+
+    return handler(parsed.id, username)
   }
 
   return { type: PONG }

@@ -4,6 +4,29 @@ A running dev diary of sessions working on this project.
 
 ---
 
+DATE      : 2026-06-12
+TIME      : ~local session
+SESSION   : 005
+
+LOG
+---
+1. Fixed deprecated Sass `lighten()` call in RoomsPage.module.scss — replaced with `color.scale()` and added `@use 'sass:color'` import
+2. Planned and designed the household tasks feature (chores tracker) — agreed on Discord-first UX, auto-created members from Discord display names, snooze for scheduled tasks
+3. Decided on `!prefix` commands (e.g. `!dishes`) over slash commands for simplicity; bot replies with confirmation on every command
+4. Updated CLAUDE.md with architecture conventions: button ID format `action:domain:id`, dispatcher registry pattern, shared reminder infrastructure, command registry rules, member auto-creation
+5. Added `members`, `tasks`, and `taskLogs` tables to `db/schema.ts` and generated migration `0002_cynical_tigra.sql`
+6. Refactored `interactions.ts` from hardcoded if-chain to a handler registry dispatching on `action:domain` key; added backward compat for old `water_plant:` / `snooze_plant:` button IDs
+7. Updated `reminders.ts` button IDs to new `water:plant:id` / `snooze:plant:id` format
+8. Added `discord/config.ts` `commandPrefix` (defaults to `!`, configurable via `DISCORD_COMMAND_PREFIX`)
+9. Created `discord/commands.ts` — DB-driven command handler; looks up task by command word, auto-upserts member, inserts `taskLog`, clears snooze on manual completion
+10. Created `discord/gateway.ts` — minimal Discord WebSocket gateway client with heartbeat, auto-reconnect, and 4004 auth-failure guard
+11. Wired gateway into `index.ts` — starts on boot, routes `MESSAGE_CREATE` to `handleCommand`, replies in the originating channel
+12. Fixed test mock in `interactions.test.ts` to include `db.insert` — all 11 tests passing, triage clean
+13. Debugged Discord gateway code 4014 — root cause was Message Content privileged intent not enabled in Discord developer portal; resolved by enabling it
+14. Verified Phase 1 end-to-end: gateway connects, `!dishes` command logs to DB and bot replies with confirmation
+
+---
+
 DATE      : 2026-06-11
 TIME      : ~local session
 SESSION   : 004

@@ -37,3 +37,29 @@ export const wateringEvents = sqliteTable('watering_events', {
   source: text('source', { enum: ['manual', 'discord'] }).notNull(),
   wateredBy: text('watered_by'),
 })
+
+export const members = sqliteTable('members', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  discordId: text('discord_id').notNull().unique(),
+  discordName: text('discord_name').notNull(),
+  displayName: text('display_name').notNull(),
+  createdAt: text('created_at').notNull(),
+})
+
+export const tasks = sqliteTable('tasks', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  command: text('command').notNull().unique(), // the !command word, e.g. "dishes"
+  description: text('description'),
+  intervalDays: integer('interval_days'), // null = on-demand, no reminders
+  snoozedUntil: text('snoozed_until'),
+  createdAt: text('created_at').notNull(),
+})
+
+export const taskLogs = sqliteTable('task_logs', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  taskId: integer('task_id').notNull().references((): AnySQLiteColumn => tasks.id),
+  memberId: integer('member_id').notNull().references((): AnySQLiteColumn => members.id),
+  completedAt: text('completed_at').notNull(),
+  source: text('source', { enum: ['discord', 'web'] }).notNull(),
+})

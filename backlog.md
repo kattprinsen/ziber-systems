@@ -6,6 +6,36 @@
 ## ~~Better UI~~ ✅ Done
 ~~Cards are too large — 12+ plants causes heavy scrolling. Consider a compact list view or a denser grid, with the card detail only on click/expand.~~
 
+## Household Tasks (chores tracker) — Phase 1 done ✅, Phases 2–4 remaining
+
+A chore tracking system where household members log completed tasks via Discord (`!dishes`, `!vacuum`, etc.) or the web UI. Data is tied to named household members auto-created from Discord display names.
+
+**Phase 1 — Shared infrastructure** ✅ Done
+- Added `members`, `tasks`, `taskLogs` tables to schema + migration
+- Refactored `interactions.ts` to a dispatcher registry (button IDs: `action:domain:id`)
+- Created `discord/gateway.ts` — WebSocket gateway for receiving `MESSAGE_CREATE` events
+- Created `discord/commands.ts` — DB-driven `!command` handler with member auto-creation
+- Wired gateway into `index.ts`; bot replies with confirmation in the originating channel
+
+**Phase 2 — Server routes + web UI for task management**
+- `GET/POST /api/tasks` — list and create tasks
+- `DELETE /api/tasks/:id`, `PATCH /api/tasks/:id` — edit/delete
+- `GET /api/members` — list members
+- `PATCH /api/members/:id` — rename a member (web UI)
+- Tasks management page (`/tasks`): add tasks (name, `!command` word, optional interval), edit, delete
+- Members management page or section: see members, rename display names
+
+**Phase 3 — Discord reminders for scheduled tasks**
+- Extend `reminders.ts` to send daily reminders for tasks with `intervalDays` set and overdue/due today
+- Register `complete:task:id` and `snooze:task:id` button handlers in `interactions.ts`
+- On-demand tasks (no interval) get no reminder — Discord `!command` only
+
+**Phase 4 — Activity feed web UI**
+- Recent log view: who did what and when, across both `taskLogs` and `wateringEvents`
+- Filter by member and/or task type
+
+---
+
 ## Logging
 Zero production logging right now. Need structured logs for key operations: adding a plant, watering a plant, Discord reminder sent, errors. Goal: be able to debug failures after the fact.
 

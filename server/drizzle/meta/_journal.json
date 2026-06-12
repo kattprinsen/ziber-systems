@@ -15,6 +15,13 @@
       "when": 1780905517571,
       "tag": "0001_add_watering_events",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1781276672078,
+      "tag": "0002_cynical_tigra",
+      "breakpoints": true
     }
   ]
 }

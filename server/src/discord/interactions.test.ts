@@ -11,11 +11,14 @@ const mocks = vi.hoisted(() => {
   const from = vi.fn(() => ({ where: selectWhere }))
   const select = vi.fn(() => ({ from }))
 
-  return { update, set, updateWhere, returning, select, from, selectWhere }
+  const insertValues = vi.fn().mockResolvedValue([])
+  const insert = vi.fn(() => ({ values: insertValues }))
+
+  return { update, set, updateWhere, returning, select, from, selectWhere, insert, insertValues }
 })
 
 vi.mock('../db/index.js', () => ({
-  db: { update: mocks.update, select: mocks.select },
+  db: { update: mocks.update, select: mocks.select, insert: mocks.insert },
 }))
 
 import { handleInteraction } from './interactions.js'

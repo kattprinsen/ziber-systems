@@ -106,6 +106,7 @@ A shared household password protects the app. The first thing you see is a login
 2. Under **Bot** — copy the token → `DISCORD_BOT_TOKEN`
 3. Under **General Information** — copy the public key → `DISCORD_PUBLIC_KEY`
 4. Invite the bot to your server (OAuth2 → URL Generator, scope `bot`, permission `Send Messages`)
+5. Under **Bot** → **Privileged Gateway Intents** — enable **Message Content Intent** (required for `!prefix` commands)
 5. Copy a channel ID (right-click channel → Copy Channel ID, requires Developer Mode) → `DISCORD_CHANNEL_ID`
 6. Create a free [ngrok](https://ngrok.com) account:
    - Install the [ngrok CLI](https://ngrok.com/download) and log in: `ngrok config add-authtoken <your-token>`
@@ -174,5 +175,5 @@ pm2 startup   # follow the printed command to enable on boot
 
 - **Client**: React 19, TypeScript, Vite 6, react-router-dom, SCSS modules
 - **Server**: Node.js, Hono, Drizzle ORM, SQLite (`better-sqlite3`), node-cron
-- **Discord**: Bot API (REST only, no gateway), Ed25519 signature verification via Node.js `webcrypto`
+- **Discord**: Bot API (REST + WebSocket gateway), Ed25519 signature verification via Node.js `webcrypto`
 - **Monorepo**: npm workspaces (`client/`, `server/`)

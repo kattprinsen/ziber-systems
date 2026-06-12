@@ -17,6 +17,10 @@ import myPlantsRoute from './routes/my-plants.js'
 import discordRoute from './routes/discord.js'
 import roomsRoute from './routes/rooms.js'
 import { sendReminders } from './discord/reminders.js'
+import { startGateway } from './discord/gateway.js'
+import { handleCommand } from './discord/commands.js'
+import { discordConfig } from './discord/config.js'
+import { sendMessage } from './discord/api.js'
 
 const app = new Hono()
 
@@ -41,9 +45,17 @@ if (process.env.NODE_ENV === 'production') {
   app.get('*', serveStatic({ root: './client/dist', rewriteRequestPath: () => '/index.html' }))
 }
 
-// Send watering reminders every day at 8:00am (server local time)
+// Send reminders every day at 8:00am (server local time)
 cron.schedule('0 8 * * *', () => {
   sendReminders().catch((err: unknown) => log.error({ err }, '[Discord] Reminder cron error'))
+})
+
+// Start Discord gateway to handle !prefix commands
+startGateway(async (msg) => {
+  const reply = await handleCommand(discordConfig.commandPrefix, msg)
+  if (reply) {
+    await sendMessage(msg.channel_id, { content: reply })
+  }
 })
 
 serve({ fetch: app.fetch, port: 3000 }, () => {
