@@ -56,7 +56,7 @@ tasksRoute.post('/', async (c) => {
     .insert(tasks)
     .values({
       name: body.name.trim(),
-      command: body.command.trim().toLowerCase(),
+      command: body.command.trim().toLowerCase().replace(/^!+/, ''),
       description: typeof body.description === 'string' ? body.description.trim() || null : null,
       intervalDays,
       createdAt: new Date().toISOString(),

@@ -135,7 +135,7 @@ export function TasksPage() {
                 className={styles.input}
                 placeholder="e.g. dishes"
                 value={addCommand}
-                onChange={(e) => setAddCommand(e.target.value.toLowerCase().replace(/\s/g, ''))}
+                onChange={(e) => setAddCommand(e.target.value.toLowerCase().replace(/[!\s]/g, ''))}
               />
             </div>
           </div>
@@ -206,7 +206,7 @@ export function TasksPage() {
                     <input
                       className={styles.input}
                       value={editCommand}
-                      onChange={(e) => setEditCommand(e.target.value.toLowerCase().replace(/\s/g, ''))}
+                      onChange={(e) => setEditCommand(e.target.value.toLowerCase().replace(/[!\s]/g, ''))}
                     />
                   </div>
                 </div>
