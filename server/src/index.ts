@@ -16,6 +16,8 @@ import plantsRoute from './routes/plants.js'
 import myPlantsRoute from './routes/my-plants.js'
 import discordRoute from './routes/discord.js'
 import roomsRoute from './routes/rooms.js'
+import tasksRoute from './routes/tasks.js'
+import membersRoute from './routes/members.js'
 import { sendReminders } from './discord/reminders.js'
 import { startGateway } from './discord/gateway.js'
 import { handleCommand } from './discord/commands.js'
@@ -36,6 +38,8 @@ app.route('/api/plants', plantsRoute)
 app.route('/api/my-plants', myPlantsRoute)
 app.route('/api/rooms', roomsRoute)
 app.route('/api/discord', discordRoute)
+app.route('/api/tasks', tasksRoute)
+app.route('/api/members', membersRoute)
 
 // In production, serve the built React client and fall back to index.html
 // so React Router handles client-side navigation.

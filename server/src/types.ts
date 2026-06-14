@@ -5,7 +5,7 @@
  * Client-side mirrors live in client/src/api/ and must be kept in sync manually
  * until a shared workspace is introduced.
  */
-import type { plants, rooms, userPlants, wateringEvents } from './db/schema.js'
+import type { plants, rooms, userPlants, wateringEvents, tasks, taskLogs, members } from './db/schema.js'
 
 export type Plant = typeof plants.$inferSelect
 export type InsertPlant = typeof plants.$inferInsert
@@ -26,3 +26,14 @@ export interface MyPlant extends UserPlant {
 }
 
 export type WateringEvent = typeof wateringEvents.$inferSelect
+
+export type Task = typeof tasks.$inferSelect
+export type TaskLog = typeof taskLogs.$inferSelect
+export type Member = typeof members.$inferSelect
+
+export interface TaskHistoryEntry {
+  id: number
+  completedAt: string
+  source: 'discord' | 'web'
+  displayName: string
+}
