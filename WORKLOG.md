@@ -4,6 +4,29 @@ A running dev diary of sessions working on this project.
 
 ---
 
+DATE      : 2026-06-15
+TIME      : ~local session
+SESSION   : 006
+
+LOG
+---
+1. Reviewed BACKLOG.md — picked up Household Tasks Phase 2 (server routes + web UI)
+2. Created feature branch `feature/household-tasks-phase2`
+3. Added `GET/POST/PATCH/DELETE /api/tasks` server routes with a `GET /:id/history` endpoint (joined with members for display names)
+4. Added `GET/PATCH /api/members` server routes for listing and renaming household members
+5. Built Tasks page (`/tasks`) with list+detail layout matching the plants page — click a task to see its full completion history
+6. Built Members page (`/members`) as a standalone page — user correctly pointed out members should be their own page, not a section of the Tasks page
+7. Added Tasks and Members nav links to Layout; wired both routes in App.tsx
+8. Fixed lint error: nested ternary in TasksPage detail panel — split into two separate `&&` expressions
+9. Fixed `!` prefix not being stripped from command input — user typed `!!dinner` and it saved; fixed with `replace(/[!\s]/g, '')` in onChange and `replace(/^!+/, '')` on server
+10. Discussed Discord channel separation — decided one bot posting to two channels is the right approach, no second bot needed
+11. Created `feature/discord-split-channels` branch; replaced single `DISCORD_CHANNEL_ID` with `DISCORD_PLANT_CHANNEL_ID` and `DISCORD_TASK_CHANNEL_ID`, with fallback to old var for backwards compatibility
+12. Fixed duplicate `!command` logging — hot-reload was leaving stale WebSocket connections alive; `startGateway` now closes any existing connection before opening a new one
+13. Verified Discord end-to-end: `!dishes` logs once correctly after the gateway fix
+14. Opened PR #41 (Phase 2 tasks/members UI) and PR #42 (split channels + gateway fix)
+
+---
+
 DATE      : 2026-06-12
 TIME      : ~local session
 SESSION   : 005
