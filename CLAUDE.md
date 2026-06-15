@@ -76,10 +76,12 @@ Server reads from `server/.env` (then falls back to root `.env`):
 ```
 AUTH_PASSWORD           # the password users type on the login screen
 AUTH_SECRET             # the session cookie value (internal, never typed — make it a long random string)
-DISCORD_BOT_TOKEN       # optional — Discord bot token for reminders and commands
-DISCORD_CHANNEL_ID      # optional — channel to post reminders to
-DISCORD_PUBLIC_KEY      # optional — for verifying interaction signatures
-DISCORD_COMMAND_PREFIX  # optional — prefix for text commands, defaults to "!"
+DISCORD_BOT_TOKEN           # optional — Discord bot token for reminders and commands
+DISCORD_PLANT_CHANNEL_ID    # optional — channel for plant watering reminders
+DISCORD_TASK_CHANNEL_ID     # optional — channel for household task reminders
+DISCORD_CHANNEL_ID          # optional — legacy fallback if per-domain channels are not set
+DISCORD_PUBLIC_KEY          # optional — for verifying interaction signatures
+DISCORD_COMMAND_PREFIX      # optional — prefix for text commands, defaults to "!"
 ```
 
 **Note**: `!prefix` commands require the bot to have the **Message Content** privileged intent enabled in the Discord developer portal, and the bot must be invited with the `bot` scope (not just `applications.commands`).

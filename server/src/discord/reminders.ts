@@ -8,8 +8,8 @@ import { sendMessage } from './api.js'
 const DAY_MS = 24 * 60 * 60 * 1000
 
 export async function sendReminders(forceAll = false): Promise<void> {
-  if (!discordConfig.botToken || !discordConfig.channelId) {
-    log.warn('Missing DISCORD_BOT_TOKEN or DISCORD_CHANNEL_ID — reminders skipped')
+  if (!discordConfig.botToken || !discordConfig.plantChannelId) {
+    log.warn('Missing DISCORD_BOT_TOKEN or DISCORD_PLANT_CHANNEL_ID — plant reminders skipped')
     return
   }
 
@@ -53,7 +53,7 @@ export async function sendReminders(forceAll = false): Promise<void> {
       : `overdue by ${overdueDays} day${overdueDays === 1 ? '' : 's'}`
 
     try {
-      await sendMessage(discordConfig.channelId, {
+      await sendMessage(discordConfig.plantChannelId, {
         content: `🌿 **${name}** needs watering!\n*${plant.latinName}* · ${statusText}`,
         components: [
           {
