@@ -19,10 +19,19 @@ const OP_HEARTBEAT_ACK = 11
 
 type MessageHandler = (message: GatewayMessage) => Promise<void>
 
+let activeWs: WebSocket | null = null
+
 export function startGateway(onMessage: MessageHandler): void {
   if (!discordConfig.botToken) {
     log.warn('Missing DISCORD_BOT_TOKEN — Discord gateway not started')
     return
+  }
+  // Close any existing connection before opening a new one — guards against
+  // hot-reload spawning duplicate connections that double-fire commands.
+  if (activeWs) {
+    activeWs.removeAllListeners()
+    activeWs.close()
+    activeWs = null
   }
   connect(onMessage)
 }
@@ -32,6 +41,7 @@ function connect(onMessage: MessageHandler): void {
   let sequence: number | null = null
 
   const ws = new WebSocket(GATEWAY_URL)
+  activeWs = ws
 
   ws.on('message', (data) => {
     let payload: { op: number; d: unknown; s: number | null; t: string | null }
