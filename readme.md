@@ -1,6 +1,6 @@
-# Ziber Systems — Household Plant Tracker
+# Ziber Systems — Household Tracker
 
-Track your household plants, get watering reminders, and manage your collection. Built with React, Hono, Drizzle ORM, and SQLite.
+Track your household plants, log chores, and manage your home. Built with React, Hono, Drizzle ORM, and SQLite.
 
 ## Getting started
 
@@ -46,8 +46,14 @@ Organise your collection by room (e.g. Living room, Bedroom). A room is required
 ### Watering history
 Every watering event is recorded with a timestamp, source (`manual` or `discord`), and — for Discord — the username of who pressed the button. The full history is shown in the detail panel for each plant.
 
+### Household Tasks
+Define chores (e.g. Dishes, Vacuum) with an optional `!command` word and an optional repeat interval. Household members log completions via Discord (`!dishes`) or the web. The **Tasks** page (`/tasks`) shows a list+detail layout — click a task to see its full completion history (who did it, when, via Discord or web). Tasks can be added, edited, and deleted from the same page.
+
+### Household Members
+Members are auto-created the first time they use a Discord command. The **Members** page (`/members`) lists all members and lets you rename their display names.
+
 ### Discord reminders
-A daily scheduled job (8am) sends a Discord message for each plant that is overdue or due today. Each message includes a 💧 button — clicking it marks the plant as watered directly from Discord without opening the app.
+A daily scheduled job (8am) sends a Discord message for each plant that is overdue or due today. Each message includes a 💧 button — clicking it marks the plant as watered directly from Discord without opening the app. Plant and task reminders post to separate channels (`DISCORD_PLANT_CHANNEL_ID` / `DISCORD_TASK_CHANNEL_ID`).
 
 ### Login / authentication
 A shared household password protects the app. The first thing you see is a login screen; a correct password sets a 30-day httpOnly session cookie. Sign out from the nav bar. The Discord interactions endpoint is exempt (it has its own signature verification).
@@ -89,6 +95,21 @@ A shared household password protects the app. The first thing you see is a login
 | `PATCH` | `/api/rooms/:id` | Rename a room (`{ name: string }`) |
 | `DELETE` | `/api/rooms/:id` | Delete a room (unassigns plants first) |
 
+### Tasks
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/tasks` | List all tasks (ordered by name) |
+| `POST` | `/api/tasks` | Create a task (`{ name, command, description?, intervalDays? }`) |
+| `PATCH` | `/api/tasks/:id` | Update task fields |
+| `DELETE` | `/api/tasks/:id` | Delete task and its completion history |
+| `GET` | `/api/tasks/:id/history` | Completion log with member display names (newest first) |
+
+### Members
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/members` | List all household members |
+| `PATCH` | `/api/members/:id` | Rename a member's display name (`{ displayName }`) |
+
 ### Discord
 | Method | Path | Description |
 |---|---|---|
@@ -107,7 +128,7 @@ A shared household password protects the app. The first thing you see is a login
 3. Under **General Information** — copy the public key → `DISCORD_PUBLIC_KEY`
 4. Invite the bot to your server (OAuth2 → URL Generator, scope `bot`, permission `Send Messages`)
 5. Under **Bot** → **Privileged Gateway Intents** — enable **Message Content Intent** (required for `!prefix` commands)
-5. Copy a channel ID (right-click channel → Copy Channel ID, requires Developer Mode) → `DISCORD_CHANNEL_ID`
+5. Copy channel IDs (right-click channel → Copy Channel ID, requires Developer Mode) → `DISCORD_PLANT_CHANNEL_ID` and `DISCORD_TASK_CHANNEL_ID` (or `DISCORD_CHANNEL_ID` as a single fallback for both)
 6. Create a free [ngrok](https://ngrok.com) account:
    - Install the [ngrok CLI](https://ngrok.com/download) and log in: `ngrok config add-authtoken <your-token>`
    - Dashboard → **Domains** → create a free static domain → copy (without `https://`) → `NGROK_DOMAIN`
