@@ -27,11 +27,12 @@ async function verifySignature(rawBody: string, signature: string, timestamp: st
   }
 }
 
-import { sendReminders } from '../discord/reminders.js'
+import { sendPlantReminders, sendTaskReminders } from '../discord/reminders.js'
 
 discordRoute.post('/reminders/trigger', async (c) => {
   const force = c.req.query('force') === 'true'
-  await sendReminders(force)
+  await sendPlantReminders(force)
+  await sendTaskReminders(force)
   return c.json({ ok: true })
 })
 

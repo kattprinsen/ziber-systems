@@ -18,7 +18,7 @@ import discordRoute from './routes/discord.js'
 import roomsRoute from './routes/rooms.js'
 import tasksRoute from './routes/tasks.js'
 import membersRoute from './routes/members.js'
-import { sendReminders } from './discord/reminders.js'
+import { sendPlantReminders, sendTaskReminders } from './discord/reminders.js'
 import { startGateway } from './discord/gateway.js'
 import { handleCommand } from './discord/commands.js'
 import { discordConfig } from './discord/config.js'
@@ -51,7 +51,8 @@ if (process.env.NODE_ENV === 'production') {
 
 // Send reminders every day at 8:00am (server local time)
 cron.schedule('0 8 * * *', () => {
-  sendReminders().catch((err: unknown) => log.error({ err }, '[Discord] Reminder cron error'))
+  sendPlantReminders().catch((err: unknown) => log.error({ err }, '[Discord] Plant reminder cron error'))
+  sendTaskReminders().catch((err: unknown) => log.error({ err }, '[Discord] Task reminder cron error'))
 })
 
 // Start Discord gateway to handle !prefix commands

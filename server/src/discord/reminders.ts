@@ -1,13 +1,13 @@
-import { eq } from 'drizzle-orm'
+import { eq, desc } from 'drizzle-orm'
 import { db } from '../db/index.js'
 import { log } from '../logger.js'
-import { userPlants, plants } from '../db/schema.js'
+import { userPlants, plants, tasks, taskLogs } from '../db/schema.js'
 import { discordConfig } from './config.js'
 import { sendMessage } from './api.js'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-export async function sendReminders(forceAll = false): Promise<void> {
+export async function sendPlantReminders(forceAll = false): Promise<void> {
   if (!discordConfig.botToken || !discordConfig.plantChannelId) {
     log.warn('Missing DISCORD_BOT_TOKEN or DISCORD_PLANT_CHANNEL_ID — plant reminders skipped')
     return
@@ -26,7 +26,6 @@ export async function sendReminders(forceAll = false): Promise<void> {
     .from(userPlants)
     .innerJoin(plants, eq(userPlants.plantId, plants.id))
 
-  // Include overdue + due today (by end of day)
   const endOfToday = new Date()
   endOfToday.setHours(23, 59, 59, 999)
 
@@ -37,11 +36,11 @@ export async function sendReminders(forceAll = false): Promise<void> {
   })
 
   if (due.length === 0) {
-    log.info('No plants due today — no reminder sent')
+    log.info('No plants due today — no plant reminder sent')
     return
   }
 
-  log.info({ count: due.length }, 'Sending watering reminders')
+  log.info({ count: due.length }, 'Sending plant watering reminders')
 
   for (const plant of due) {
     const name = plant.nickname ?? plant.commonName
@@ -75,12 +74,96 @@ export async function sendReminders(forceAll = false): Promise<void> {
           },
         ],
       })
-      log.info({ userPlantId: plant.id, name, statusText }, 'Reminder sent')
+      log.info({ userPlantId: plant.id, name, statusText }, 'Plant reminder sent')
     } catch (err) {
-      log.error({ err, userPlantId: plant.id, name }, 'Failed to send reminder')
+      log.error({ err, userPlantId: plant.id, name }, 'Failed to send plant reminder')
     }
 
-    // Small delay between messages to stay within Discord rate limits
+    await new Promise((resolve) => setTimeout(resolve, 500))
+  }
+}
+
+export async function sendTaskReminders(forceAll = false): Promise<void> {
+  if (!discordConfig.botToken || !discordConfig.taskChannelId) {
+    log.warn('Missing DISCORD_BOT_TOKEN or DISCORD_TASK_CHANNEL_ID — task reminders skipped')
+    return
+  }
+
+  // Only scheduled tasks (intervalDays set) get reminders
+  const scheduledTasks = await db
+    .select()
+    .from(tasks)
+    .where(eq(tasks.intervalDays, tasks.intervalDays)) // fetch all, filter below
+
+  const endOfToday = new Date()
+  endOfToday.setHours(23, 59, 59, 999)
+
+  const due = []
+
+  for (const task of scheduledTasks) {
+    if (task.intervalDays === null) continue // on-demand tasks — no reminder
+
+    // Respect snooze
+    if (!forceAll && task.snoozedUntil && new Date(task.snoozedUntil) > new Date()) continue
+
+    // Find the most recent completion
+    const [lastLog] = await db
+      .select({ completedAt: taskLogs.completedAt })
+      .from(taskLogs)
+      .where(eq(taskLogs.taskId, task.id))
+      .orderBy(desc(taskLogs.completedAt))
+      .limit(1)
+
+    // Use last completion or createdAt as baseline
+    const base = lastLog?.completedAt ?? task.createdAt
+    const dueMs = new Date(base).getTime() + task.intervalDays * DAY_MS
+
+    if (forceAll || dueMs <= endOfToday.getTime()) {
+      due.push({ task, dueMs })
+    }
+  }
+
+  if (due.length === 0) {
+    log.info('No tasks due today — no task reminder sent')
+    return
+  }
+
+  log.info({ count: due.length }, 'Sending task reminders')
+
+  for (const { task, dueMs } of due) {
+    const overdueDays = Math.ceil((Date.now() - dueMs) / DAY_MS)
+    const statusText = overdueDays <= 0
+      ? 'due today'
+      : `overdue by ${overdueDays} day${overdueDays === 1 ? '' : 's'}`
+
+    try {
+      await sendMessage(discordConfig.taskChannelId, {
+        content: `🏠 **${task.name}** needs to be done!\n${task.description ? `*${task.description}* · ` : ''}${statusText}`,
+        components: [
+          {
+            type: 1,
+            components: [
+              {
+                type: 2,
+                style: 1,
+                label: '✅ Mark as done',
+                custom_id: `complete:task:${task.id}`,
+              },
+              {
+                type: 2,
+                style: 2,
+                label: '😴 Snooze 1 day',
+                custom_id: `snooze:task:${task.id}`,
+              },
+            ],
+          },
+        ],
+      })
+      log.info({ taskId: task.id, name: task.name, statusText }, 'Task reminder sent')
+    } catch (err) {
+      log.error({ err, taskId: task.id, name: task.name }, 'Failed to send task reminder')
+    }
+
     await new Promise((resolve) => setTimeout(resolve, 500))
   }
 }
