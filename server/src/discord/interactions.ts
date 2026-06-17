@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { db } from '../db/index.js'
 import { log } from '../logger.js'
-import { userPlants, plants, wateringEvents } from '../db/schema.js'
+import { userPlants, plants, wateringEvents, tasks, taskLogs, members } from '../db/schema.js'
 
 interface DiscordInteraction {
   type: number
@@ -138,6 +138,90 @@ registerButtonHandler('snooze', 'plant', async (id, _username) => {
   return {
     type: UPDATE_MESSAGE,
     data: { content: `😴 **${name}** snoozed for 1 day.`, components: [] },
+  }
+})
+
+// Task: complete
+registerButtonHandler('complete', 'task', async (id, username) => {
+  const taskId = parseInt(id, 10)
+  if (isNaN(taskId)) {
+    log.warn({ id }, 'Discord button: invalid task ID')
+    return { type: CHANNEL_MESSAGE, data: { content: '❌ Invalid task ID.', flags: EPHEMERAL } }
+  }
+
+  const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId))
+  if (!task) {
+    log.warn({ taskId }, 'Discord button: task not found')
+    return { type: CHANNEL_MESSAGE, data: { content: '❌ Task not found.', flags: EPHEMERAL } }
+  }
+
+  // Look up or create member from username
+  let member: { id: number; displayName: string } | null = null
+  if (username) {
+    const existing = await db.select().from(members).where(eq(members.discordName, username))
+    if (existing.length > 0) {
+      member = existing[0]
+    } else {
+      const [created] = await db
+        .insert(members)
+        .values({ discordId: username, discordName: username, displayName: username, createdAt: new Date().toISOString() })
+        .returning()
+      member = created
+    }
+  }
+
+  if (!member) {
+    return { type: CHANNEL_MESSAGE, data: { content: '❌ Could not identify user.', flags: EPHEMERAL } }
+  }
+
+  await db.insert(taskLogs).values({
+    taskId,
+    memberId: member.id,
+    completedAt: new Date().toISOString(),
+    source: 'discord',
+  })
+
+  // Clear snooze on completion
+  if (task.snoozedUntil) {
+    await db.update(tasks).set({ snoozedUntil: null }).where(eq(tasks.id, taskId))
+  }
+
+  log.info({ taskId, name: task.name, username }, 'Task completed via Discord button')
+
+  return {
+    type: UPDATE_MESSAGE,
+    data: { content: `✅ **${task.name}** marked as done by ${member.displayName}!`, components: [] },
+  }
+})
+
+// Task: snooze
+registerButtonHandler('snooze', 'task', async (id, _username) => {
+  const taskId = parseInt(id, 10)
+  if (isNaN(taskId)) {
+    log.warn({ id }, 'Discord button: invalid task ID for snooze')
+    return { type: CHANNEL_MESSAGE, data: { content: '❌ Invalid task ID.', flags: EPHEMERAL } }
+  }
+
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const snoozedUntil = tomorrow.toISOString()
+
+  const [updated] = await db
+    .update(tasks)
+    .set({ snoozedUntil })
+    .where(eq(tasks.id, taskId))
+    .returning()
+
+  if (!updated) {
+    log.warn({ taskId }, 'Discord button: task not found for snooze')
+    return { type: CHANNEL_MESSAGE, data: { content: '❌ Task not found.', flags: EPHEMERAL } }
+  }
+
+  log.info({ taskId, name: updated.name, snoozedUntil }, 'Task snoozed via Discord button')
+
+  return {
+    type: UPDATE_MESSAGE,
+    data: { content: `😴 **${updated.name}** snoozed for 1 day.`, components: [] },
   }
 })
 
