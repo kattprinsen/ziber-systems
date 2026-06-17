@@ -4,6 +4,26 @@ A running dev diary of sessions working on this project.
 
 ---
 
+DATE      : 2026-06-17
+TIME      : ~local session
+SESSION   : 007
+
+LOG
+---
+1. Picked up Household Tasks Phase 3 from BACKLOG.md — Discord reminders for scheduled tasks
+2. Created feature branch `feature/household-tasks-phase3` from an up-to-date main
+3. Decided `createdAt` as the baseline for never-completed tasks so new tasks don't spam the channel immediately
+4. Renamed `sendReminders` → `sendPlantReminders` for clarity and added `sendTaskReminders`
+5. `sendTaskReminders` queries all tasks with `intervalDays` set, finds last completion from `taskLogs` (falls back to `createdAt`), skips snoozed and on-demand tasks
+6. Registered `complete:task` button handler in `interactions.ts` — logs to `taskLogs`, auto-creates member from Discord username if not seen before, clears snooze on completion
+7. Registered `snooze:task` button handler — sets `snoozedUntil` to tomorrow on the task
+8. Updated cron in `index.ts` to call both `sendPlantReminders` and `sendTaskReminders`
+9. Updated manual trigger endpoint `/api/discord/reminders/trigger` to fire both reminder types
+10. Triage passed clean; opened PR #44
+11. Deployed to RPi — confirmed all smooth in production
+
+---
+
 DATE      : 2026-06-15
 TIME      : ~local session
 SESSION   : 006
