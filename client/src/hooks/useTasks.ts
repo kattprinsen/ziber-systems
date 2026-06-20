@@ -4,8 +4,8 @@ import { fetchTasks, createTask, updateTask, deleteTask, type Task } from '../ap
 interface UseTasksResult {
   tasks: Task[]
   loading: boolean
-  create: (data: { name: string; command: string; description?: string; intervalDays?: number | null }) => Promise<void>
-  update: (id: number, data: Partial<{ name: string; command: string; description: string | null; intervalDays: number | null }>) => Promise<void>
+  create: (data: { name: string; command: string; description?: string; intervalDays?: number | null; dayOfWeek?: number | null }) => Promise<void>
+  update: (id: number, data: Partial<{ name: string; command: string; description: string | null; intervalDays: number | null; dayOfWeek: number | null }>) => Promise<void>
   remove: (id: number) => Promise<void>
   reload: () => void
 }

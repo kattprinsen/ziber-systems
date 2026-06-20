@@ -99,14 +99,26 @@ export async function sendTaskReminders(forceAll = false): Promise<void> {
   endOfToday.setHours(23, 59, 59, 999)
 
   const due = []
+  const todayDow = new Date().getDay() // 0=Sun … 6=Sat
 
   for (const task of scheduledTasks) {
-    if (task.intervalDays === null) continue // on-demand tasks — no reminder
+    const isIntervalBased = task.intervalDays !== null
+    const isDayOfWeekBased = task.dayOfWeek !== null
+
+    if (!isIntervalBased && !isDayOfWeekBased) continue // on-demand — no reminder
 
     // Respect snooze
     if (!forceAll && task.snoozedUntil && new Date(task.snoozedUntil) > new Date()) continue
 
-    // Find the most recent completion
+    if (isDayOfWeekBased) {
+      // Day-of-week task: remind on the matching weekday
+      if (forceAll || task.dayOfWeek === todayDow) {
+        due.push({ task, dueMs: Date.now() })
+      }
+      continue
+    }
+
+    // Interval-based task
     const [lastLog] = await db
       .select({ completedAt: taskLogs.completedAt })
       .from(taskLogs)
@@ -114,9 +126,8 @@ export async function sendTaskReminders(forceAll = false): Promise<void> {
       .orderBy(desc(taskLogs.completedAt))
       .limit(1)
 
-    // Use last completion or createdAt as baseline
     const base = lastLog?.completedAt ?? task.createdAt
-    const dueMs = new Date(base).getTime() + task.intervalDays * DAY_MS
+    const dueMs = new Date(base).getTime() + task.intervalDays! * DAY_MS
 
     if (forceAll || dueMs <= endOfToday.getTime()) {
       due.push({ task, dueMs })
@@ -132,9 +143,14 @@ export async function sendTaskReminders(forceAll = false): Promise<void> {
 
   for (const { task, dueMs } of due) {
     const overdueDays = Math.ceil((Date.now() - dueMs) / DAY_MS)
-    const statusText = overdueDays <= 0
-      ? 'due today'
-      : `overdue by ${overdueDays} day${overdueDays === 1 ? '' : 's'}`
+    let statusText: string
+    if (task.dayOfWeek !== null) {
+      statusText = 'scheduled for today'
+    } else if (overdueDays <= 0) {
+      statusText = 'due today'
+    } else {
+      statusText = `overdue by ${overdueDays} day${overdueDays === 1 ? '' : 's'}`
+    }
 
     try {
       await sendMessage(discordConfig.taskChannelId, {

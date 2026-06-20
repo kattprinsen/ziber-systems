@@ -3,11 +3,22 @@ import { useTasks } from '../../hooks/useTasks'
 import { fetchTaskHistory, type TaskHistoryEntry } from '../../api/tasks'
 import styles from './TasksPage.module.scss'
 
-function formatInterval(days: number | null): string {
-  if (days === null) return 'On demand'
-  if (days === 1) return 'Daily'
-  if (days === 7) return 'Weekly'
-  return `Every ${days} days`
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+function formatSchedule(task: { intervalDays: number | null; dayOfWeek: number | null }): string {
+  if (task.dayOfWeek !== null) return `Every ${DAY_NAMES[task.dayOfWeek]}`
+  if (task.intervalDays === null) return 'On demand'
+  if (task.intervalDays === 1) return 'Daily'
+  if (task.intervalDays === 7) return 'Weekly'
+  return `Every ${task.intervalDays} days`
+}
+
+type ScheduleMode = 'ondemand' | 'interval' | 'dayofweek'
+
+const SCHEDULE_MODE_LABELS: Record<ScheduleMode, string> = {
+  ondemand: 'On demand',
+  interval: 'Interval',
+  dayofweek: 'Day of week',
 }
 
 export function TasksPage() {
@@ -21,14 +32,18 @@ export function TasksPage() {
   const [addName, setAddName] = useState('')
   const [addCommand, setAddCommand] = useState('')
   const [addDescription, setAddDescription] = useState('')
+  const [addScheduleMode, setAddScheduleMode] = useState<ScheduleMode>('ondemand')
   const [addInterval, setAddInterval] = useState('')
+  const [addDayOfWeek, setAddDayOfWeek] = useState(0)
   const [addError, setAddError] = useState<string | null>(null)
 
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editName, setEditName] = useState('')
   const [editCommand, setEditCommand] = useState('')
   const [editDescription, setEditDescription] = useState('')
+  const [editScheduleMode, setEditScheduleMode] = useState<ScheduleMode>('ondemand')
   const [editInterval, setEditInterval] = useState('')
+  const [editDayOfWeek, setEditDayOfWeek] = useState(0)
   const [editError, setEditError] = useState<string | null>(null)
 
   const selectedTask = tasks.find((t) => t.id === selectedId) ?? null
@@ -53,15 +68,24 @@ export function TasksPage() {
     const name = addName.trim()
     const command = addCommand.trim()
     if (!name || !command) { setAddError('Name and command are required.'); return }
-    const intervalDays = addInterval ? Number(addInterval) : null
-    if (addInterval && (!Number.isInteger(intervalDays) || (intervalDays as number) < 1)) {
-      setAddError('Interval must be a positive whole number.')
-      return
+
+    let intervalDays: number | null = null
+    let dayOfWeek: number | null = null
+    if (addScheduleMode === 'interval') {
+      intervalDays = addInterval ? Number(addInterval) : null
+      if (!addInterval || !Number.isInteger(intervalDays) || (intervalDays as number) < 1) {
+        setAddError('Interval must be a positive whole number.')
+        return
+      }
+    } else if (addScheduleMode === 'dayofweek') {
+      dayOfWeek = addDayOfWeek
     }
+
     setAddError(null)
     try {
-      await create({ name, command, description: addDescription.trim() || undefined, intervalDays })
-      setAddName(''); setAddCommand(''); setAddDescription(''); setAddInterval('')
+      await create({ name, command, description: addDescription.trim() || undefined, intervalDays, dayOfWeek })
+      setAddName(''); setAddCommand(''); setAddDescription('')
+      setAddInterval(''); setAddDayOfWeek(0); setAddScheduleMode('ondemand')
       setShowAddForm(false)
     } catch {
       setAddError('Failed to create task. Command may already be taken.')
@@ -75,7 +99,19 @@ export function TasksPage() {
     setEditName(task.name)
     setEditCommand(task.command)
     setEditDescription(task.description ?? '')
-    setEditInterval(task.intervalDays !== null ? String(task.intervalDays) : '')
+    if (task.dayOfWeek !== null) {
+      setEditScheduleMode('dayofweek')
+      setEditDayOfWeek(task.dayOfWeek)
+      setEditInterval('')
+    } else if (task.intervalDays !== null) {
+      setEditScheduleMode('interval')
+      setEditInterval(String(task.intervalDays))
+      setEditDayOfWeek(0)
+    } else {
+      setEditScheduleMode('ondemand')
+      setEditInterval('')
+      setEditDayOfWeek(0)
+    }
     setEditError(null)
   }
 
@@ -85,14 +121,22 @@ export function TasksPage() {
     const name = editName.trim()
     const command = editCommand.trim()
     if (!name || !command) { setEditError('Name and command are required.'); return }
-    const intervalDays = editInterval ? Number(editInterval) : null
-    if (editInterval && (!Number.isInteger(intervalDays) || (intervalDays as number) < 1)) {
-      setEditError('Interval must be a positive whole number.')
-      return
+
+    let intervalDays: number | null = null
+    let dayOfWeek: number | null = null
+    if (editScheduleMode === 'interval') {
+      intervalDays = editInterval ? Number(editInterval) : null
+      if (!editInterval || !Number.isInteger(intervalDays) || (intervalDays as number) < 1) {
+        setEditError('Interval must be a positive whole number.')
+        return
+      }
+    } else if (editScheduleMode === 'dayofweek') {
+      dayOfWeek = editDayOfWeek
     }
+
     setEditError(null)
     try {
-      await update(editingId, { name, command, description: editDescription.trim() || null, intervalDays })
+      await update(editingId, { name, command, description: editDescription.trim() || null, intervalDays, dayOfWeek })
       setEditingId(null)
     } catch {
       setEditError('Failed to update task. Command may already be taken.')
@@ -149,16 +193,47 @@ export function TasksPage() {
             />
           </div>
           <div className={styles.formRow}>
-            <label className={styles.label}>Interval (days)</label>
-            <input
-              className={styles.input}
-              placeholder="Leave blank for on-demand"
-              type="number"
-              min={1}
-              value={addInterval}
-              onChange={(e) => setAddInterval(e.target.value)}
-            />
+            <label className={styles.label}>Schedule</label>
+            <div className={styles.scheduleModes}>
+              {(['ondemand', 'interval', 'dayofweek'] as ScheduleMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  className={`${styles.modeButton} ${addScheduleMode === mode ? styles.modeButtonActive : ''}`}
+                  onClick={() => setAddScheduleMode(mode)}
+                >
+                  {SCHEDULE_MODE_LABELS[mode]}
+                </button>
+              ))}
+            </div>
           </div>
+          {addScheduleMode === 'interval' && (
+            <div className={styles.formRow}>
+              <label className={styles.label}>Every (days)</label>
+              <input
+                className={styles.input}
+                placeholder="e.g. 7"
+                type="number"
+                min={1}
+                value={addInterval}
+                onChange={(e) => setAddInterval(e.target.value)}
+              />
+            </div>
+          )}
+          {addScheduleMode === 'dayofweek' && (
+            <div className={styles.formRow}>
+              <label className={styles.label}>Day</label>
+              <select
+                className={styles.input}
+                value={addDayOfWeek}
+                onChange={(e) => setAddDayOfWeek(Number(e.target.value))}
+              >
+                {DAY_NAMES.map((day, i) => (
+                  <option key={i} value={i}>{day}</option>
+                ))}
+              </select>
+            </div>
+          )}
           {addError && <p className={styles.error}>{addError}</p>}
           <div className={styles.formActions}>
             <button className={styles.button} type="submit">Create</button>
@@ -215,16 +290,47 @@ export function TasksPage() {
                   <input className={styles.input} value={editDescription} onChange={(e) => setEditDescription(e.target.value)} />
                 </div>
                 <div className={styles.formRow}>
-                  <label className={styles.label}>Interval (days)</label>
-                  <input
-                    className={styles.input}
-                    type="number"
-                    min={1}
-                    placeholder="Leave blank for on-demand"
-                    value={editInterval}
-                    onChange={(e) => setEditInterval(e.target.value)}
-                  />
+                  <label className={styles.label}>Schedule</label>
+                  <div className={styles.scheduleModes}>
+                    {(['ondemand', 'interval', 'dayofweek'] as ScheduleMode[]).map((mode) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        className={`${styles.modeButton} ${editScheduleMode === mode ? styles.modeButtonActive : ''}`}
+                        onClick={() => setEditScheduleMode(mode)}
+                      >
+                        {SCHEDULE_MODE_LABELS[mode]}
+                      </button>
+                    ))}
+                  </div>
                 </div>
+                {editScheduleMode === 'interval' && (
+                  <div className={styles.formRow}>
+                    <label className={styles.label}>Every (days)</label>
+                    <input
+                      className={styles.input}
+                      type="number"
+                      min={1}
+                      placeholder="e.g. 7"
+                      value={editInterval}
+                      onChange={(e) => setEditInterval(e.target.value)}
+                    />
+                  </div>
+                )}
+                {editScheduleMode === 'dayofweek' && (
+                  <div className={styles.formRow}>
+                    <label className={styles.label}>Day</label>
+                    <select
+                      className={styles.input}
+                      value={editDayOfWeek}
+                      onChange={(e) => setEditDayOfWeek(Number(e.target.value))}
+                    >
+                      {DAY_NAMES.map((day, i) => (
+                        <option key={i} value={i}>{day}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 {editError && <p className={styles.error}>{editError}</p>}
                 <div className={styles.formActions}>
                   <button className={styles.button} type="submit">Save</button>
@@ -248,7 +354,7 @@ export function TasksPage() {
                 <dl className={styles.detailMeta}>
                   <div>
                     <dt>Schedule</dt>
-                    <dd>{formatInterval(selectedTask.intervalDays)}</dd>
+                    <dd>{formatSchedule(selectedTask)}</dd>
                   </div>
                 </dl>
 
