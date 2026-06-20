@@ -292,6 +292,42 @@
   color: $color-text-muted;
 }
 
+// ─── Schedule mode toggle ─────────────────────────────────────────────────────
+
+.scheduleModes {
+  display: flex;
+  gap: $space-1;
+  flex: 1;
+}
+
+.modeButton {
+  padding: $space-1 $space-3;
+  background: transparent;
+  color: $color-text-muted;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  font-family: $font-family;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+
+  &:hover {
+    background: $color-background;
+    color: $color-text;
+  }
+}
+
+.modeButtonActive {
+  background: $color-primary;
+  color: #ffffff;
+  border-color: $color-primary;
+
+  &:hover {
+    background: $color-primary-hover;
+    border-color: $color-primary-hover;
+  }
+}
+
 // ─── Buttons ──────────────────────────────────────────────────────────────────
 
 .button {

@@ -51,7 +51,8 @@ export const tasks = sqliteTable('tasks', {
   name: text('name').notNull(),
   command: text('command').notNull().unique(), // the !command word, e.g. "dishes"
   description: text('description'),
-  intervalDays: integer('interval_days'), // null = on-demand, no reminders
+  intervalDays: integer('interval_days'), // null = on-demand or day-of-week; mutually exclusive with dayOfWeek
+  dayOfWeek: integer('day_of_week'), // 0=Sun … 6=Sat; null = interval-based or on-demand
   snoozedUntil: text('snoozed_until'),
   createdAt: text('created_at').notNull(),
 })

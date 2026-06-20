@@ -5,6 +5,7 @@ export interface Task {
   command: string
   description: string | null
   intervalDays: number | null
+  dayOfWeek: number | null // 0=Sun … 6=Sat; mutually exclusive with intervalDays
   snoozedUntil: string | null
   createdAt: string
 }
@@ -33,6 +34,7 @@ export async function createTask(data: {
   command: string
   description?: string
   intervalDays?: number | null
+  dayOfWeek?: number | null
 }): Promise<Task> {
   const res = await fetch('/api/tasks', {
     method: 'POST',
@@ -45,7 +47,7 @@ export async function createTask(data: {
 
 export async function updateTask(
   id: number,
-  data: Partial<{ name: string; command: string; description: string | null; intervalDays: number | null }>,
+  data: Partial<{ name: string; command: string; description: string | null; intervalDays: number | null; dayOfWeek: number | null }>,
 ): Promise<Task> {
   const res = await fetch(`/api/tasks/${id}`, {
     method: 'PATCH',
