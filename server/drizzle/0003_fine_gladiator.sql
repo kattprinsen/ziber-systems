@@ -1,0 +1,1 @@
+ALTER TABLE `tasks` ADD `day_of_week` integer;

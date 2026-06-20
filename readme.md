@@ -53,7 +53,7 @@ Define chores (e.g. Dishes, Vacuum) with an optional `!command` word and an opti
 Members are auto-created the first time they use a Discord command. The **Members** page (`/members`) lists all members and lets you rename their display names.
 
 ### Discord reminders
-A daily scheduled job (8am) sends a Discord message for each plant that is overdue or due today. Each message includes a 💧 button — clicking it marks the plant as watered directly from Discord without opening the app. Plant and task reminders post to separate channels (`DISCORD_PLANT_CHANNEL_ID` / `DISCORD_TASK_CHANNEL_ID`).
+A daily scheduled job (8am) sends reminders for both plants and household tasks. Plant reminders include 💧 water and 😴 snooze buttons; task reminders include ✅ done and 😴 snooze buttons — all actionable directly from Discord without opening the app. On-demand tasks (no interval set) are never reminded. Plant and task reminders post to separate channels (`DISCORD_PLANT_CHANNEL_ID` / `DISCORD_TASK_CHANNEL_ID`). Reminders can also be triggered manually via `POST /api/discord/reminders/trigger`.
 
 ### Login / authentication
 A shared household password protects the app. The first thing you see is a login screen; a correct password sets a 30-day httpOnly session cookie. Sign out from the nav bar. The Discord interactions endpoint is exempt (it has its own signature verification).

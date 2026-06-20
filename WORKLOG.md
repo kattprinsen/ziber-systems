@@ -4,6 +4,25 @@ A running dev diary of sessions working on this project.
 
 ---
 
+DATE      : 2026-06-20
+TIME      : ~local session
+SESSION   : 008
+
+LOG
+---
+1. User spotted that task scheduling only supported "every N days" — no way to pin a task to a specific weekday (e.g. vacuum every Sunday)
+2. Added `day_of_week` (integer 0–6, nullable) column to the `tasks` table; generated drizzle migration `0003_fine_gladiator.sql`
+3. Updated `server/src/routes/tasks.ts` — new `parseSchedule` helper enforces mutual exclusivity between `intervalDays` and `dayOfWeek` on both POST and PATCH
+4. Updated `server/src/discord/reminders.ts` — day-of-week tasks fire when today's weekday matches; show "scheduled for today" instead of an overdue count; snooze already sets +1 day so no change needed there
+5. Replaced the interval number input in the Tasks form with a three-way schedule toggle: **On demand / Interval / Day of week**, with a weekday dropdown when "Day of week" is selected
+6. Updated `formatInterval` → `formatSchedule` in the detail view to render "Every Sunday" etc.
+7. Fixed three lint errors (`no-nested-ternary`) — reminders status text split into if/else; JSX labels extracted into `SCHEDULE_MODE_LABELS` map
+8. Discussed member sync bug — wife exists in local DB but not prod; root cause is Discord's single Interactions Endpoint URL: dev tunnel hijacks all interactions while active, so her member row was never written to the Pi's DB
+9. Agreed members management UI is the right long-term fix; deferred to a later phase
+10. Opened PR for day-of-week scheduling feature
+
+---
+
 DATE      : 2026-06-17
 TIME      : ~local session
 SESSION   : 007
