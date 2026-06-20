@@ -47,7 +47,7 @@ Organise your collection by room (e.g. Living room, Bedroom). A room is required
 Every watering event is recorded with a timestamp, source (`manual` or `discord`), and — for Discord — the username of who pressed the button. The full history is shown in the detail panel for each plant.
 
 ### Household Tasks
-Define chores (e.g. Dishes, Vacuum) with an optional `!command` word and an optional repeat interval. Household members log completions via Discord (`!dishes`) or the web. The **Tasks** page (`/tasks`) shows a list+detail layout — click a task to see its full completion history (who did it, when, via Discord or web). Tasks can be added, edited, and deleted from the same page.
+Define chores (e.g. Dishes, Vacuum) with an optional `!command` word and a flexible schedule. Three scheduling modes are available: **On demand** (no reminders), **Interval** (every N days), or **Day of week** (e.g. every Sunday). Household members log completions via Discord (`!dishes`) or the web. The **Tasks** page (`/tasks`) shows a list+detail layout — click a task to see its full completion history (who did it, when, via Discord or web). Tasks can be added, edited, and deleted from the same page.
 
 ### Household Members
 Members are auto-created the first time they use a Discord command. The **Members** page (`/members`) lists all members and lets you rename their display names.
@@ -99,7 +99,7 @@ A shared household password protects the app. The first thing you see is a login
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/api/tasks` | List all tasks (ordered by name) |
-| `POST` | `/api/tasks` | Create a task (`{ name, command, description?, intervalDays? }`) |
+| `POST` | `/api/tasks` | Create a task (`{ name, command, description?, intervalDays?, dayOfWeek? }`) |
 | `PATCH` | `/api/tasks/:id` | Update task fields |
 | `DELETE` | `/api/tasks/:id` | Delete task and its completion history |
 | `GET` | `/api/tasks/:id/history` | Completion log with member display names (newest first) |
