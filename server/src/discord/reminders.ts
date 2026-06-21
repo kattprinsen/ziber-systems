@@ -89,11 +89,7 @@ export async function sendTaskReminders(forceAll = false): Promise<void> {
     return
   }
 
-  // Only scheduled tasks (intervalDays set) get reminders
-  const scheduledTasks = await db
-    .select()
-    .from(tasks)
-    .where(eq(tasks.intervalDays, tasks.intervalDays)) // fetch all, filter below
+  const scheduledTasks = await db.select().from(tasks)
 
   const endOfToday = new Date()
   endOfToday.setHours(23, 59, 59, 999)
