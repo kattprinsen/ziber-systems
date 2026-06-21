@@ -2,11 +2,15 @@ import { Hono } from 'hono'
 import { webcrypto } from 'crypto'
 import { discordConfig } from '../discord/config.js'
 import { handleInteraction } from '../discord/interactions.js'
+import { log } from '../logger.js'
 
 const discordRoute = new Hono()
 
 async function verifySignature(rawBody: string, signature: string, timestamp: string): Promise<boolean> {
-  if (!discordConfig.publicKey) return false
+  if (!discordConfig.publicKey) {
+    log.warn('DISCORD_PUBLIC_KEY not set — all interactions will be rejected')
+    return false
+  }
   try {
     const key = await webcrypto.subtle.importKey(
       'raw',
@@ -41,11 +45,15 @@ discordRoute.post('/interactions', async (c) => {
   const signature = c.req.header('x-signature-ed25519') ?? ''
   const timestamp = c.req.header('x-signature-timestamp') ?? ''
 
+  log.info('Discord interaction received')
+
   if (!await verifySignature(rawBody, signature, timestamp)) {
+    log.warn({ signature: signature.slice(0, 16) }, 'Discord interaction rejected — invalid signature')
     return c.text('Invalid request signature', 401)
   }
 
   const body = JSON.parse(rawBody)
+  log.info({ type: body.type, customId: body.data?.custom_id }, 'Discord interaction verified, dispatching')
   const response = await handleInteraction(body)
   return c.json(response)
 })
