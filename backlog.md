@@ -36,6 +36,9 @@ A chore tracking system where household members log completed tasks via Discord 
 
 ---
 
+## Versioning + release cycle
+Show the app version (from `package.json`) in the UI footer. Use `npm version patch/minor/major` to bump + tag before deploying to the Pi, so you can always see what's running without SSH-ing in.
+
 ## Logging
 Zero production logging right now. Need structured logs for key operations: adding a plant, watering a plant, Discord reminder sent, errors. Goal: be able to debug failures after the fact.
 
