@@ -23,6 +23,9 @@ export const Layout = ({ onLogout }: LayoutProps) => (
       <NavLink to="/members" className={({ isActive }) => (isActive ? styles.navLinkActive : styles.navLink)}>
         Members
       </NavLink>
+      <NavLink to="/activity" className={({ isActive }) => (isActive ? styles.navLinkActive : styles.navLink)}>
+        Activity
+      </NavLink>
       <button className={styles.logoutButton} onClick={onLogout} type="button">
         Sign out
       </button>

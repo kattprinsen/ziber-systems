@@ -8,6 +8,7 @@ import { EditPlantPage } from './pages/EditPlantPage/EditPlantPage'
 import { RoomsPage } from './pages/RoomsPage/RoomsPage'
 import { TasksPage } from './pages/TasksPage/TasksPage'
 import { MembersPage } from './pages/MembersPage/MembersPage'
+import { ActivityPage } from './pages/ActivityPage/ActivityPage'
 import LoginPage from './pages/LoginPage/LoginPage'
 import { useMyPlants } from './hooks/useMyPlants'
 import { useRooms } from './hooks/useRooms'
@@ -293,6 +294,7 @@ function App() {
         <Route path="/rooms" element={authed ? <RoomsPage /> : <Navigate to="/login" replace />} />
         <Route path="/tasks" element={authed ? <TasksPage /> : <Navigate to="/login" replace />} />
         <Route path="/members" element={authed ? <MembersPage /> : <Navigate to="/login" replace />} />
+        <Route path="/activity" element={authed ? <ActivityPage /> : <Navigate to="/login" replace />} />
       </Route>
     </Routes>
   )
