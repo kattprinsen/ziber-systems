@@ -30,9 +30,9 @@ A chore tracking system where household members log completed tasks via Discord 
 - Register `complete:task:id` and `snooze:task:id` button handlers in `interactions.ts`
 - On-demand tasks (no interval) get no reminder — Discord `!command` only
 
-**Phase 4 — Activity feed web UI**
-- Recent log view: who did what and when, across both `taskLogs` and `wateringEvents`
-- Filter by member and/or task type
+**~~Phase 4 — Activity feed web UI~~ ✅ Done**
+- ~~Recent log view: who did what and when, across both `taskLogs` and `wateringEvents`~~
+- ~~Filter by member and/or task type~~
 
 ---
 
