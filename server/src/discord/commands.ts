@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { eq, asc } from 'drizzle-orm'
 import { db } from '../db/index.js'
 import { log } from '../logger.js'
 import { tasks, taskLogs, members } from '../db/schema.js'
@@ -36,7 +36,12 @@ export async function handleCommand(prefix: string, msg: GatewayMessage): Promis
   if (!cmd) return null
 
   const [task] = await db.select().from(tasks).where(eq(tasks.command, cmd))
-  if (!task) return null // unknown command — silently ignore
+  if (!task) {
+    const all = await db.select({ command: tasks.command, name: tasks.name }).from(tasks).orderBy(asc(tasks.name))
+    if (all.length === 0) return `❓ Unknown command \`${prefix}${cmd}\`. No tasks have been set up yet.`
+    const list = all.map((t) => `• \`${prefix}${t.command}\` — ${t.name}`).join('\n')
+    return `❓ Unknown command \`${prefix}${cmd}\`. Available commands:\n${list}`
+  }
 
   const member = await upsertMember(msg.author)
 
