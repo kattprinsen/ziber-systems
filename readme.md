@@ -55,6 +55,9 @@ Members are auto-created the first time they use a Discord command. The **Member
 ### Discord reminders
 A daily scheduled job (8am) sends reminders for both plants and household tasks. Plant reminders include 💧 water and 😴 snooze buttons; task reminders include ✅ done and 😴 snooze buttons — all actionable directly from Discord without opening the app. On-demand tasks (no interval set) are never reminded. Plant and task reminders post to separate channels (`DISCORD_PLANT_CHANNEL_ID` / `DISCORD_TASK_CHANNEL_ID`). Reminders can also be triggered manually via `POST /api/discord/reminders/trigger`.
 
+### Activity feed
+The **Activity** page (`/activity`) shows a unified chronological feed of task completions and plant waterings — who did what, when, and via which source. Entries are grouped by date (Today / Yesterday / weekday) with an All / Tasks / Plants filter toggle.
+
 ### Login / authentication
 A shared household password protects the app. The first thing you see is a login screen; a correct password sets a 30-day httpOnly session cookie. Sign out from the nav bar. The Discord interactions endpoint is exempt (it has its own signature verification).
 
@@ -109,6 +112,11 @@ A shared household password protects the app. The first thing you see is a login
 |---|---|---|
 | `GET` | `/api/members` | List all household members |
 | `PATCH` | `/api/members/:id` | Rename a member's display name (`{ displayName }`) |
+
+### Activity
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/activity` | Unified feed of task completions + plant waterings (newest 100) |
 
 ### Discord
 | Method | Path | Description |
