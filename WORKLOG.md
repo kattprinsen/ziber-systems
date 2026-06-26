@@ -4,6 +4,27 @@ A running dev diary of sessions working on this project.
 
 ---
 
+DATE      : 2026-06-26
+TIME      : ~local session
+SESSION   : 008
+
+LOG
+---
+1. Picked up Phase 4 of Household Tasks — activity feed showing task completions and plant waterings in a unified chronological view
+2. Added `GET /api/activity` route merging `taskLogs` and `wateringEvents` in application code, returning newest 100 entries with type, name, who, source, and timestamp
+3. Built `ActivityPage` at `/activity` with date-grouped feed (Today/Yesterday/weekday), per-entry time, emoji icons, and All/Tasks/Plants filter toggle
+4. Added Activity nav link to Layout and route to App.tsx; marked Phase 4 as done in BACKLOG.md
+5. Added versioning + release cycle as a new backlog item (show app version in UI footer, use `npm version` + git tags)
+6. Debugged missing Discord `!dinner` command responses — root cause was user's wife simply hadn't added the task to the DB yet; false alarm
+7. During debug, added proper logging to the Discord interactions endpoint (`discord.ts`) so silent 401s and missing `DISCORD_PUBLIC_KEY` are now visible in `pm2 logs ziber`
+8. Fixed day-of-week tasks being silently excluded from reminders — pre-existing `eq(tasks.intervalDays, tasks.intervalDays)` WHERE clause dropped all NULL rows; replaced with plain `db.select().from(tasks)`
+9. Discussed /log + PR workflow conflict causing merge conflicts on WORKLOG.md — saved to memory: docs must always be committed to main, never bundled into feature branches
+10. Added unknown `!command` help reply — when a user sends an unrecognised prefixed command, bot now responds with a list of all available task commands instead of silently ignoring
+11. User's wife missing from prod DB explained: dev Cloudflare tunnel hijacked the Discord interactions endpoint during a dev session, so her member row was only written to localhost
+12. Added her manually to prod via `sqlite3` after installing it on the Pi (`sudo apt install sqlite3`)
+
+---
+
 DATE      : 2026-06-20
 TIME      : ~local session
 SESSION   : 007
