@@ -4,6 +4,25 @@ A running dev diary of sessions working on this project.
 
 ---
 
+DATE      : 2026-06-28
+TIME      : ~local session
+SESSION   : 009
+
+LOG
+---
+1. Reviewed existing test suite — found `interactions.test.ts` only covered legacy `water_plant` handler and `plants.test.ts` was solid, but all other Discord modules had zero coverage
+2. Extended `interactions.test.ts` with 15 new cases covering `snooze:plant`, `complete:task`, `snooze:task` handlers plus custom_id format edge cases (unregistered handler, bad format)
+3. Created `commands.test.ts` with 9 tests covering `!prefix` command dispatch: happy path, member auto-creation, `global_name` fallback, unknown command reply, snooze clearing
+4. Created `reminders.test.ts` with 19 tests covering plant and task reminder scheduling: due today, overdue (singular/plural), `forceAll` override, snooze skip, day-of-week matching, button `custom_id`s, description formatting
+5. Created `gateway.test.ts` with 11 tests covering WebSocket lifecycle: HELLO→IDENTIFY handshake, heartbeat interval, sequence tracking, MESSAGE_CREATE bot filter, reconnect on close, no-retry on 4004, malformed JSON handling
+6. Fixed fake timer interaction in reminder tests — used `vi.runAllTimersAsync()` pattern to flush the 500ms inter-message delay without hitting test timeouts
+7. Fixed gateway mock — arrow functions can't be used as constructors; rewrote WS mock as a regular function returning a shared `EventEmitter` instance
+8. All work done on `feature/expand-unit-tests` branch in two logical commits; merged via PR #51
+9. Fixed post-merge TS2345 typecheck error in `gateway.test.ts` — `vi.fn()` mock cast to `MessageHandler` type; pushed directly to main
+10. Server test suite grew from 5 to 64 passing tests across 5 files
+
+---
+
 DATE      : 2026-06-26
 TIME      : ~local session
 SESSION   : 008
