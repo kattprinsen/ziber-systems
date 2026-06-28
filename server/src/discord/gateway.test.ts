@@ -23,6 +23,9 @@ const wsInstance = Object.assign(new EventEmitter(), {
 mocks.WS.mockImplementation(function () { return wsInstance })
 
 import { startGateway } from './gateway.js'
+import type { GatewayMessage } from './commands.js'
+
+type MessageHandler = (message: GatewayMessage) => Promise<void>
 
 // ---- helpers ----
 
@@ -33,7 +36,7 @@ function send(payload: object) {
 // ---- tests ----
 
 describe('startGateway', () => {
-  let onMessage: ReturnType<typeof vi.fn>
+  let onMessage: MessageHandler
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -41,7 +44,7 @@ describe('startGateway', () => {
     wsInstance.close.mockReset()
     wsInstance.removeAllListeners()
     mocks.WS.mockImplementation(function () { return wsInstance })
-    onMessage = vi.fn().mockResolvedValue(undefined)
+    onMessage = vi.fn().mockResolvedValue(undefined) as unknown as MessageHandler
   })
 
   afterEach(() => vi.useRealTimers())
