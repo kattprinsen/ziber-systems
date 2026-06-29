@@ -6,33 +6,33 @@
 ## ~~Better UI~~ ✅ Done
 ~~Cards are too large — 12+ plants causes heavy scrolling. Consider a compact list view or a denser grid, with the card detail only on click/expand.~~
 
-## Household Tasks (chores tracker) — Phase 1 done ✅, Phases 2–4 remaining
+## ~~Household Tasks (chores tracker)~~ ✅ Done
 
-A chore tracking system where household members log completed tasks via Discord (`!dishes`, `!vacuum`, etc.) or the web UI. Data is tied to named household members auto-created from Discord display names.
+~~A chore tracking system where household members log completed tasks via Discord (`!dishes`, `!vacuum`, etc.) or the web UI. Data is tied to named household members auto-created from Discord display names.~~
 
-**Phase 1 — Shared infrastructure** ✅ Done
-- Added `members`, `tasks`, `taskLogs` tables to schema + migration
-- Refactored `interactions.ts` to a dispatcher registry (button IDs: `action:domain:id`)
-- Created `discord/gateway.ts` — WebSocket gateway for receiving `MESSAGE_CREATE` events
-- Created `discord/commands.ts` — DB-driven `!command` handler with member auto-creation
-- Wired gateway into `index.ts`; bot replies with confirmation in the originating channel
+**~~Phase 1 — Shared infrastructure~~ ✅ Done**
+~~- Added `members`, `tasks`, `taskLogs` tables to schema + migration~~
+~~- Refactored `interactions.ts` to a dispatcher registry (button IDs: `action:domain:id`)~~
+~~- Created `discord/gateway.ts` — WebSocket gateway for receiving `MESSAGE_CREATE` events~~
+~~- Created `discord/commands.ts` — DB-driven `!command` handler with member auto-creation~~
+~~- Wired gateway into `index.ts`; bot replies with confirmation in the originating channel~~
 
-**Phase 2 — Server routes + web UI for task management**
-- `GET/POST /api/tasks` — list and create tasks
-- `DELETE /api/tasks/:id`, `PATCH /api/tasks/:id` — edit/delete
-- `GET /api/members` — list members
-- `PATCH /api/members/:id` — rename a member (web UI)
-- Tasks management page (`/tasks`): add tasks (name, `!command` word, optional interval), edit, delete
-- Members management page or section: see members, rename display names
+**~~Phase 2 — Server routes + web UI for task management~~ ✅ Done**
+~~- `GET/POST /api/tasks` — list and create tasks~~
+~~- `DELETE /api/tasks/:id`, `PATCH /api/tasks/:id` — edit/delete~~
+~~- `GET /api/members` — list members~~
+~~- `PATCH /api/members/:id` — rename a member (web UI)~~
+~~- Tasks management page (`/tasks`): add tasks (name, `!command` word, optional interval), edit, delete~~
+~~- Members management page or section: see members, rename display names~~
 
-**Phase 3 — Discord reminders for scheduled tasks**
-- Extend `reminders.ts` to send daily reminders for tasks with `intervalDays` set and overdue/due today
-- Register `complete:task:id` and `snooze:task:id` button handlers in `interactions.ts`
-- On-demand tasks (no interval) get no reminder — Discord `!command` only
+**~~Phase 3 — Discord reminders for scheduled tasks~~ ✅ Done**
+~~- Extend `reminders.ts` to send daily reminders for tasks with `intervalDays` set and overdue/due today~~
+~~- Register `complete:task:id` and `snooze:task:id` button handlers in `interactions.ts`~~
+~~- On-demand tasks (no interval) get no reminder — Discord `!command` only~~
 
 **~~Phase 4 — Activity feed web UI~~ ✅ Done**
-- ~~Recent log view: who did what and when, across both `taskLogs` and `wateringEvents`~~
-- ~~Filter by member and/or task type~~
+~~- Recent log view: who did what and when, across both `taskLogs` and `wateringEvents`~~
+~~- Filter by member and/or task type~~
 
 ---
 
@@ -44,26 +44,9 @@ Zero production logging right now. Need structured logs for key operations: addi
 
 ## Authentication + Public Hosting (Cloudflare Tunnel)
 
-### Phase 1 — Shared login auth (implement first)
+### ~~Phase 1 — Shared login auth~~ ✅ Done
 
-Stateless cookie-based auth, no DB changes, one shared password for the whole household.
-
-**How it works:**
-- `AUTH_PASSWORD` env var = the household passphrase
-- `AUTH_SECRET` env var = a long random string that doubles as the session cookie value
-- Login: `POST /api/auth/login` with `{ password }` → if correct, set httpOnly `session` cookie (value = `AUTH_SECRET`)
-- Middleware: checks `session` cookie on all `/api/*` routes; exempts `/api/auth/*` and `/api/discord/interactions`
-- Logout: deletes the cookie
-
-**Files to create/change:**
-- `server/.env.example` — add `AUTH_PASSWORD` and `AUTH_SECRET` entries
-- `server/src/routes/auth.ts` — new: `POST /login`, `POST /logout`, `GET /me`
-- `server/src/middleware/auth.ts` — new: cookie check, exemptions
-- `server/src/index.ts` — mount auth route then apply middleware (order matters)
-- `client/src/api/auth.ts` — new: `login()`, `logout()`, `checkAuth()` fetch wrappers
-- `client/src/pages/LoginPage/` — new: password form page
-- `client/src/App.tsx` — add auth state, `/login` route, redirect guard
-- `client/src/components/Layout/Layout.tsx` — add logout button
+~~Stateless cookie-based auth, no DB changes, one shared password for the whole household.~~
 
 ### Phase 2 — Cloudflare Tunnel (RPi setup, no code changes)
 
