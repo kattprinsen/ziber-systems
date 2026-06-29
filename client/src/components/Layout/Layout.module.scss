@@ -33,6 +33,14 @@
   border-bottom-color: $color-primary;
 }
 
+.footer {
+  padding: $space-4 $space-8;
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  opacity: 0.5;
+  text-align: right;
+}
+
 .logoutButton {
   margin-left: auto;
   padding: $space-1 $space-3;
