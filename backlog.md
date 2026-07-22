@@ -42,6 +42,9 @@ We need to update so that the text in discord actually says what room the plants
 ## Create backup of database
 What would happen today if the rpi would break, it would be impossible to re-creatge the database, we need to secure that and future proof it
 
+## Create datapipeline
+We need to create some sort of data-engineering pipeline to create reports and other things based on the database
+
 ## Versioning + release cycle
 Show the app version (from `package.json`) in the UI footer. Use `npm version patch/minor/major` to bump + tag before deploying to the Pi, so you can always see what's running without SSH-ing in.
 
