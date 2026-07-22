@@ -39,6 +39,9 @@
 ## Updating text
 We need to update so that the text in discord actually says what room the plants are in, some plants with different intervalls in different rooms are hard to track with the messages we get from discord
 
+## Create backup of database
+What would happen today if the rpi would break, it would be impossible to re-creatge the database, we need to secure that and future proof it
+
 ## Versioning + release cycle
 Show the app version (from `package.json`) in the UI footer. Use `npm version patch/minor/major` to bump + tag before deploying to the Pi, so you can always see what's running without SSH-ing in.
 
