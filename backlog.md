@@ -45,6 +45,12 @@ What would happen today if the rpi would break, it would be impossible to re-cre
 ## Create datapipeline
 We need to create some sort of data-engineering pipeline to create reports and other things based on the database
 
+## Pi network resilience
+The Pi lost network connectivity and required physical access to recover (see INCIDENT-001). Investigate options to prevent this:
+- Set a DHCP reservation in the router for the Pi's MAC address
+- Look into a remote access fallback such as Tailscale so the Pi can be reached even if it drops off the local network
+- Explore a network watchdog script (e.g. ping check + auto-reconnect via `cron`) to self-heal without manual intervention
+
 ## Versioning + release cycle
 Show the app version (from `package.json`) in the UI footer. Use `npm version patch/minor/major` to bump + tag before deploying to the Pi, so you can always see what's running without SSH-ing in.
 
