@@ -45,6 +45,13 @@ What would happen today if the rpi would break, it would be impossible to re-cre
 ## Create datapipeline
 We need to create some sort of data-engineering pipeline to create reports and other things based on the database
 
+## Admin system health monitoring
+No alerting exists when the system goes down. As admin you only find out when you notice notifications have stopped (see INCIDENT-002). Options to explore:
+- **Heartbeat Discord message**: have the server send a daily "system alive" message to a private channel — silence = something is wrong
+- **External uptime monitor**: point UptimeRobot or a similar free service at the ngrok health endpoint (`/api/health`) — alerts via email/Discord when it stops responding
+- **PM2 startup hardening**: ensure `pm2 startup` + `pm2 save` are run after every deployment so processes auto-restore on reboot
+- **Systemd watchdog**: configure PM2 with `--watch` or a systemd unit as a fallback if PM2 itself crashes
+
 ## Pi network resilience
 The Pi lost network connectivity and required physical access to recover (see INCIDENT-001). Investigate options to prevent this:
 - Set a DHCP reservation in the router for the Pi's MAC address
