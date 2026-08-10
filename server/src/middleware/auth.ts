@@ -2,7 +2,7 @@ import { getCookie } from 'hono/cookie'
 import type { MiddlewareHandler } from 'hono'
 
 // Paths that must be accessible without a session cookie
-const EXEMPT = ['/api/auth/', '/api/discord/interactions']
+const EXEMPT = ['/api/auth/', '/api/discord/interactions', '/api/export/']
 
 export const authMiddleware: MiddlewareHandler = async (c, next) => {
   const path = new URL(c.req.url).pathname

@@ -19,6 +19,7 @@ import roomsRoute from './routes/rooms.js'
 import tasksRoute from './routes/tasks.js'
 import membersRoute from './routes/members.js'
 import activityRoute from './routes/activity.js'
+import exportRoute from './routes/export.js'
 import { sendPlantReminders, sendTaskReminders } from './discord/reminders.js'
 import { startGateway } from './discord/gateway.js'
 import { handleCommand } from './discord/commands.js'
@@ -42,6 +43,7 @@ app.route('/api/discord', discordRoute)
 app.route('/api/tasks', tasksRoute)
 app.route('/api/members', membersRoute)
 app.route('/api/activity', activityRoute)
+app.route('/api/export', exportRoute)
 
 // In production, serve the built React client and fall back to index.html
 // so React Router handles client-side navigation.
