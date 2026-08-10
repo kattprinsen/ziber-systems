@@ -42,8 +42,17 @@ We need to update so that the text in discord actually says what room the plants
 ## Create backup of database
 What would happen today if the rpi would break, it would be impossible to re-creatge the database, we need to secure that and future proof it
 
-## Create datapipeline
-We need to create some sort of data-engineering pipeline to create reports and other things based on the database
+## ~~Create datapipeline~~ ✅ Done
+
+~~We need to create some sort of data-engineering pipeline to create reports and other things based on the database~~
+
+Read-only export API added at `/api/export/*`, authenticated via `X-Api-Key` header (`EXPORT_API_KEY` env var). Endpoints:
+- `GET /api/export/plants` — collection with room and catalogue data
+- `GET /api/export/watering-events` — full watering history
+- `GET /api/export/tasks` — tasks with completion count and last completed
+- `GET /api/export/task-logs` — raw task log with member names
+- `GET /api/export/members` — members with activity stats
+- `GET /api/export/summary` — dashboard snapshot (overdue plants, tasks this week, most active member)
 
 ## Admin system health monitoring
 No alerting exists when the system goes down. As admin you only find out when you notice notifications have stopped (see INCIDENT-002). Options to explore:

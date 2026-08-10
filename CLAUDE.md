@@ -73,6 +73,21 @@ members         — household members (discordId, discordName, displayName — a
 
 Server reads from `server/.env` (then falls back to root `.env`):
 
+### Export API (`/api/export/*`)
+
+Read-only endpoints for external systems (dashboards, data pipelines, reports). Authenticated via `X-Api-Key` header matching `EXPORT_API_KEY` env var. Leave `EXPORT_API_KEY` unset to disable entirely (returns 503).
+
+- `GET /api/export/plants` — user collection joined with catalogue data and room name
+- `GET /api/export/watering-events` — full watering history with plant and room info
+- `GET /api/export/tasks` — tasks with aggregate completion count and last completed timestamp
+- `GET /api/export/task-logs` — raw task log with task name and member display name
+- `GET /api/export/members` — members with task count and last active timestamp
+- `GET /api/export/summary` — snapshot stats (overdue plants, tasks this week, most active member)
+
+Route is in `server/src/routes/export.ts`; middleware in `server/src/middleware/apiKey.ts`. The `/api/export/` prefix is exempt from cookie auth in `middleware/auth.ts`.
+
+
+
 ```
 AUTH_PASSWORD           # the password users type on the login screen
 AUTH_SECRET             # the session cookie value (internal, never typed — make it a long random string)
@@ -82,6 +97,7 @@ DISCORD_TASK_CHANNEL_ID     # optional — channel for household task reminders
 DISCORD_CHANNEL_ID          # optional — legacy fallback if per-domain channels are not set
 DISCORD_PUBLIC_KEY          # optional — for verifying interaction signatures
 DISCORD_COMMAND_PREFIX      # optional — prefix for text commands, defaults to "!"
+EXPORT_API_KEY              # optional — enables /api/export/* endpoints; external systems pass this in X-Api-Key header
 ```
 
 **Note**: `!prefix` commands require the bot to have the **Message Content** privileged intent enabled in the Discord developer portal, and the bot must be invited with the `bot` scope (not just `applications.commands`).

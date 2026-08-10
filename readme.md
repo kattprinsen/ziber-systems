@@ -129,6 +129,36 @@ A shared household password protects the app. The first thing you see is a login
 |---|---|---|
 | `GET` | `/api/health` | Server + DB health check |
 
+### Export API (data pipeline)
+
+Read-only endpoints for external systems — dashboards, data pipelines, reporting tools. All requests must include an `X-Api-Key` header matching `EXPORT_API_KEY` in `server/.env`. Leave `EXPORT_API_KEY` unset to disable the endpoints entirely (returns `503`).
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/export/plants` | Full plant collection joined with catalogue data and room name |
+| `GET` | `/api/export/watering-events` | Complete watering history with plant, room, and who-watered info |
+| `GET` | `/api/export/tasks` | All tasks with total completion count and last completed timestamp |
+| `GET` | `/api/export/task-logs` | Raw task completion log with task name and member display name |
+| `GET` | `/api/export/members` | All members with task count and last active timestamp |
+| `GET` | `/api/export/summary` | Snapshot stats: overdue plants, waterings today, tasks this week, most active member |
+
+**Setup**: generate a key and add it to `server/.env`:
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+# → EXPORT_API_KEY=<paste here>
+```
+
+**Example usage:**
+```bash
+# Summary stats
+curl https://your-domain/api/export/summary \
+  -H "X-Api-Key: <your-key>"
+
+# All watering events as JSON (e.g. for a reporting tool or spreadsheet import)
+curl https://your-domain/api/export/watering-events \
+  -H "X-Api-Key: <your-key>"
+```
+
 ## Discord integration setup
 
 1. Create an application at https://discord.com/developers/applications
