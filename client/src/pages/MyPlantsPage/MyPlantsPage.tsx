@@ -271,7 +271,7 @@ export const MyPlantsPage = () => {
                 min={1}
                 value={customForm.wateringIntervalDays}
                 onChange={(e) => setCustomForm((f) => ({ ...f, wateringIntervalDays: e.target.value }))}
-                placeholder="7"
+                placeholder="e.g. 3"
                 className={styles.input}
               />
             </div>
