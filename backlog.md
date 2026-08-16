@@ -36,6 +36,16 @@
 
 ---
 
+## Improve plant removal UX
+
+Triggered by INCIDENT-003 — the remove action is immediate, permanent, and silent.
+
+- **Confirmation dialog**: show a modal before deletion ("Remove *Monstera*? This will also delete all watering history.")
+- **Soft-delete / archive**: instead of hard-deleting, mark `userPlants` as archived (`archivedAt` timestamp). Archived plants are hidden from the main collection but their history is preserved. A separate "Archive" view can show or restore them.
+- **Undo toast**: if soft-delete is implemented, show a brief "Plant removed — Undo" toast that cancels the operation within a few seconds before it is committed.
+
+---
+
 ## Updating text
 We need to update so that the text in discord actually says what room the plants are in, some plants with different intervalls in different rooms are hard to track with the messages we get from discord
 
