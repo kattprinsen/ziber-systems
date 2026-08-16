@@ -170,6 +170,9 @@ myPlantsRoute.delete('/:id', async (c) => {
   const id = Number(c.req.param('id'))
   if (!Number.isInteger(id) || id < 1) return c.json({ error: 'Invalid id' }, 400)
 
+  // Delete watering history first to satisfy the FK constraint
+  await db.delete(wateringEvents).where(eq(wateringEvents.userPlantId, id))
+
   const [deleted] = await db
     .delete(userPlants)
     .where(eq(userPlants.id, id))
