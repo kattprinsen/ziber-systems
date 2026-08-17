@@ -36,13 +36,27 @@
 
 ---
 
-## Improve plant removal UX
+## ~~Improve plant removal UX~~ ✅ Done
 
-Triggered by INCIDENT-003 — the remove action is immediate, permanent, and silent.
+~~Triggered by INCIDENT-003 — the remove action is immediate, permanent, and silent.~~
 
-- **Confirmation dialog**: show a modal before deletion ("Remove *Monstera*? This will also delete all watering history.")
-- **Soft-delete / archive**: instead of hard-deleting, mark `userPlants` as archived (`archivedAt` timestamp). Archived plants are hidden from the main collection but their history is preserved. A separate "Archive" view can show or restore them.
-- **Undo toast**: if soft-delete is implemented, show a brief "Plant removed — Undo" toast that cancels the operation within a few seconds before it is committed.
+~~- **Confirmation dialog**: show a modal before deletion ("Remove *Monstera*? This will also delete all watering history.")~~
+~~- **Soft-delete / archive**: instead of hard-deleting, mark `userPlants` as archived (`archivedAt` timestamp). Archived plants are hidden from the main collection but their history is preserved. A separate "Archive" view can show or restore them.~~
+~~- **Undo toast**: if soft-delete is implemented, show a brief "Plant removed — Undo" toast that cancels the operation within a few seconds before it is committed.~~
+
+Implemented: inline confirmation banner + soft-delete (`archivedAt`). Watering history preserved. Restore endpoint (`PATCH /api/my-plants/:id/restore`) ready for a future archive view. Undo toast still in backlog below.
+
+**Remaining:**
+- Archive/restore view in the UI (the restore endpoint exists but there's no page yet)
+- Undo toast as an alternative to the confirm step
+
+---
+
+## Footer doesn't stick to the bottom
+
+The footer renders right below page content instead of sitting at the viewport bottom on short pages. `.root` has `min-height: 100vh` but no flex column, so there's nothing pushing the footer down.
+
+Fix: make `.root` a flex column, add a wrapping `<main>` that takes `flex: 1`, and give the footer a `margin-top: auto` (or equivalent). Also add some top margin to the footer so it doesn't feel cramped on long pages.
 
 ---
 
