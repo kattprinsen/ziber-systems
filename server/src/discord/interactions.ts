@@ -80,7 +80,7 @@ registerButtonHandler('water', 'plant', async (id, username) => {
 
   if (updated.length === 0) {
     log.warn({ userPlantId: plantId }, 'Discord button: plant not found')
-    return { type: CHANNEL_MESSAGE, data: { content: '❌ Plant not found.', flags: EPHEMERAL } }
+    return { type: UPDATE_MESSAGE, data: { content: '🗑️ This plant has been removed.', components: [] } }
   }
 
   await db.insert(wateringEvents).values({
@@ -124,7 +124,7 @@ registerButtonHandler('snooze', 'plant', async (id, _username) => {
 
   if (updated.length === 0) {
     log.warn({ userPlantId: plantId }, 'Discord button: plant not found for snooze')
-    return { type: CHANNEL_MESSAGE, data: { content: '❌ Plant not found.', flags: EPHEMERAL } }
+    return { type: UPDATE_MESSAGE, data: { content: '🗑️ This plant has been removed.', components: [] } }
   }
 
   const [plantRow] = await db
@@ -152,7 +152,7 @@ registerButtonHandler('complete', 'task', async (id, username) => {
   const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId))
   if (!task) {
     log.warn({ taskId }, 'Discord button: task not found')
-    return { type: CHANNEL_MESSAGE, data: { content: '❌ Task not found.', flags: EPHEMERAL } }
+    return { type: UPDATE_MESSAGE, data: { content: '🗑️ This task has been removed.', components: [] } }
   }
 
   // Look up or create member from username
