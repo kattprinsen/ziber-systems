@@ -27,6 +27,7 @@ function HomePage() {
   const { rooms, create: createRoom } = useRooms()
   const navigate = useNavigate()
   const [selectedPlantId, setSelectedPlantId] = useState<number | null>(null)
+  const [confirmRemoveId, setConfirmRemoveId] = useState<number | null>(null)
   const [roomFilter, setRoomFilter] = useState<number | null>(null)
   const [showNewRoom, setShowNewRoom] = useState(false)
   const [newRoomName, setNewRoomName] = useState('')
@@ -226,9 +227,25 @@ function HomePage() {
               <button className={styles.actionButtonSecondary} onClick={() => navigate(`/plants/${selectedPlant.id}`)} type="button">
                 Edit
               </button>
-              <button className={styles.actionButtonDanger} onClick={() => remove(selectedPlant.id)} type="button">
-                Remove
-              </button>
+              {confirmRemoveId === selectedPlant.id ? (
+                <div className={styles.confirmRemove}>
+                  <span>Remove <strong>{selectedPlant.nickname ?? selectedPlant.commonName}</strong>? History will be archived.</span>
+                  <button
+                    className={styles.actionButtonDanger}
+                    onClick={async () => { await remove(selectedPlant.id); setConfirmRemoveId(null) }}
+                    type="button"
+                  >
+                    Remove
+                  </button>
+                  <button className={styles.actionButtonSecondary} onClick={() => setConfirmRemoveId(null)} type="button">
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button className={styles.actionButtonDanger} onClick={() => setConfirmRemoveId(selectedPlant.id)} type="button">
+                  Remove
+                </button>
+              )}
             </div>
 
             <section className={styles.history}>

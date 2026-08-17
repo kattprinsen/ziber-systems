@@ -5,6 +5,7 @@ import {
   waterMyPlant,
   snoozeMyPlant,
   removeMyPlant,
+  restoreMyPlant,
   updateMyPlantNickname,
   assignRoom,
   type MyPlant,
@@ -22,6 +23,7 @@ interface UseMyPlantsResult {
   water: (id: number) => Promise<void>
   snooze: (id: number) => Promise<void>
   remove: (id: number) => Promise<void>
+  restore: (id: number) => Promise<void>
 }
 
 export function useMyPlants(): UseMyPlantsResult {
@@ -107,5 +109,13 @@ export function useMyPlants(): UseMyPlantsResult {
     [load],
   )
 
-  return { myPlants, loading, error, add, addCustom, update, setRoom, water, snooze, remove }
+  const restore = useCallback(
+    async (id: number) => {
+      await restoreMyPlant(id)
+      load()
+    },
+    [load],
+  )
+
+  return { myPlants, loading, error, add, addCustom, update, setRoom, water, snooze, remove, restore }
 }

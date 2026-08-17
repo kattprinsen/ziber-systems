@@ -227,6 +227,19 @@
   }
 }
 
+.confirmRemove {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  flex-wrap: wrap;
+  padding: $space-3 $space-4;
+  background: color.adjust($color-error, $lightness: 38%);
+  border: 1px solid $color-error;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  color: $color-text;
+}
+
 @media (max-width: 900px) {
   .page {
     padding: 0 $space-4;

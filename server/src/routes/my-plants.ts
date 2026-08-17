@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { eq } from 'drizzle-orm'
+import { eq, isNull } from 'drizzle-orm'
 import { db } from '../db/index.js'
 import { log } from '../logger.js'
 import { userPlants, plants, rooms, wateringEvents } from '../db/schema.js'
@@ -18,6 +18,7 @@ myPlantsRoute.get('/', async (c) => {
       addedAt: userPlants.addedAt,
       lastWateredAt: userPlants.lastWateredAt,
       snoozedUntil: userPlants.snoozedUntil,
+      archivedAt: userPlants.archivedAt,
       commonName: plants.commonName,
       latinName: plants.latinName,
       wateringIntervalDays: plants.wateringIntervalDays,
@@ -26,6 +27,7 @@ myPlantsRoute.get('/', async (c) => {
     })
     .from(userPlants)
     .innerJoin(plants, eq(userPlants.plantId, plants.id))
+    .where(isNull(userPlants.archivedAt))
     .orderBy(userPlants.addedAt)
 
   return c.json(rows)
@@ -165,23 +167,38 @@ myPlantsRoute.patch('/:id', async (c) => {
   return c.json(updated)
 })
 
-// DELETE /api/my-plants/:id — remove from collection
+// DELETE /api/my-plants/:id — archive (soft-delete) a plant
 myPlantsRoute.delete('/:id', async (c) => {
   const id = Number(c.req.param('id'))
   if (!Number.isInteger(id) || id < 1) return c.json({ error: 'Invalid id' }, 400)
 
-  // Delete watering history first to satisfy the FK constraint
-  await db.delete(wateringEvents).where(eq(wateringEvents.userPlantId, id))
-
-  const [deleted] = await db
-    .delete(userPlants)
+  const [archived] = await db
+    .update(userPlants)
+    .set({ archivedAt: new Date().toISOString() })
     .where(eq(userPlants.id, id))
     .returning()
 
-  if (!deleted) return c.json({ error: 'Not found' }, 404)
+  if (!archived) return c.json({ error: 'Not found' }, 404)
 
-  log.info({ userPlantId: id }, 'Plant removed from collection')
+  log.info({ userPlantId: id }, 'Plant archived')
   return c.json({ success: true })
+})
+
+// PATCH /api/my-plants/:id/restore — unarchive a plant
+myPlantsRoute.patch('/:id/restore', async (c) => {
+  const id = Number(c.req.param('id'))
+  if (!Number.isInteger(id) || id < 1) return c.json({ error: 'Invalid id' }, 400)
+
+  const [restored] = await db
+    .update(userPlants)
+    .set({ archivedAt: null })
+    .where(eq(userPlants.id, id))
+    .returning()
+
+  if (!restored) return c.json({ error: 'Not found' }, 404)
+
+  log.info({ userPlantId: id }, 'Plant restored from archive')
+  return c.json(restored)
 })
 
 export default myPlantsRoute

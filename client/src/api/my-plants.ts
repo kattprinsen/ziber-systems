@@ -60,6 +60,11 @@ export async function removeMyPlant(id: number): Promise<void> {
   if (!res.ok) throw new Error(`Failed to remove plant: ${res.status}`)
 }
 
+export async function restoreMyPlant(id: number): Promise<void> {
+  const res = await fetch(`/api/my-plants/${id}/restore`, { method: 'PATCH' })
+  if (!res.ok) throw new Error(`Failed to restore plant: ${res.status}`)
+}
+
 export async function updateMyPlantNickname(id: number, nickname: string | null): Promise<void> {
   const res = await fetch(`/api/my-plants/${id}`, {
     method: 'PATCH',
