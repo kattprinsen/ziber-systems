@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { eq, isNull } from 'drizzle-orm'
+import { eq, isNull, isNotNull } from 'drizzle-orm'
 import { db } from '../db/index.js'
 import { log } from '../logger.js'
 import { userPlants, plants, rooms, wateringEvents } from '../db/schema.js'
@@ -29,6 +29,32 @@ myPlantsRoute.get('/', async (c) => {
     .innerJoin(plants, eq(userPlants.plantId, plants.id))
     .where(isNull(userPlants.archivedAt))
     .orderBy(userPlants.addedAt)
+
+  return c.json(rows)
+})
+
+// GET /api/my-plants/archived — list soft-deleted plants
+myPlantsRoute.get('/archived', async (c) => {
+  const rows: MyPlant[] = await db
+    .select({
+      id: userPlants.id,
+      plantId: userPlants.plantId,
+      roomId: userPlants.roomId,
+      nickname: userPlants.nickname,
+      addedAt: userPlants.addedAt,
+      lastWateredAt: userPlants.lastWateredAt,
+      snoozedUntil: userPlants.snoozedUntil,
+      archivedAt: userPlants.archivedAt,
+      commonName: plants.commonName,
+      latinName: plants.latinName,
+      wateringIntervalDays: plants.wateringIntervalDays,
+      light: plants.light,
+      description: plants.description,
+    })
+    .from(userPlants)
+    .innerJoin(plants, eq(userPlants.plantId, plants.id))
+    .where(isNotNull(userPlants.archivedAt))
+    .orderBy(userPlants.archivedAt)
 
   return c.json(rows)
 })

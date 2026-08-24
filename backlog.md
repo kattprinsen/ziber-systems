@@ -44,11 +44,7 @@
 ~~- **Soft-delete / archive**: instead of hard-deleting, mark `userPlants` as archived (`archivedAt` timestamp). Archived plants are hidden from the main collection but their history is preserved. A separate "Archive" view can show or restore them.~~
 ~~- **Undo toast**: if soft-delete is implemented, show a brief "Plant removed — Undo" toast that cancels the operation within a few seconds before it is committed.~~
 
-Implemented: inline confirmation banner + soft-delete (`archivedAt`). Watering history preserved. Restore endpoint (`PATCH /api/my-plants/:id/restore`) ready for a future archive view. Undo toast still in backlog below.
-
-**Remaining:**
-- Archive/restore view in the UI (the restore endpoint exists but there's no page yet)
-- Undo toast as an alternative to the confirm step
+Implemented: soft-delete (`archivedAt`), watering history preserved, undo toast (replaces confirmation banner — 5s to undo after remove), archive view at `/archive` with per-plant restore.
 
 ---
 

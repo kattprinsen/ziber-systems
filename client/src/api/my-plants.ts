@@ -23,10 +23,20 @@ export interface MyPlant {
   description: string
 }
 
+export interface ArchivedPlant extends MyPlant {
+  archivedAt: string
+}
+
 export async function fetchMyPlants(): Promise<MyPlant[]> {
   const res = await fetch('/api/my-plants')
   if (!res.ok) throw new Error(`Failed to fetch collection: ${res.status}`)
   return res.json() as Promise<MyPlant[]>
+}
+
+export async function fetchArchivedPlants(): Promise<ArchivedPlant[]> {
+  const res = await fetch('/api/my-plants/archived')
+  if (!res.ok) throw new Error(`Failed to fetch archived plants: ${res.status}`)
+  return res.json() as Promise<ArchivedPlant[]>
 }
 
 export async function addMyPlant(plantId: number, roomId: number, nickname?: string): Promise<MyPlant> {

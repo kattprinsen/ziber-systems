@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Routes, Route, useNavigate, Navigate } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import styles from './App.module.scss'
@@ -9,6 +9,7 @@ import { RoomsPage } from './pages/RoomsPage/RoomsPage'
 import { TasksPage } from './pages/TasksPage/TasksPage'
 import { MembersPage } from './pages/MembersPage/MembersPage'
 import { ActivityPage } from './pages/ActivityPage/ActivityPage'
+import { ArchivePage } from './pages/ArchivePage/ArchivePage'
 import LoginPage from './pages/LoginPage/LoginPage'
 import { useMyPlants } from './hooks/useMyPlants'
 import { useRooms } from './hooks/useRooms'
@@ -23,11 +24,12 @@ function getBadgeLabel(isOverdue: boolean, daysUntil: number): string {
 }
 
 function HomePage() {
-  const { myPlants, loading, error, water, snooze, remove, setRoom } = useMyPlants()
+  const { myPlants, loading, error, water, snooze, remove, restore, setRoom } = useMyPlants()
   const { rooms, create: createRoom } = useRooms()
   const navigate = useNavigate()
   const [selectedPlantId, setSelectedPlantId] = useState<number | null>(null)
-  const [confirmRemoveId, setConfirmRemoveId] = useState<number | null>(null)
+  const [undoToast, setUndoToast] = useState<{ id: number; name: string } | null>(null)
+  const undoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [roomFilter, setRoomFilter] = useState<number | null>(null)
   const [showNewRoom, setShowNewRoom] = useState(false)
   const [newRoomName, setNewRoomName] = useState('')
@@ -70,6 +72,20 @@ function HomePage() {
     : null
 
   const selectedPlantStatus = selectedPlantDaysUntil !== null ? getWaterStatus(selectedPlantDaysUntil) : ''
+
+  async function handleRemove(plantId: number, plantName: string) {
+    if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current)
+    await remove(plantId)
+    undoTimeoutRef.current = setTimeout(() => setUndoToast(null), 5000)
+    setUndoToast({ id: plantId, name: plantName })
+  }
+
+  async function handleUndoRemove() {
+    if (!undoToast) return
+    if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current)
+    await restore(undoToast.id)
+    setUndoToast(null)
+  }
 
   async function handleCreateRoom(e: React.FormEvent) {
     e.preventDefault()
@@ -227,25 +243,13 @@ function HomePage() {
               <button className={styles.actionButtonSecondary} onClick={() => navigate(`/plants/${selectedPlant.id}`)} type="button">
                 Edit
               </button>
-              {confirmRemoveId === selectedPlant.id ? (
-                <div className={styles.confirmRemove}>
-                  <span>Remove <strong>{selectedPlant.nickname ?? selectedPlant.commonName}</strong>? History will be archived.</span>
-                  <button
-                    className={styles.actionButtonDanger}
-                    onClick={async () => { await remove(selectedPlant.id); setConfirmRemoveId(null) }}
-                    type="button"
-                  >
-                    Remove
-                  </button>
-                  <button className={styles.actionButtonSecondary} onClick={() => setConfirmRemoveId(null)} type="button">
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <button className={styles.actionButtonDanger} onClick={() => setConfirmRemoveId(selectedPlant.id)} type="button">
-                  Remove
-                </button>
-              )}
+              <button
+                className={styles.actionButtonDanger}
+                onClick={() => handleRemove(selectedPlant.id, selectedPlant.nickname ?? selectedPlant.commonName)}
+                type="button"
+              >
+                Remove
+              </button>
             </div>
 
             <section className={styles.history}>
@@ -270,6 +274,14 @@ function HomePage() {
               )}
             </section>
           </section>
+        </div>
+      )}
+      {undoToast && (
+        <div className={styles.undoToast}>
+          <span><strong>{undoToast.name}</strong> removed</span>
+          <button className={styles.undoButton} onClick={handleUndoRemove} type="button">
+            Undo
+          </button>
         </div>
       )}
     </div>
@@ -312,6 +324,7 @@ function App() {
         <Route path="/tasks" element={authed ? <TasksPage /> : <Navigate to="/login" replace />} />
         <Route path="/members" element={authed ? <MembersPage /> : <Navigate to="/login" replace />} />
         <Route path="/activity" element={authed ? <ActivityPage /> : <Navigate to="/login" replace />} />
+        <Route path="/archive" element={authed ? <ArchivePage /> : <Navigate to="/login" replace />} />
       </Route>
     </Routes>
   )

@@ -227,17 +227,37 @@
   }
 }
 
-.confirmRemove {
+.undoToast {
+  position: fixed;
+  bottom: $space-8;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: $space-3;
-  flex-wrap: wrap;
+  gap: $space-4;
   padding: $space-3 $space-4;
-  background: color.adjust($color-error, $lightness: 38%);
-  border: 1px solid $color-error;
-  border-radius: $radius-md;
+  background: $color-text;
+  color: #fff;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-md;
   font-size: $font-size-sm;
-  color: $color-text;
+  z-index: 100;
+  white-space: nowrap;
+}
+
+.undoButton {
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: $radius-md;
+  padding: 2px $space-3;
+  background: transparent;
+  color: #fff;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
 }
 
 @media (max-width: 900px) {
