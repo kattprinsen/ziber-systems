@@ -48,11 +48,11 @@ Implemented: soft-delete (`archivedAt`), watering history preserved, undo toast 
 
 ---
 
-## Footer doesn't stick to the bottom
+## ~~Footer doesn't stick to the bottom~~ ✅ Done
 
-The footer renders right below page content instead of sitting at the viewport bottom on short pages. `.root` has `min-height: 100vh` but no flex column, so there's nothing pushing the footer down.
+~~The footer renders right below page content instead of sitting at the viewport bottom on short pages.~~
 
-Fix: make `.root` a flex column, add a wrapping `<main>` that takes `flex: 1`, and give the footer a `margin-top: auto` (or equivalent). Also add some top margin to the footer so it doesn't feel cramped on long pages.
+Fixed: `.root` is now a flex column, `<main>` wraps the outlet with `flex: 1`, footer has `margin-top: $space-8` and a top border. Footer shows "Ziber Systems" left-aligned and the version right-aligned.
 
 ---
 

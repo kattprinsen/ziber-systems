@@ -33,9 +33,12 @@ export const Layout = ({ onLogout }: LayoutProps) => (
         Sign out
       </button>
     </nav>
-    <main>
+    <main className={styles.main}>
       <Outlet />
     </main>
-    <footer className={styles.footer}>v{__APP_VERSION__}</footer>
+    <footer className={styles.footer}>
+      <span>Ziber Systems</span>
+      <span>v{__APP_VERSION__}</span>
+    </footer>
   </div>
 )

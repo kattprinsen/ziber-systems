@@ -2,14 +2,25 @@
 
 .root {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  flex: 1;
+  padding-bottom: $space-12;
 }
 
 .nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   gap: $space-4;
   align-items: center;
   border-bottom: 1px solid $color-border;
   padding: 0 $space-8;
+  background: $color-background;
 }
 
 .navLink {
@@ -34,11 +45,18 @@
 }
 
 .footer {
-  padding: $space-4 $space-8;
-  font-size: $font-size-sm;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $space-2 $space-8;
+  font-size: 0.75rem;
   color: $color-text-muted;
-  opacity: 0.5;
-  text-align: right;
+  background: $color-background;
+  border-top: 1px solid $color-border;
 }
 
 .logoutButton {
