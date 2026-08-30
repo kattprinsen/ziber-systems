@@ -107,8 +107,9 @@ export async function sendTaskReminders(forceAll = false): Promise<void> {
     if (!forceAll && task.snoozedUntil && new Date(task.snoozedUntil) > new Date()) continue
 
     if (isDayOfWeekBased) {
-      // Day-of-week task: remind on the matching weekday
-      if (forceAll || task.dayOfWeek === todayDow) {
+      // Also fire if the task was snoozed and the snooze just expired (today != matching weekday)
+      const snoozedAndExpired = !forceAll && task.snoozedUntil !== null && new Date(task.snoozedUntil) <= new Date()
+      if (forceAll || task.dayOfWeek === todayDow || snoozedAndExpired) {
         due.push({ task, dueMs: Date.now() })
       }
       continue

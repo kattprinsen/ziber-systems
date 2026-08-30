@@ -202,8 +202,10 @@ registerButtonHandler('snooze', 'task', async (id, _username) => {
     return { type: CHANNEL_MESSAGE, data: { content: '❌ Invalid task ID.', flags: EPHEMERAL } }
   }
 
+  // Set to midnight of next day so the 08:00 reminder sees the snooze as expired
   const tomorrow = new Date()
   tomorrow.setDate(tomorrow.getDate() + 1)
+  tomorrow.setHours(0, 0, 0, 0)
   const snoozedUntil = tomorrow.toISOString()
 
   const [updated] = await db
