@@ -9,8 +9,8 @@ interface DiscordInteraction {
     custom_id: string
     component_type: number
   }
-  member?: { user: { username: string } }
-  user?: { username: string }
+  member?: { user: { id: string; username: string } }
+  user?: { id: string; username: string }
 }
 
 interface InteractionResponse {
@@ -22,7 +22,7 @@ interface InteractionResponse {
   }
 }
 
-type ButtonHandler = (id: string, username: string | null) => Promise<InteractionResponse>
+type ButtonHandler = (id: string, username: string | null, discordUserId: string | null) => Promise<InteractionResponse>
 
 // Interaction types
 const PING = 1
@@ -64,7 +64,7 @@ function parseCustomId(customId: string): { action: string; domain: string; id: 
 }
 
 // Plant: water
-registerButtonHandler('water', 'plant', async (id, username) => {
+registerButtonHandler('water', 'plant', async (id, username, _discordUserId) => {
   const plantId = parseInt(id, 10)
   if (isNaN(plantId)) {
     log.warn({ id }, 'Discord button: invalid plant ID')
@@ -105,7 +105,7 @@ registerButtonHandler('water', 'plant', async (id, username) => {
 })
 
 // Plant: snooze
-registerButtonHandler('snooze', 'plant', async (id, _username) => {
+registerButtonHandler('snooze', 'plant', async (id, _username, _discordUserId) => {
   const plantId = parseInt(id, 10)
   if (isNaN(plantId)) {
     log.warn({ id }, 'Discord button: invalid plant ID for snooze')
@@ -142,7 +142,7 @@ registerButtonHandler('snooze', 'plant', async (id, _username) => {
 })
 
 // Task: complete
-registerButtonHandler('complete', 'task', async (id, username) => {
+registerButtonHandler('complete', 'task', async (id, username, discordUserId) => {
   const taskId = parseInt(id, 10)
   if (isNaN(taskId)) {
     log.warn({ id }, 'Discord button: invalid task ID')
@@ -155,18 +155,20 @@ registerButtonHandler('complete', 'task', async (id, username) => {
     return { type: UPDATE_MESSAGE, data: { content: '🗑️ This task has been removed.', components: [] } }
   }
 
-  // Look up or create member from username
+  // Look up or create member by Discord user ID — consistent with the !command handler
   let member: { id: number; displayName: string } | null = null
-  if (username) {
-    const existing = await db.select().from(members).where(eq(members.discordName, username))
+  if (discordUserId) {
+    const existing = await db.select().from(members).where(eq(members.discordId, discordUserId))
     if (existing.length > 0) {
       member = existing[0]
     } else {
+      const displayName = username ?? discordUserId
       const [created] = await db
         .insert(members)
-        .values({ discordId: username, discordName: username, displayName: username, createdAt: new Date().toISOString() })
+        .values({ discordId: discordUserId, discordName: username ?? discordUserId, displayName, createdAt: new Date().toISOString() })
         .returning()
       member = created
+      log.info({ discordId: discordUserId, displayName }, 'New member auto-created from Discord button')
     }
   }
 
@@ -195,7 +197,7 @@ registerButtonHandler('complete', 'task', async (id, username) => {
 })
 
 // Task: snooze
-registerButtonHandler('snooze', 'task', async (id, _username) => {
+registerButtonHandler('snooze', 'task', async (id, _username, _discordUserId) => {
   const taskId = parseInt(id, 10)
   if (isNaN(taskId)) {
     log.warn({ id }, 'Discord button: invalid task ID for snooze')
@@ -235,6 +237,7 @@ export async function handleInteraction(body: DiscordInteraction): Promise<Inter
   if (body.type === MESSAGE_COMPONENT && body.data?.component_type === BUTTON) {
     const customId = body.data.custom_id
     const username = body.member?.user.username ?? body.user?.username ?? null
+    const discordUserId = body.member?.user.id ?? body.user?.id ?? null
     const parsed = parseCustomId(customId)
 
     if (!parsed) {
@@ -250,7 +253,7 @@ export async function handleInteraction(body: DiscordInteraction): Promise<Inter
       return { type: PONG }
     }
 
-    return handler(parsed.id, username)
+    return handler(parsed.id, username, discordUserId)
   }
 
   return { type: PONG }

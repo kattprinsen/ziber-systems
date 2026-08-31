@@ -90,7 +90,7 @@ describe('handleInteraction', () => {
     expect(result.data?.content).toContain('Invalid')
   })
 
-  it('returns ephemeral error when plant is not found in DB', async () => {
+  it('returns UPDATE_MESSAGE when plant is not found in DB', async () => {
     mocks.returning.mockResolvedValueOnce([]) // empty → not found
 
     const result = await handleInteraction({
@@ -98,9 +98,9 @@ describe('handleInteraction', () => {
       data: { custom_id: 'water_plant:999', component_type: BUTTON },
     })
 
-    expect(result.type).toBe(CHANNEL_MESSAGE)
-    expect(result.data?.flags).toBe(EPHEMERAL)
-    expect(result.data?.content).toContain('not found')
+    expect(result.type).toBe(UPDATE_MESSAGE)
+    expect(result.data?.components).toEqual([])
+    expect(result.data?.content).toContain('removed')
   })
 
   // --- snooze:plant ---
@@ -143,7 +143,7 @@ describe('handleInteraction', () => {
     expect(result.data?.content).toContain('Invalid')
   })
 
-  it('returns ephemeral error when plant is not found (snooze)', async () => {
+  it('returns UPDATE_MESSAGE when plant is not found (snooze)', async () => {
     mocks.returning.mockResolvedValueOnce([])
 
     const result = await handleInteraction({
@@ -151,9 +151,9 @@ describe('handleInteraction', () => {
       data: { custom_id: 'snooze:plant:999', component_type: BUTTON },
     })
 
-    expect(result.type).toBe(CHANNEL_MESSAGE)
-    expect(result.data?.flags).toBe(EPHEMERAL)
-    expect(result.data?.content).toContain('not found')
+    expect(result.type).toBe(UPDATE_MESSAGE)
+    expect(result.data?.components).toEqual([])
+    expect(result.data?.content).toContain('removed')
   })
 
   // --- complete:task ---
@@ -161,12 +161,12 @@ describe('handleInteraction', () => {
   it('completes a task for an existing member and returns UPDATE_MESSAGE', async () => {
     mocks.selectWhere
       .mockResolvedValueOnce([{ id: 7, name: 'Dishes', snoozedUntil: null }]) // task lookup
-      .mockResolvedValueOnce([{ id: 2, displayName: 'Alice' }])               // member lookup
+      .mockResolvedValueOnce([{ id: 2, displayName: 'Alice' }])               // member lookup by discordId
 
     const result = await handleInteraction({
       type: MESSAGE_COMPONENT,
       data: { custom_id: 'complete:task:7', component_type: BUTTON },
-      member: { user: { username: 'alice' } },
+      member: { user: { id: '111222333', username: 'alice' } },
     })
 
     expect(result.type).toBe(UPDATE_MESSAGE)
@@ -179,7 +179,7 @@ describe('handleInteraction', () => {
   it('auto-creates a member when completing a task for first-time user', async () => {
     mocks.selectWhere
       .mockResolvedValueOnce([{ id: 8, name: 'Vacuum', snoozedUntil: null }]) // task lookup
-      .mockResolvedValueOnce([])                                                // member not found
+      .mockResolvedValueOnce([])                                                // member not found by discordId
 
     // insert returning for member creation
     const insertReturning = vi.fn().mockResolvedValueOnce([{ id: 99, displayName: 'bob' }])
@@ -188,7 +188,7 @@ describe('handleInteraction', () => {
     const result = await handleInteraction({
       type: MESSAGE_COMPONENT,
       data: { custom_id: 'complete:task:8', component_type: BUTTON },
-      member: { user: { username: 'bob' } },
+      member: { user: { id: '444555666', username: 'bob' } },
     })
 
     expect(result.type).toBe(UPDATE_MESSAGE)
@@ -201,7 +201,7 @@ describe('handleInteraction', () => {
     const result = await handleInteraction({
       type: MESSAGE_COMPONENT,
       data: { custom_id: 'complete:task:9', component_type: BUTTON },
-      // no member/user field → username is null
+      // no member/user field → discordUserId is null
     })
 
     expect(result.type).toBe(CHANNEL_MESSAGE)
@@ -209,25 +209,25 @@ describe('handleInteraction', () => {
     expect(result.data?.content).toContain('identify user')
   })
 
-  it('returns ephemeral error when task is not found (complete)', async () => {
+  it('returns UPDATE_MESSAGE when task is not found (complete)', async () => {
     mocks.selectWhere.mockResolvedValueOnce([]) // task not found
 
     const result = await handleInteraction({
       type: MESSAGE_COMPONENT,
       data: { custom_id: 'complete:task:999', component_type: BUTTON },
-      member: { user: { username: 'alice' } },
+      member: { user: { id: '111222333', username: 'alice' } },
     })
 
-    expect(result.type).toBe(CHANNEL_MESSAGE)
-    expect(result.data?.flags).toBe(EPHEMERAL)
-    expect(result.data?.content).toContain('not found')
+    expect(result.type).toBe(UPDATE_MESSAGE)
+    expect(result.data?.components).toEqual([])
+    expect(result.data?.content).toContain('removed')
   })
 
   it('returns ephemeral error when task ID is not a number (complete)', async () => {
     const result = await handleInteraction({
       type: MESSAGE_COMPONENT,
       data: { custom_id: 'complete:task:abc', component_type: BUTTON },
-      member: { user: { username: 'alice' } },
+      member: { user: { id: '111222333', username: 'alice' } },
     })
 
     expect(result.type).toBe(CHANNEL_MESSAGE)
