@@ -67,6 +67,14 @@ When browsing the activity feed, the page can grow long and hard to scan. Add pr
 
 Optional follow-up: if activity volume keeps growing, move to server-side pagination later.
 
+## Personal training schedules
+Add training rotations and Discord reminders, reusing the household-task reminder patterns where appropriate without making training a shared household task.
+
+- Each training schedule belongs to a specific member; members only receive their own reminders
+- Support different activity types and rotations, such as swimming and gym sessions
+- Record completions so the next reminder can follow the configured rotation
+- Decide later how rotations are represented, how reminders are delivered, and whether web-based completion is needed
+
 ## Updating text
 We need to update so that the text in discord actually says what room the plants are in, some plants with different intervalls in different rooms are hard to track with the messages we get from discord
 
