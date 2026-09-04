@@ -128,3 +128,36 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+}
+
+.pageButton {
+  padding: $space-2 $space-3;
+  background: $color-surface;
+  color: $color-text;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  font-family: $font-family;
+  font-size: $font-size-sm;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: $color-background;
+  }
+
+  &:disabled {
+    color: $color-text-muted;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.pageStatus {
+  color: $color-text-muted;
+  font-size: $font-size-sm;
+}

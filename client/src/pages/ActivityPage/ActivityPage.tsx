@@ -40,21 +40,30 @@ function entryMeta(entry: ActivityEntry): string {
 
 export function ActivityPage() {
   const [entries, setEntries] = useState<ActivityEntry[]>([])
+  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<Filter>('all')
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
-    fetchActivity()
-      .then(setEntries)
-      .catch(() => setEntries([]))
+    setLoading(true)
+    fetchActivity(page, filter)
+      .then((activity) => {
+        setEntries(activity.entries)
+        setTotal(activity.total)
+      })
+      .catch(() => {
+        setEntries([])
+        setTotal(0)
+      })
       .finally(() => setLoading(false))
-  }, [])
+  }, [filter, page])
 
-  const filtered = filter === 'all' ? entries : entries.filter((e) => e.type === filter)
+  const totalPages = Math.max(1, Math.ceil(total / 25))
 
   // Group by date for dividers
   const grouped: { date: string; items: ActivityEntry[] }[] = []
-  for (const entry of filtered) {
+  for (const entry of entries) {
     const date = formatDate(entry.timestamp)
     const last = grouped[grouped.length - 1]
     if (last && last.date === date) {
@@ -74,7 +83,10 @@ export function ActivityPage() {
               key={f}
               type="button"
               className={`${styles.filterButton} ${filter === f ? styles.filterButtonActive : ''}`}
-              onClick={() => setFilter(f)}
+              onClick={() => {
+                setFilter(f)
+                setPage(1)
+              }}
             >
               {FILTER_LABELS[f]}
             </button>
@@ -84,28 +96,41 @@ export function ActivityPage() {
 
       {loading && <p className={styles.muted}>Loading…</p>}
 
-      {!loading && filtered.length === 0 && (
+      {!loading && entries.length === 0 && (
         <p className={styles.muted}>No activity yet.</p>
       )}
 
-      {!loading && filtered.length > 0 && (
-        <div className={styles.feed}>
-          {grouped.map((group) => (
-            <div key={group.date}>
-              <div className={styles.dateDivider}>{group.date}</div>
-              {group.items.map((entry) => (
-                <div key={entry.id} className={styles.entry}>
-                  <span className={styles.icon}>{entryIcon(entry.type)}</span>
-                  <div className={styles.entryBody}>
-                    <div className={styles.entryName}>{entry.name}</div>
-                    <div className={styles.entryMeta}>{entryMeta(entry)}</div>
+      {!loading && entries.length > 0 && (
+        <>
+          <div className={styles.feed}>
+            {grouped.map((group) => (
+              <div key={group.date}>
+                <div className={styles.dateDivider}>{group.date}</div>
+                {group.items.map((entry) => (
+                  <div key={entry.id} className={styles.entry}>
+                    <span className={styles.icon}>{entryIcon(entry.type)}</span>
+                    <div className={styles.entryBody}>
+                      <div className={styles.entryName}>{entry.name}</div>
+                      <div className={styles.entryMeta}>{entryMeta(entry)}</div>
+                    </div>
+                    <div className={styles.entryTime}>{formatTime(entry.timestamp)}</div>
                   </div>
-                  <div className={styles.entryTime}>{formatTime(entry.timestamp)}</div>
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
+                ))}
+              </div>
+            ))}
+          </div>
+          {totalPages > 1 && (
+            <nav className={styles.pagination} aria-label="Activity pages">
+              <button type="button" className={styles.pageButton} onClick={() => setPage(page - 1)} disabled={page === 1}>
+                Previous
+              </button>
+              <span className={styles.pageStatus}>Page {page} of {totalPages}</span>
+              <button type="button" className={styles.pageButton} onClick={() => setPage(page + 1)} disabled={page === totalPages}>
+                Next
+              </button>
+            </nav>
+          )}
+        </>
       )}
     </div>
   )
