@@ -1,7 +1,7 @@
 import { eq, desc } from 'drizzle-orm'
 import { db } from '../db/index.js'
 import { log } from '../logger.js'
-import { userPlants, plants, tasks, taskLogs } from '../db/schema.js'
+import { userPlants, plants, rooms, tasks, taskLogs } from '../db/schema.js'
 import { discordConfig } from './config.js'
 import { sendMessage } from './api.js'
 
@@ -22,9 +22,11 @@ export async function sendPlantReminders(forceAll = false): Promise<void> {
       commonName: plants.commonName,
       latinName: plants.latinName,
       wateringIntervalDays: plants.wateringIntervalDays,
+      roomName: rooms.name,
     })
     .from(userPlants)
     .innerJoin(plants, eq(userPlants.plantId, plants.id))
+    .leftJoin(rooms, eq(userPlants.roomId, rooms.id))
 
   const endOfToday = new Date()
   endOfToday.setHours(23, 59, 59, 999)
@@ -53,7 +55,7 @@ export async function sendPlantReminders(forceAll = false): Promise<void> {
 
     try {
       await sendMessage(discordConfig.plantChannelId, {
-        content: `🌿 **${name}** needs watering!\n*${plant.latinName}* · ${statusText}`,
+        content: `🌿 **${name}** needs watering!\n*${plant.latinName}* · 📍 ${plant.roomName ?? 'Room not assigned'} · ${statusText}`,
         components: [
           {
             type: 1,
