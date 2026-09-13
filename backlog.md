@@ -56,15 +56,14 @@ Fixed: `.root` is now a flex column, `<main>` wraps the outlet with `flex: 1`, f
 
 ---
 
-## Activity page pagination
-When browsing the activity feed, the page can grow long and hard to scan. Add progressive loading in the UI.
-
-- Show 5 activity items initially
-- Add a "Show more" control below the list
-- Each click loads 5 more items
-- Hide the control when all items are shown
-- Keep current filters working together with pagination
-
+## ~~Activity page pagination~~ ✅ Done
+~~When browsing the activity feed, the page can grow long and hard to scan. Add progressive loading in the UI.~~
+~~- Show 5 activity items initially~~
+~~- Add a "Show more" control below the list~~
+~~- Each click loads 5 more items~~
+~~- Hide the control when all items are shown~~
+~~- Keep current filters working together with pagination~~
+### Not implemented
 Optional follow-up: if activity volume keeps growing, move to server-side pagination later.
 
 ## Personal training schedules
