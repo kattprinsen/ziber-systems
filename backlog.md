@@ -75,8 +75,8 @@ Add training rotations and Discord reminders, reusing the household-task reminde
 - Record completions so the next reminder can follow the configured rotation
 - Decide later how rotations are represented, how reminders are delivered, and whether web-based completion is needed
 
-## Updating text
-We need to update so that the text in discord actually says what room the plants are in, some plants with different intervalls in different rooms are hard to track with the messages we get from discord
+## ~~Updating text~~ ✅ Done
+~~We need to update so that the text in discord actually says what room the plants are in, some plants with different intervalls in different rooms are hard to track with the messages we get from discord~~
 
 ## Create backup of database
 What would happen today if the rpi would break, it would be impossible to re-creatge the database, we need to secure that and future proof it
