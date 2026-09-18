@@ -151,8 +151,10 @@ After tunnel is up:
 
 ## Technical debt (found during repo maintenance scan, 2026-09-18)
 
-### Docs/code drift — tunnel provider
-`CLAUDE.md` describes the tunnel as Cloudflare Tunnel (`tunnel.ts` / `cloudflared`), but the actual code (`server/src/tunnel.ts`, `npm run tunnel -w server`) still spawns the **ngrok** CLI and reads `NGROK_DOMAIN`. `.github/copilot-instructions.md` correctly documents ngrok. Either finish the Cloudflare Tunnel migration (see "Phase 2 — Cloudflare Tunnel" above) or fix `CLAUDE.md` to stop describing a migration that hasn't happened — right now the two docs contradict each other.
+### ~~Docs/code drift — tunnel provider~~ ✅ Done
+~~`CLAUDE.md` describes the tunnel as Cloudflare Tunnel (`tunnel.ts` / `cloudflared`), but the actual code (`server/src/tunnel.ts`, `npm run tunnel -w server`) still spawns the **ngrok** CLI and reads `NGROK_DOMAIN`. `.github/copilot-instructions.md` correctly documents ngrok. Either finish the Cloudflare Tunnel migration (see "Phase 2 — Cloudflare Tunnel" above) or fix `CLAUDE.md` to stop describing a migration that hasn't happened — right now the two docs contradict each other.~~
+
+Fixed: `CLAUDE.md` now correctly describes the ngrok-based tunnel, matching the actual code and `.github/copilot-instructions.md`. The Cloudflare Tunnel migration remains a possible future task (see "Phase 2 — Cloudflare Tunnel" above), not something already in place.
 
 ### `console.log`/`console.error` left in server code
 Project convention is structured logging via `pino` (`log` from `logger.ts`) and never `console.*` in server code, but several files still use raw console calls:

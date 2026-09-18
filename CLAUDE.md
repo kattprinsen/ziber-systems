@@ -9,7 +9,7 @@ Run from the **repo root** unless noted otherwise.
 ```bash
 # Development
 npm run dev            # start client (Vite) + server (tsx --watch) concurrently
-npm run dev:discord    # same + Cloudflare Tunnel (for Discord interactions)
+npm run dev:discord    # same + ngrok tunnel (for Discord interactions)
 
 # Build & production
 npm run build          # build client then server
@@ -45,7 +45,7 @@ This is an npm workspaces monorepo with two packages: `client/` (React SPA) and 
 - **Database**: SQLite via `better-sqlite3` + Drizzle ORM. The DB file lives at `data/data.db` (created at startup). Schema is in `db/schema.ts`; migrations are applied inline in `db/index.ts` using raw `PRAGMA table_info` checks (no migration runner).
 - **Auth**: Cookie-based shared-password auth. Login posts to `/api/auth/login`, which sets a `session` cookie. `middleware/auth.ts` compares it against `AUTH_SECRET` env var. `/api/auth/*` and `/api/discord/interactions` are exempt.
 - **Discord integration**: A Discord bot sends daily reminders at 08:00 (cron) for both plant watering and scheduled household tasks. `discord/reminders.ts` is parameterised by domain. `discord/interactions.ts` dispatches button clicks via a registry keyed on `custom_id` prefix. `discord/commands.ts` handles `!prefix` commands (e.g. `!dishes`). `discord/api.ts` wraps the Discord REST API.
-- **Cloudflare Tunnel**: `tunnel.ts` exposes the local server publicly so Discord can reach `/api/discord/interactions` during development (`npm run dev:discord`).
+- **ngrok tunnel**: `tunnel.ts` spawns the ngrok CLI (static domain via `NGROK_DOMAIN`) to expose the local server publicly so Discord can reach `/api/discord/interactions` during development (`npm run dev:discord`).
 - **Logging**: `pino` via `logger.ts`, exported as `log`.
 
 ### Client (`client/src/`)
