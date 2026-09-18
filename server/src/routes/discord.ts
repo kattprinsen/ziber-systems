@@ -26,7 +26,7 @@ async function verifySignature(rawBody: string, signature: string, timestamp: st
       Buffer.from(timestamp + rawBody),
     )
   } catch (e) {
-    console.error('[Discord] Verify error:', e)
+    log.error({ err: e }, '[Discord] Verify error')
     return false
   }
 }

@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm'
 import { createRequire } from 'module'
 import { plants } from '../db/schema.js'
 import * as schema from '../db/schema.js'
+import { log } from '../logger.js'
 
 const require = createRequire(import.meta.url)
 const seedData = require('./seeds/plants.json') as {
@@ -48,5 +49,5 @@ for (const plant of seedData) {
   inserted++
 }
 
-console.log(`Seed complete — inserted: ${inserted}, skipped (already exist): ${skipped}`)
+log.info(`Seed complete — inserted: ${inserted}, skipped (already exist): ${skipped}`)
 sqlite.close()

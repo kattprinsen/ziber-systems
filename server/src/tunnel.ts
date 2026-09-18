@@ -1,15 +1,16 @@
 import 'dotenv/config'
 import { spawn } from 'child_process'
+import { log } from './logger.js'
 
 const domain = process.env.NGROK_DOMAIN
 
 if (!domain) {
-  console.error('[ngrok] NGROK_DOMAIN is not set in server/.env')
+  log.error('[ngrok] NGROK_DOMAIN is not set in server/.env')
   process.exit(1)
 }
 
-console.log(`[ngrok] Starting tunnel → https://${domain}`)
-console.log(`[ngrok] Interactions endpoint: https://${domain}/api/discord/interactions`)
+log.info(`[ngrok] Starting tunnel → https://${domain}`)
+log.info(`[ngrok] Interactions endpoint: https://${domain}/api/discord/interactions`)
 
 const proc = spawn('ngrok', ['http', `--url=${domain}`, '3000'], {
   stdio: 'inherit',

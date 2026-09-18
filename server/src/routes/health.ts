@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { count } from 'drizzle-orm'
 import { db } from '../db/index.js'
 import { healthChecks } from '../db/schema.js'
+import { log } from '../logger.js'
 
 const health = new Hono()
 
@@ -11,7 +12,7 @@ health.get('/', async (c) => {
   await db.insert(healthChecks).values({ checkedAt: now })
 
   const [result] = await db.select({ total: count() }).from(healthChecks)
-  console.log("Healthcheck PING!")
+  log.info('Healthcheck PING!')
   return c.json({
     status: 'ok',
     db: 'connected',

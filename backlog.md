@@ -156,12 +156,14 @@ After tunnel is up:
 
 Fixed: `CLAUDE.md` now correctly describes the ngrok-based tunnel, matching the actual code and `.github/copilot-instructions.md`. The Cloudflare Tunnel migration remains a possible future task (see "Phase 2 — Cloudflare Tunnel" above), not something already in place.
 
-### `console.log`/`console.error` left in server code
-Project convention is structured logging via `pino` (`log` from `logger.ts`) and never `console.*` in server code, but several files still use raw console calls:
-- `server/src/routes/health.ts:14` — `console.log("Healthcheck PING!")` on every health check (also spams stdout since health checks run frequently)
-- `server/src/routes/discord.ts:29` — `console.error('[Discord] Verify error:', e)` in `verifySignature`, even though the rest of the file already imports and uses `log`
-- `server/src/tunnel.ts` — several `console.log`/`console.error` calls (lower priority, it's a standalone script not the main app, but still inconsistent)
-- `server/src/db/seed.ts:51` — `console.log` summary at end of seed run (also low priority, one-off CLI script)
+### ~~`console.log`/`console.error` left in server code~~ ✅ Done
+~~Project convention is structured logging via `pino` (`log` from `logger.ts`) and never `console.*` in server code, but several files still use raw console calls:~~
+~~- `server/src/routes/health.ts:14` — `console.log("Healthcheck PING!")` on every health check (also spams stdout since health checks run frequently)~~
+~~- `server/src/routes/discord.ts:29` — `console.error('[Discord] Verify error:', e)` in `verifySignature`, even though the rest of the file already imports and uses `log`~~
+~~- `server/src/tunnel.ts` — several `console.log`/`console.error` calls (lower priority, it's a standalone script not the main app, but still inconsistent)~~
+~~- `server/src/db/seed.ts:51` — `console.log` summary at end of seed run (also low priority, one-off CLI script)~~
+
+Fixed: all four files now use the shared pino `log` (`log.info`/`log.error`/`log.warn`) instead of `console.*`.
 
 ### Inconsistent error handling in client hooks
 `usePlants` and `useMyPlants` follow the documented hook pattern (own `loading` **and** `error` state, expose `error` to callers). `useMembers`, `useRooms`, and `useTasks` do not — they swallow fetch failures with `console.error` only and never expose an `error` state, so the Members/Rooms/Tasks pages have no way to show the user that a load or mutation failed. Bring these three hooks in line with `usePlants`/`useMyPlants`.
