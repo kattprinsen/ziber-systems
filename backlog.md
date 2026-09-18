@@ -148,3 +148,21 @@ pm2 start "cloudflared tunnel run ziber" --name tunnel && pm2 save
 After tunnel is up:
 - Update Discord Developer Portal interactions URL → `https://ziber.yourdomain.com/api/discord/interactions`
 - Remove ngrok process from pm2: `pm2 delete <ngrok-process-name> && pm2 save`
+
+## Technical debt (found during repo maintenance scan, 2026-09-18)
+
+### Docs/code drift — tunnel provider
+`CLAUDE.md` describes the tunnel as Cloudflare Tunnel (`tunnel.ts` / `cloudflared`), but the actual code (`server/src/tunnel.ts`, `npm run tunnel -w server`) still spawns the **ngrok** CLI and reads `NGROK_DOMAIN`. `.github/copilot-instructions.md` correctly documents ngrok. Either finish the Cloudflare Tunnel migration (see "Phase 2 — Cloudflare Tunnel" above) or fix `CLAUDE.md` to stop describing a migration that hasn't happened — right now the two docs contradict each other.
+
+### `console.log`/`console.error` left in server code
+Project convention is structured logging via `pino` (`log` from `logger.ts`) and never `console.*` in server code, but several files still use raw console calls:
+- `server/src/routes/health.ts:14` — `console.log("Healthcheck PING!")` on every health check (also spams stdout since health checks run frequently)
+- `server/src/routes/discord.ts:29` — `console.error('[Discord] Verify error:', e)` in `verifySignature`, even though the rest of the file already imports and uses `log`
+- `server/src/tunnel.ts` — several `console.log`/`console.error` calls (lower priority, it's a standalone script not the main app, but still inconsistent)
+- `server/src/db/seed.ts:51` — `console.log` summary at end of seed run (also low priority, one-off CLI script)
+
+### Inconsistent error handling in client hooks
+`usePlants` and `useMyPlants` follow the documented hook pattern (own `loading` **and** `error` state, expose `error` to callers). `useMembers`, `useRooms`, and `useTasks` do not — they swallow fetch failures with `console.error` only and never expose an `error` state, so the Members/Rooms/Tasks pages have no way to show the user that a load or mutation failed. Bring these three hooks in line with `usePlants`/`useMyPlants`.
+
+### `health.ts` writes a DB row on every check
+`GET /api/health` inserts a row into `healthChecks` on every single call before responding. If this endpoint is polled frequently by an uptime monitor (see "Admin system health monitoring" above), the table grows unbounded with no cleanup/retention policy. Worth deciding whether every ping needs a persisted row, or only cron/scheduled checks, and adding a retention/cleanup strategy either way.
