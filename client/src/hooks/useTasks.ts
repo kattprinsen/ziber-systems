@@ -4,6 +4,7 @@ import { fetchTasks, createTask, updateTask, deleteTask, type Task } from '../ap
 interface UseTasksResult {
   tasks: Task[]
   loading: boolean
+  error: string | null
   create: (data: { name: string; command: string; description?: string; intervalDays?: number | null; dayOfWeek?: number | null }) => Promise<void>
   update: (id: number, data: Partial<{ name: string; command: string; description: string | null; intervalDays: number | null; dayOfWeek: number | null }>) => Promise<void>
   remove: (id: number) => Promise<void>
@@ -13,12 +14,14 @@ interface UseTasksResult {
 export function useTasks(): UseTasksResult {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(() => {
     setLoading(true)
+    setError(null)
     fetchTasks()
       .then(setTasks)
-      .catch((err: unknown) => console.error('[tasks]', err))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load tasks'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -50,5 +53,5 @@ export function useTasks(): UseTasksResult {
     [load],
   )
 
-  return { tasks, loading, create, update, remove, reload: load }
+  return { tasks, loading, error, create, update, remove, reload: load }
 }

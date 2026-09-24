@@ -4,6 +4,7 @@ import { fetchMembers, renameMember, type Member } from '../api/members'
 interface UseMembersResult {
   members: Member[]
   loading: boolean
+  error: string | null
   rename: (id: number, displayName: string) => Promise<void>
   reload: () => void
 }
@@ -11,12 +12,14 @@ interface UseMembersResult {
 export function useMembers(): UseMembersResult {
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(() => {
     setLoading(true)
+    setError(null)
     fetchMembers()
       .then(setMembers)
-      .catch((err: unknown) => console.error('[members]', err))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load members'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -32,5 +35,5 @@ export function useMembers(): UseMembersResult {
     [load],
   )
 
-  return { members, loading, rename, reload: load }
+  return { members, loading, error, rename, reload: load }
 }

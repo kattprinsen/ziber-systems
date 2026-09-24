@@ -3,7 +3,7 @@ import { useMembers } from '../../hooks/useMembers'
 import styles from './MembersPage.module.scss'
 
 export function MembersPage() {
-  const { members, loading, rename } = useMembers()
+  const { members, loading, error, rename } = useMembers()
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editName, setEditName] = useState('')
 
@@ -21,12 +21,13 @@ export function MembersPage() {
       <p className={styles.muted}>Members are created automatically when they use a Discord command.</p>
 
       {loading && <p className={styles.muted}>Loading…</p>}
+      {error && <p className={styles.error}>{error}</p>}
 
-      {!loading && members.length === 0 && (
+      {!loading && !error && members.length === 0 && (
         <p className={styles.muted}>No members yet — they appear here after their first Discord interaction.</p>
       )}
 
-      {!loading && members.length > 0 && (
+      {!loading && !error && members.length > 0 && (
         <ul className={styles.list}>
           {members.map((member) => (
             <li key={member.id} className={styles.item}>

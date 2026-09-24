@@ -165,8 +165,12 @@ Fixed: `CLAUDE.md` now correctly describes the ngrok-based tunnel, matching the 
 
 Fixed: all four files now use the shared pino `log` (`log.info`/`log.error`/`log.warn`) instead of `console.*`.
 
-### Inconsistent error handling in client hooks
-`usePlants` and `useMyPlants` follow the documented hook pattern (own `loading` **and** `error` state, expose `error` to callers). `useMembers`, `useRooms`, and `useTasks` do not — they swallow fetch failures with `console.error` only and never expose an `error` state, so the Members/Rooms/Tasks pages have no way to show the user that a load or mutation failed. Bring these three hooks in line with `usePlants`/`useMyPlants`.
+### ~~Inconsistent error handling in client hooks~~ ✅ Done
+~~`usePlants` and `useMyPlants` follow the documented hook pattern (own `loading` **and** `error` state, expose `error` to callers). `useMembers`, `useRooms`, and `useTasks` do not — they swallow fetch failures with `console.error` only and never expose an `error` state, so the Members/Rooms/Tasks pages have no way to show the user that a load or mutation failed. Bring these three hooks in line with `usePlants`/`useMyPlants`.~~
 
-### `health.ts` writes a DB row on every check
-`GET /api/health` inserts a row into `healthChecks` on every single call before responding. If this endpoint is polled frequently by an uptime monitor (see "Admin system health monitoring" above), the table grows unbounded with no cleanup/retention policy. Worth deciding whether every ping needs a persisted row, or only cron/scheduled checks, and adding a retention/cleanup strategy either way.
+Fixed: `useMembers`, `useRooms`, and `useTasks` now expose load errors, and their pages render an error state instead of showing an empty result after a failed request.
+
+### ~~`health.ts` writes a DB row on every check~~ ✅ Done
+~~`GET /api/health` inserts a row into `healthChecks` on every single call before responding. If this endpoint is polled frequently by an uptime monitor (see "Admin system health monitoring" above), the table grows unbounded with no cleanup/retention policy. Worth deciding whether every ping needs a persisted row, or only cron/scheduled checks, and adding a retention/cleanup strategy either way.~~
+
+Fixed: health checks older than 30 days are deleted on each health request before the retained row count is returned.

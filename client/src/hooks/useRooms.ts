@@ -4,6 +4,7 @@ import { fetchRooms, createRoom, renameRoom, deleteRoom, type Room } from '../ap
 interface UseRoomsResult {
   rooms: Room[]
   loading: boolean
+  error: string | null
   create: (name: string) => Promise<void>
   rename: (id: number, name: string) => Promise<void>
   remove: (id: number) => Promise<void>
@@ -13,12 +14,14 @@ interface UseRoomsResult {
 export function useRooms(): UseRoomsResult {
   const [rooms, setRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(() => {
     setLoading(true)
+    setError(null)
     fetchRooms()
       .then(setRooms)
-      .catch((err: unknown) => console.error('[rooms]', err))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load rooms'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -50,5 +53,5 @@ export function useRooms(): UseRoomsResult {
     [load],
   )
 
-  return { rooms, loading, create, rename, remove, reload: load }
+  return { rooms, loading, error, create, rename, remove, reload: load }
 }

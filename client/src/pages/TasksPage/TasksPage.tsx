@@ -22,7 +22,7 @@ const SCHEDULE_MODE_LABELS: Record<ScheduleMode, string> = {
 }
 
 export function TasksPage() {
-  const { tasks, loading, create, update, remove } = useTasks()
+  const { tasks, loading, error, create, update, remove } = useTasks()
 
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [history, setHistory] = useState<TaskHistoryEntry[]>([])
@@ -205,6 +205,8 @@ export function TasksPage() {
                   {SCHEDULE_MODE_LABELS[mode]}
                 </button>
               ))}
+
+              {error && <p className={styles.error}>{error}</p>}
             </div>
           </div>
           {addScheduleMode === 'interval' && (

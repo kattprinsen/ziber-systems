@@ -3,7 +3,7 @@ import { useRooms } from '../../hooks/useRooms'
 import styles from './RoomsPage.module.scss'
 
 export const RoomsPage = () => {
-  const { rooms, loading, create, rename, remove } = useRooms()
+  const { rooms, loading, error, create, rename, remove } = useRooms()
   const [newName, setNewName] = useState('')
   const [createError, setCreateError] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -58,12 +58,13 @@ export const RoomsPage = () => {
       <h1 className={styles.title}>Rooms</h1>
 
       {loading && <p className={styles.muted}>Loading…</p>}
+      {error && <p className={styles.error}>{error}</p>}
 
-      {!loading && rooms.length === 0 && (
+      {!loading && !error && rooms.length === 0 && (
         <p className={styles.muted}>No rooms yet — add one below.</p>
       )}
 
-      {!loading && rooms.length > 0 && (
+      {!loading && !error && rooms.length > 0 && (
         <ul className={styles.list}>
           {rooms.map((room) => (
             <li key={room.id} className={styles.item}>
