@@ -36,6 +36,18 @@
 
 ---
 
+## Undo accidental Discord actions
+
+Add a way to reverse an accidental action in the Discord reminder interface, especially a misclicked **Snooze** button.
+
+- Provide an **Undo** action after snoozing a plant or task
+- Restore the previous `snoozedUntil` value and reminder state exactly
+- Make the undo window and behavior clear in the Discord response
+- Decide whether other reversible actions, such as **Complete**, should use the same pattern
+- Add tests covering a snooze followed by undo, including expiry of the undo window
+
+---
+
 ## ~~Improve plant removal UX~~ ✅ Done
 
 ~~Triggered by INCIDENT-003 — the remove action is immediate, permanent, and silent.~~
