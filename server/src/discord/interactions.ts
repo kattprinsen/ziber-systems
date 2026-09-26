@@ -309,7 +309,7 @@ registerButtonHandler('undo', 'task', async (id, _username, _discordUserId, toke
 async function undoSnooze(domain: 'plant' | 'task', id: string, token?: string): Promise<InteractionResponse> {
   const undo = token ? snoozeUndos.get(token) : undefined
   const entityId = parseInt(id, 10)
-  if (!undo || undo.domain !== domain || undo.id !== entityId || undo.expiresAt <= Date.now()) {
+  if (!token || !undo || undo.domain !== domain || undo.id !== entityId || undo.expiresAt <= Date.now()) {
     if (token) snoozeUndos.delete(token)
     return { type: UPDATE_MESSAGE, data: { content: '↩️ This undo action has expired.', components: [] } }
   }
