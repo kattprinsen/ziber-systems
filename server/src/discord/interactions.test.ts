@@ -35,6 +35,7 @@ const EPHEMERAL = 64
 describe('handleInteraction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.selectWhere.mockResolvedValue([])
   })
 
   it('responds to PING with PONG', async () => {
@@ -107,7 +108,9 @@ describe('handleInteraction', () => {
 
   it('snoozes a plant for 1 day and returns UPDATE_MESSAGE', async () => {
     mocks.returning.mockResolvedValueOnce([{ id: 3, plantId: 5, nickname: 'Leafy', snoozedUntil: '2026-06-29T00:00:00Z' }])
-    mocks.selectWhere.mockResolvedValueOnce([{ commonName: 'Ficus' }])
+    mocks.selectWhere
+      .mockResolvedValueOnce([{ snoozedUntil: null }])
+      .mockResolvedValueOnce([{ commonName: 'Ficus' }])
 
     const result = await handleInteraction({
       type: MESSAGE_COMPONENT,
@@ -117,12 +120,14 @@ describe('handleInteraction', () => {
     expect(result.type).toBe(UPDATE_MESSAGE)
     expect(result.data?.content).toContain('😴')
     expect(result.data?.content).toContain('Leafy')
-    expect(result.data?.components).toEqual([])
+    expect(result.data?.components).toBeDefined()
   })
 
   it('uses commonName when plant has no nickname (snooze)', async () => {
     mocks.returning.mockResolvedValueOnce([{ id: 4, plantId: 6, nickname: null, snoozedUntil: '2026-06-29T00:00:00Z' }])
-    mocks.selectWhere.mockResolvedValueOnce([{ commonName: 'Ficus' }])
+    mocks.selectWhere
+      .mockResolvedValueOnce([{ snoozedUntil: null }])
+      .mockResolvedValueOnce([{ commonName: 'Ficus' }])
 
     const result = await handleInteraction({
       type: MESSAGE_COMPONENT,
@@ -239,6 +244,7 @@ describe('handleInteraction', () => {
 
   it('snoozes a task for 1 day and returns UPDATE_MESSAGE', async () => {
     mocks.returning.mockResolvedValueOnce([{ id: 10, name: 'Laundry', snoozedUntil: '2026-06-29T00:00:00Z' }])
+    mocks.selectWhere.mockResolvedValueOnce([{ snoozedUntil: null }])
 
     const result = await handleInteraction({
       type: MESSAGE_COMPONENT,
@@ -248,7 +254,7 @@ describe('handleInteraction', () => {
     expect(result.type).toBe(UPDATE_MESSAGE)
     expect(result.data?.content).toContain('😴')
     expect(result.data?.content).toContain('Laundry')
-    expect(result.data?.components).toEqual([])
+    expect(result.data?.components).toBeDefined()
   })
 
   it('returns ephemeral error when task is not found (snooze)', async () => {

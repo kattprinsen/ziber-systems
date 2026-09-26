@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm'
+import { randomUUID } from 'node:crypto'
 import { db } from '../db/index.js'
 import { log } from '../logger.js'
 import { userPlants, plants, wateringEvents, tasks, taskLogs, members } from '../db/schema.js'
@@ -22,7 +23,7 @@ interface InteractionResponse {
   }
 }
 
-type ButtonHandler = (id: string, username: string | null, discordUserId: string | null) => Promise<InteractionResponse>
+type ButtonHandler = (id: string, username: string | null, discordUserId: string | null, token?: string) => Promise<InteractionResponse>
 
 // Interaction types
 const PING = 1
@@ -38,6 +39,28 @@ const CHANNEL_MESSAGE = 4
 
 // Message flags
 const EPHEMERAL = 64
+const UNDO_WINDOW_MS = 5 * 60 * 1000
+
+interface SnoozeUndo {
+  domain: 'plant' | 'task'
+  id: number
+  previousSnoozedUntil: string | null
+  snoozedUntil: string
+  expiresAt: number
+}
+
+const snoozeUndos = new Map<string, SnoozeUndo>()
+
+function rememberSnoozeUndo(undo: Omit<SnoozeUndo, 'expiresAt'>): string {
+  const now = Date.now()
+  for (const [token, entry] of snoozeUndos) {
+    if (entry.expiresAt <= now) snoozeUndos.delete(token)
+  }
+
+  const token = randomUUID()
+  snoozeUndos.set(token, { ...undo, expiresAt: now + UNDO_WINDOW_MS })
+  return token
+}
 
 // Registry: keyed by "action:domain"
 const handlers = new Map<string, ButtonHandler>()
@@ -46,21 +69,46 @@ export function registerButtonHandler(action: string, domain: string, handler: B
   handlers.set(`${action}:${domain}`, handler)
 }
 
-function parseCustomId(customId: string): { action: string; domain: string; id: string } | null {
-  const parts = customId.split(':')
+interface ParsedCustomId {
+  action: string
+  domain: string
+  id: string
+  token?: string
+}
 
-  // New format: action:domain:id (e.g. "water:plant:42")
+function parseCurrentCustomId(customId: string): ParsedCustomId | null {
+  const parts = customId.split(':')
   if (parts.length === 3) {
     return { action: parts[0], domain: parts[1], id: parts[2] }
   }
-
-  // Legacy format: water_plant:42, snooze_plant:42
-  if (parts.length === 2) {
-    if (customId.startsWith('water_plant:')) return { action: 'water', domain: 'plant', id: parts[1] }
-    if (customId.startsWith('snooze_plant:')) return { action: 'snooze', domain: 'plant', id: parts[1] }
-  }
-
   return null
+}
+
+function parseUndoCustomId(customId: string): ParsedCustomId | null {
+  const parts = customId.split(':')
+  if (parts.length === 4 && parts[0] === 'undo') {
+    return { action: parts[0], domain: parts[1], id: parts[2], token: parts[3] }
+  }
+  return null
+}
+
+function parseLegacyCustomId(customId: string): ParsedCustomId | null {
+  const legacyFormats: Record<string, Omit<ParsedCustomId, 'id'>> = {
+    water_plant: { action: 'water', domain: 'plant' },
+    snooze_plant: { action: 'snooze', domain: 'plant' },
+  }
+  const separatorIndex = customId.indexOf(':')
+  if (separatorIndex === -1) return null
+
+  const format = customId.slice(0, separatorIndex)
+  const parsedFormat = legacyFormats[format]
+  if (!parsedFormat) return null
+
+  return { ...parsedFormat, id: customId.slice(separatorIndex + 1) }
+}
+
+function parseCustomId(customId: string): ParsedCustomId | null {
+  return parseCurrentCustomId(customId) ?? parseUndoCustomId(customId) ?? parseLegacyCustomId(customId)
 }
 
 // Plant: water
@@ -115,6 +163,10 @@ registerButtonHandler('snooze', 'plant', async (id, _username, _discordUserId) =
   const tomorrow = new Date()
   tomorrow.setDate(tomorrow.getDate() + 1)
   const snoozedUntil = tomorrow.toISOString()
+  const [before] = await db
+    .select({ snoozedUntil: userPlants.snoozedUntil })
+    .from(userPlants)
+    .where(eq(userPlants.id, plantId))
 
   const updated = await db
     .update(userPlants)
@@ -133,11 +185,20 @@ registerButtonHandler('snooze', 'plant', async (id, _username, _discordUserId) =
     .where(eq(plants.id, updated[0].plantId))
 
   const name = updated[0].nickname ?? plantRow?.commonName ?? 'Plant'
+  const undoToken = rememberSnoozeUndo({
+    domain: 'plant',
+    id: plantId,
+    previousSnoozedUntil: before?.snoozedUntil ?? null,
+    snoozedUntil,
+  })
   log.info({ userPlantId: plantId, name, snoozedUntil }, 'Plant snoozed via Discord')
 
   return {
     type: UPDATE_MESSAGE,
-    data: { content: `😴 **${name}** snoozed for 1 day.`, components: [] },
+    data: {
+      content: `😴 **${name}** snoozed for 1 day.`,
+      components: [{ type: 1, components: [{ type: 2, style: 2, label: 'Undo snooze', custom_id: `undo:plant:${plantId}:${undoToken}` }] }],
+    },
   }
 })
 
@@ -209,6 +270,10 @@ registerButtonHandler('snooze', 'task', async (id, _username, _discordUserId) =>
   tomorrow.setDate(tomorrow.getDate() + 1)
   tomorrow.setHours(0, 0, 0, 0)
   const snoozedUntil = tomorrow.toISOString()
+  const [before] = await db
+    .select({ snoozedUntil: tasks.snoozedUntil })
+    .from(tasks)
+    .where(eq(tasks.id, taskId))
 
   const [updated] = await db
     .update(tasks)
@@ -221,13 +286,60 @@ registerButtonHandler('snooze', 'task', async (id, _username, _discordUserId) =>
     return { type: CHANNEL_MESSAGE, data: { content: '❌ Task not found.', flags: EPHEMERAL } }
   }
 
+  const undoToken = rememberSnoozeUndo({
+    domain: 'task',
+    id: taskId,
+    previousSnoozedUntil: before?.snoozedUntil ?? null,
+    snoozedUntil,
+  })
   log.info({ taskId, name: updated.name, snoozedUntil }, 'Task snoozed via Discord button')
 
   return {
     type: UPDATE_MESSAGE,
-    data: { content: `😴 **${updated.name}** snoozed for 1 day.`, components: [] },
+    data: {
+      content: `😴 **${updated.name}** snoozed for 1 day.`,
+      components: [{ type: 1, components: [{ type: 2, style: 2, label: 'Undo snooze', custom_id: `undo:task:${taskId}:${undoToken}` }] }],
+    },
   }
 })
+
+registerButtonHandler('undo', 'plant', async (id, _username, _discordUserId, token) => undoSnooze('plant', id, token))
+registerButtonHandler('undo', 'task', async (id, _username, _discordUserId, token) => undoSnooze('task', id, token))
+
+async function undoSnooze(domain: 'plant' | 'task', id: string, token?: string): Promise<InteractionResponse> {
+  const undo = token ? snoozeUndos.get(token) : undefined
+  const entityId = parseInt(id, 10)
+  if (!token || !undo || undo.domain !== domain || undo.id !== entityId || undo.expiresAt <= Date.now()) {
+    if (token) snoozeUndos.delete(token)
+    return { type: UPDATE_MESSAGE, data: { content: '↩️ This undo action has expired.', components: [] } }
+  }
+
+  if (domain === 'plant') {
+    const [current] = await db
+      .select({ snoozedUntil: userPlants.snoozedUntil })
+      .from(userPlants)
+      .where(eq(userPlants.id, entityId))
+    if (!current || current.snoozedUntil !== undo.snoozedUntil) {
+      snoozeUndos.delete(token)
+      return { type: UPDATE_MESSAGE, data: { content: '↩️ This snooze can no longer be undone.', components: [] } }
+    }
+    await db.update(userPlants).set({ snoozedUntil: undo.previousSnoozedUntil }).where(eq(userPlants.id, entityId))
+  } else {
+    const [current] = await db
+      .select({ snoozedUntil: tasks.snoozedUntil })
+      .from(tasks)
+      .where(eq(tasks.id, entityId))
+    if (!current || current.snoozedUntil !== undo.snoozedUntil) {
+      snoozeUndos.delete(token)
+      return { type: UPDATE_MESSAGE, data: { content: '↩️ This snooze can no longer be undone.', components: [] } }
+    }
+    await db.update(tasks).set({ snoozedUntil: undo.previousSnoozedUntil }).where(eq(tasks.id, entityId))
+  }
+
+  snoozeUndos.delete(token)
+  log.info({ domain, id: entityId }, 'Discord snooze undone')
+  return { type: UPDATE_MESSAGE, data: { content: '↩️ Snooze undone.', components: [] } }
+}
 
 export async function handleInteraction(body: DiscordInteraction): Promise<InteractionResponse> {
   if (body.type === PING) {
@@ -253,7 +365,7 @@ export async function handleInteraction(body: DiscordInteraction): Promise<Inter
       return { type: PONG }
     }
 
-    return handler(parsed.id, username, discordUserId)
+    return handler(parsed.id, username, discordUserId, parsed.token)
   }
 
   return { type: PONG }
