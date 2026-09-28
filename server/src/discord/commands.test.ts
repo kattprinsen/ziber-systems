@@ -70,6 +70,29 @@ describe('handleCommand', () => {
     expect(result).toContain('rawuser')
   })
 
+  it('logs all mentioned members instead of only the command author', async () => {
+    mocks.selectWhere.mockResolvedValueOnce([{ id: 3, name: 'Dinner', command: 'dinner', snoozedUntil: null }])
+    mocks.recordTaskCompletion.mockReturnValueOnce({
+      participants: ['Kattprinsen', 'Sissel'],
+    })
+
+    const result = await handleCommand(PREFIX, {
+      author,
+      content: '!dinner @kattprinsen @Sissel',
+      channel_id: 'ch1',
+      mentions: [
+        { id: 'discord-123', username: 'kattprinsen', global_name: 'Kattprinsen' },
+        { id: 'discord-456', username: 'sissel', global_name: 'Sissel' },
+      ],
+    })
+
+    expect(result).toContain('Kattprinsen, Sissel')
+    expect(mocks.recordTaskCompletion).toHaveBeenCalledWith(3, 'discord', [
+      { discordId: 'discord-123', discordName: 'kattprinsen', displayName: 'Kattprinsen' },
+      { discordId: 'discord-456', discordName: 'sissel', displayName: 'Sissel' },
+    ])
+  })
+
   it('returns unknown-command reply listing available commands when task is not found', async () => {
     mocks.selectWhere.mockResolvedValueOnce([]) // task not found
     mocks.orderBy.mockResolvedValueOnce([

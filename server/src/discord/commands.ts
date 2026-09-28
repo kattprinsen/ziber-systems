@@ -8,6 +8,12 @@ export interface GatewayMessage {
   author: { id: string; username: string; global_name?: string | null }
   content: string
   channel_id: string
+  mentions?: Array<{
+    id: string
+    username: string
+    global_name?: string | null
+    member?: { nick?: string | null }
+  }>
 }
 
 // Returns a reply string if the message was a recognised command, null otherwise.
@@ -25,11 +31,20 @@ export async function handleCommand(prefix: string, msg: GatewayMessage): Promis
     return `❓ Unknown command \`${prefix}${cmd}\`. Available commands:\n${list}`
   }
 
-  const [participant] = recordTaskCompletion(task.id, 'discord', [{
-    discordId: msg.author.id,
-    discordName: msg.author.username,
-    displayName: msg.author.global_name ?? msg.author.username,
-  }]).participants
+  const mentionedParticipants = msg.mentions?.map((mention) => ({
+    discordId: mention.id,
+    discordName: mention.username,
+    displayName: mention.member?.nick ?? mention.global_name ?? mention.username,
+  }))
+  const participants = mentionedParticipants?.length
+    ? mentionedParticipants
+    : [{
+      discordId: msg.author.id,
+      discordName: msg.author.username,
+      displayName: msg.author.global_name ?? msg.author.username,
+    }]
+  const recorded = recordTaskCompletion(task.id, 'discord', participants)
+  const participant = recorded.participants.join(', ')
 
   // Clear snooze on scheduled tasks when manually completed
   if (task.snoozedUntil) {

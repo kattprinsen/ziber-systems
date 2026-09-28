@@ -8,4 +8,4 @@ CREATE TABLE `__new_task_log_members` (
 --> statement-breakpoint
 INSERT INTO `__new_task_log_members`("task_log_id", "member_id") SELECT "task_log_id", "member_id" FROM `task_log_members`;--> statement-breakpoint
 DROP TABLE `task_log_members`;--> statement-breakpoint
-ALTER TABLE `__new_task_log_members` RENAME TO `task_log_members`;--> statement-breakpoint
+ALTER TABLE `__new_task_log_members` RENAME TO `task_log_members`;
