@@ -36,6 +36,23 @@
 
 ---
 
+## Record shared task completions — implemented; local Discord verification pending
+
+Allow one household task completion to be credited to multiple members when people do something together (for example, dinner or a walk). Today `taskLogs` stores one `memberId` per completion, and the Discord completion button credits only the person who clicked it. Nearly all use currently comes through Discord, so deliver the button flow first; prefix commands and web UI can follow later.
+
+- After a reminder's **Complete** button is clicked, let the user choose participants with a Discord-native user-select control and explicitly confirm; opening or changing the picker must not log a completion. Acknowledge success and prevent repeat submissions from creating duplicate completion events
+- Resolve/store participants by Discord user ID, never typed display names; deduplicate selected IDs and use Discord-provided user data to create missing household member records
+- Preserve today's behavior when no participants are selected: credit the person who clicked **Complete**; when participants are selected, that selection is the complete list, and the clicker is credited only if selected
+- Update the data model so one completion event can be linked to multiple members (use a normalized join table, not a free-form string or duplicate completion rows); add a migration that backfills every existing `taskLogs.memberId` as that event's participant
+- Keep completion totals event-based (one completion counts once), while member activity/participation credits each linked member
+- Show all credited members in the activity feed and `/api/export/task-logs`; update member activity aggregates so shared completions count for every linked member
+- Keep `!command` single-member behavior unchanged in the first release; later support mention-based participants using Discord IDs and the same event model
+- Add tests for no selection/default clicker, selecting multiple members, selecting the clicker explicitly, duplicate/invalid participant IDs, event-count semantics, and activity/export member lists
+
+Implemented: Discord task reminder **Complete** opens an ephemeral participant picker and confirmation flow; an empty selection credits the clicker, and an explicit selection is authoritative. Completion events now link to participants through `task_log_members`; existing task history is backfilled by migration, and Discord reminder message IDs prevent repeat completions. Activity, task history, exports, and per-member stats expose/count the linked participants. Automated checks pass; manual Discord verification remains.
+
+---
+
 ## Undo accidental Discord actions
 
 Add a way to reverse an accidental action in the Discord reminder interface, especially a misclicked **Snooze** button.

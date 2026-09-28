@@ -13,13 +13,18 @@ const mocks = vi.hoisted(() => {
 
   const insertValues = vi.fn().mockResolvedValue([])
   const insert = vi.fn(() => ({ values: insertValues }))
+  const recordTaskCompletion = vi.fn((_taskId: number, _source: string, participants: { displayName: string }[]) => ({
+    taskLogId: 1,
+    participants: participants.map((participant) => participant.displayName),
+  }))
 
-  return { update, set, updateWhere, returning, select, from, selectWhere, insert, insertValues }
+  return { update, set, updateWhere, returning, select, from, selectWhere, insert, insertValues, recordTaskCompletion }
 })
 
 vi.mock('../db/index.js', () => ({
   db: { update: mocks.update, select: mocks.select, insert: mocks.insert },
 }))
+vi.mock('./task-completions.js', () => ({ recordTaskCompletion: mocks.recordTaskCompletion }))
 
 import { handleInteraction } from './interactions.js'
 
@@ -31,6 +36,43 @@ const PONG = 1
 const UPDATE_MESSAGE = 7
 const CHANNEL_MESSAGE = 4
 const EPHEMERAL = 64
+const USER_SELECT = 5
+const requester = { id: '111222333', username: 'alice', global_name: 'Alice' }
+
+async function startTaskCompletion(taskId = 7, taskName = 'Dishes'): Promise<string> {
+  mocks.selectWhere.mockResolvedValueOnce([{ id: taskId, name: taskName, snoozedUntil: null }])
+  const response = await handleInteraction({
+    type: MESSAGE_COMPONENT,
+    message: { id: `reminder-${taskId}` },
+    data: { custom_id: `complete:task:${taskId}`, component_type: BUTTON },
+    member: { user: requester },
+  })
+  expect(response.type).toBe(CHANNEL_MESSAGE)
+  expect(response.data?.flags).toBe(EPHEMERAL)
+  const components = response.data?.components as { components: { custom_id: string }[] }[]
+  return components[0].components[0].custom_id.split(':').at(-1)!
+}
+
+function selectParticipants(taskId: number, token: string, values: string[], users: Record<string, { id: string; username: string; global_name?: string | null }>) {
+  return handleInteraction({
+    type: MESSAGE_COMPONENT,
+    data: {
+      custom_id: `participants:task:${taskId}:${token}`,
+      component_type: USER_SELECT,
+      values,
+      resolved: { users },
+    },
+    member: { user: requester },
+  })
+}
+
+function confirmCompletion(taskId: number, token: string) {
+  return handleInteraction({
+    type: MESSAGE_COMPONENT,
+    data: { custom_id: `confirm:task:${taskId}:${token}`, component_type: BUTTON },
+    member: { user: requester },
+  })
+}
 
 describe('handleInteraction', () => {
   beforeEach(() => {
@@ -163,50 +205,125 @@ describe('handleInteraction', () => {
 
   // --- complete:task ---
 
-  it('completes a task for an existing member and returns UPDATE_MESSAGE', async () => {
-    mocks.selectWhere
-      .mockResolvedValueOnce([{ id: 7, name: 'Dishes', snoozedUntil: null }]) // task lookup
-      .mockResolvedValueOnce([{ id: 2, displayName: 'Alice' }])               // member lookup by discordId
+  it('waits for explicit confirmation before recording a completion', async () => {
+    const token = await startTaskCompletion()
 
-    const result = await handleInteraction({
-      type: MESSAGE_COMPONENT,
-      data: { custom_id: 'complete:task:7', component_type: BUTTON },
-      member: { user: { id: '111222333', username: 'alice' } },
-    })
+    expect(mocks.recordTaskCompletion).not.toHaveBeenCalled()
+    expect(token).toBeTruthy()
+  })
+
+  it('credits the clicker when no participants are selected', async () => {
+    const token = await startTaskCompletion()
+    mocks.selectWhere.mockResolvedValueOnce([{ id: 7, name: 'Dishes', snoozedUntil: null }])
+
+    const result = await confirmCompletion(7, token)
 
     expect(result.type).toBe(UPDATE_MESSAGE)
-    expect(result.data?.content).toContain('✅')
     expect(result.data?.content).toContain('Dishes')
     expect(result.data?.content).toContain('Alice')
-    expect(result.data?.components).toEqual([])
+    expect(mocks.recordTaskCompletion).toHaveBeenCalledWith(7, 'discord', [{
+      discordId: requester.id,
+      discordName: requester.username,
+      displayName: requester.global_name,
+    }], 'reminder-7')
   })
 
-  it('auto-creates a member when completing a task for first-time user', async () => {
-    mocks.selectWhere
-      .mockResolvedValueOnce([{ id: 8, name: 'Vacuum', snoozedUntil: null }]) // task lookup
-      .mockResolvedValueOnce([])                                                // member not found by discordId
+  it('credits only selected participants, not the clicker implicitly', async () => {
+    const token = await startTaskCompletion()
+    await selectParticipants(7, token, ['222', '333'], {
+      '222': { id: '222', username: 'bob', global_name: 'Bob' },
+      '333': { id: '333', username: 'carol', global_name: 'Carol' },
+    })
+    mocks.selectWhere.mockResolvedValueOnce([{ id: 7, name: 'Dishes', snoozedUntil: null }])
 
-    // insert returning for member creation
-    const insertReturning = vi.fn().mockResolvedValueOnce([{ id: 99, displayName: 'bob' }])
-    mocks.insertValues.mockReturnValueOnce({ returning: insertReturning })
+    const result = await confirmCompletion(7, token)
 
+    expect(result.data?.content).toContain('Bob, Carol')
+    expect(mocks.recordTaskCompletion).toHaveBeenCalledWith(7, 'discord', [
+      { discordId: '222', discordName: 'bob', displayName: 'Bob' },
+      { discordId: '333', discordName: 'carol', displayName: 'Carol' },
+    ], 'reminder-7')
+  })
+
+  it('deduplicates selected Discord user IDs', async () => {
+    const token = await startTaskCompletion()
+    await selectParticipants(7, token, ['222', '222'], {
+      '222': { id: '222', username: 'bob', global_name: 'Bob' },
+    })
+    mocks.selectWhere.mockResolvedValueOnce([{ id: 7, name: 'Dishes', snoozedUntil: null }])
+
+    await confirmCompletion(7, token)
+
+    expect(mocks.recordTaskCompletion).toHaveBeenCalledWith(7, 'discord', [
+      { discordId: '222', discordName: 'bob', displayName: 'Bob' },
+    ], 'reminder-7')
+  })
+
+  it('credits the clicker when explicitly selected with other participants', async () => {
+    const token = await startTaskCompletion()
+    await selectParticipants(7, token, [requester.id, '222'], {
+      [requester.id]: requester,
+      '222': { id: '222', username: 'bob', global_name: 'Bob' },
+    })
+    mocks.selectWhere.mockResolvedValueOnce([{ id: 7, name: 'Dishes', snoozedUntil: null }])
+
+    await confirmCompletion(7, token)
+
+    expect(mocks.recordTaskCompletion).toHaveBeenCalledWith(7, 'discord', [
+      { discordId: requester.id, discordName: requester.username, displayName: requester.global_name },
+      { discordId: '222', discordName: 'bob', displayName: 'Bob' },
+    ], 'reminder-7')
+  })
+
+  it('rejects selected IDs that Discord did not resolve', async () => {
+    const token = await startTaskCompletion()
+
+    const result = await selectParticipants(7, token, ['unknown-user'], {})
+
+    expect(result.data?.content).toContain('could not resolve')
+    expect(mocks.recordTaskCompletion).not.toHaveBeenCalled()
+  })
+
+  it('cancels a pending completion without recording an event', async () => {
+    const token = await startTaskCompletion()
     const result = await handleInteraction({
       type: MESSAGE_COMPONENT,
-      data: { custom_id: 'complete:task:8', component_type: BUTTON },
-      member: { user: { id: '444555666', username: 'bob' } },
+      data: { custom_id: `cancel:task:7:${token}`, component_type: BUTTON },
+      member: { user: requester },
     })
 
-    expect(result.type).toBe(UPDATE_MESSAGE)
-    expect(result.data?.content).toContain('bob')
+    expect(result.data?.content).toContain('cancelled')
+    expect(result.data?.components).toEqual([])
+    expect(mocks.recordTaskCompletion).not.toHaveBeenCalled()
   })
 
-  it('returns ephemeral error when no username is provided for task complete', async () => {
-    mocks.selectWhere.mockResolvedValueOnce([{ id: 9, name: 'Trash', snoozedUntil: null }])
+  it('does not let another user change or submit the selection', async () => {
+    const token = await startTaskCompletion()
+    const result = await handleInteraction({
+      type: MESSAGE_COMPONENT,
+      data: { custom_id: `confirm:task:7:${token}`, component_type: BUTTON },
+      member: { user: { id: 'other-user', username: 'mallory' } },
+    })
 
+    expect(result.data?.content).toContain('expired or was already submitted')
+    expect(mocks.recordTaskCompletion).not.toHaveBeenCalled()
+  })
+
+  it('does not record duplicate confirmation submissions', async () => {
+    const token = await startTaskCompletion()
+    mocks.selectWhere.mockResolvedValueOnce([{ id: 7, name: 'Dishes', snoozedUntil: null }])
+
+    await confirmCompletion(7, token)
+    const duplicate = await confirmCompletion(7, token)
+
+    expect(duplicate.data?.content).toContain('expired or was already submitted')
+    expect(mocks.recordTaskCompletion).toHaveBeenCalledOnce()
+  })
+
+  it('returns ephemeral error when no Discord user is available', async () => {
     const result = await handleInteraction({
       type: MESSAGE_COMPONENT,
       data: { custom_id: 'complete:task:9', component_type: BUTTON },
-      // no member/user field → discordUserId is null
     })
 
     expect(result.type).toBe(CHANNEL_MESSAGE)

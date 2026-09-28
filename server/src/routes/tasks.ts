@@ -1,8 +1,8 @@
 import { Hono } from 'hono'
-import { eq, desc } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { db } from '../db/index.js'
 import { log } from '../logger.js'
-import { tasks, taskLogs, members } from '../db/schema.js'
+import { tasks, taskLogs, taskLogMembers, members } from '../db/schema.js'
 
 const tasksRoute = new Hono()
 
@@ -17,17 +17,16 @@ tasksRoute.get('/:id/history', async (c) => {
   const id = Number(c.req.param('id'))
   if (!Number.isInteger(id) || id < 1) return c.json({ error: 'Invalid id' }, 400)
 
-  const history = await db
-    .select({
-      id: taskLogs.id,
-      completedAt: taskLogs.completedAt,
-      source: taskLogs.source,
-      displayName: members.displayName,
-    })
-    .from(taskLogs)
-    .innerJoin(members, eq(taskLogs.memberId, members.id))
-    .where(eq(taskLogs.taskId, id))
-    .orderBy(desc(taskLogs.completedAt))
+  const history = await db.all<{ id: number; completedAt: string; source: 'discord' | 'web'; displayName: string }>(sql`
+    SELECT ${taskLogs.id} AS id, ${taskLogs.completedAt} AS completedAt, ${taskLogs.source} AS source,
+      (SELECT group_concat(${members.displayName}, ', ')
+        FROM ${taskLogMembers}
+        INNER JOIN ${members} ON ${taskLogMembers.memberId} = ${members.id}
+        WHERE ${taskLogMembers.taskLogId} = ${taskLogs.id}) AS displayName
+    FROM ${taskLogs}
+    WHERE ${taskLogs.taskId} = ${id}
+    ORDER BY ${taskLogs.completedAt} DESC
+  `)
 
   return c.json(history)
 })

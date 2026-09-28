@@ -14,13 +14,17 @@ const mocks = vi.hoisted(() => {
   const insertReturning = vi.fn().mockResolvedValue([])
   const insertValues = vi.fn(() => ({ returning: insertReturning }))
   const insert = vi.fn(() => ({ values: insertValues }))
+  const recordTaskCompletion = vi.fn((_taskId: number, _source: string, participants: { displayName: string }[]) => ({
+    participants: participants.map((participant) => participant.displayName),
+  }))
 
-  return { update, set, updateWhere, returning, select, from, selectWhere, orderBy, insert, insertValues, insertReturning }
+  return { update, set, updateWhere, returning, select, from, selectWhere, orderBy, insert, insertValues, insertReturning, recordTaskCompletion }
 })
 
 vi.mock('../db/index.js', () => ({
   db: { update: mocks.update, select: mocks.select, insert: mocks.insert },
 }))
+vi.mock('./task-completions.js', () => ({ recordTaskCompletion: mocks.recordTaskCompletion }))
 
 import { handleCommand } from './commands.js'
 
@@ -44,40 +48,24 @@ describe('handleCommand', () => {
   })
 
   it('logs the task and returns success message for an existing member', async () => {
-    mocks.selectWhere
-      .mockResolvedValueOnce([{ id: 1, name: 'Dishes', command: 'dishes', snoozedUntil: null }]) // task lookup
-      .mockResolvedValueOnce([{ id: 5, displayName: 'Test User' }])                               // member lookup
+    mocks.selectWhere.mockResolvedValueOnce([{ id: 1, name: 'Dishes', command: 'dishes', snoozedUntil: null }])
 
     const result = await handleCommand(PREFIX, { author, content: '!dishes', channel_id: 'ch1' })
 
     expect(result).toContain('✅')
     expect(result).toContain('Dishes')
     expect(result).toContain('Test User')
+    expect(mocks.recordTaskCompletion).toHaveBeenCalledWith(1, 'discord', [{
+      discordId: author.id,
+      discordName: author.username,
+      displayName: author.global_name,
+    }])
   })
 
-  it('auto-creates a new member on first interaction and uses global_name as displayName', async () => {
-    mocks.selectWhere
-      .mockResolvedValueOnce([{ id: 2, name: 'Vacuum', command: 'vacuum', snoozedUntil: null }]) // task
-      .mockResolvedValueOnce([])                                                                   // member not found
-
-    mocks.insertReturning.mockResolvedValueOnce([{ id: 99, displayName: 'Test User' }])
-
-    const result = await handleCommand(PREFIX, { author, content: '!vacuum', channel_id: 'ch1' })
-
-    expect(result).toContain('Test User')
-    expect(mocks.insert).toHaveBeenCalled()
-  })
-
-  it('falls back to username when global_name is null during member creation', async () => {
-    const authorNoGlobal = { id: 'discord-456', username: 'rawuser', global_name: null }
-
-    mocks.selectWhere
-      .mockResolvedValueOnce([{ id: 3, name: 'Trash', command: 'trash', snoozedUntil: null }])
-      .mockResolvedValueOnce([])
-
-    mocks.insertReturning.mockResolvedValueOnce([{ id: 100, displayName: 'rawuser' }])
-
-    const result = await handleCommand(PREFIX, { author: authorNoGlobal, content: '!trash', channel_id: 'ch1' })
+  it('uses username as the display name when global_name is null', async () => {
+    mocks.selectWhere.mockResolvedValueOnce([{ id: 2, name: 'Vacuum', command: 'vacuum', snoozedUntil: null }])
+    const authorWithoutGlobalName = { id: 'discord-456', username: 'rawuser', global_name: null }
+    const result = await handleCommand(PREFIX, { author: authorWithoutGlobalName, content: '!vacuum', channel_id: 'ch1' })
 
     expect(result).toContain('rawuser')
   })
@@ -106,9 +94,7 @@ describe('handleCommand', () => {
   })
 
   it('clears snoozedUntil when completing a snoozed task', async () => {
-    mocks.selectWhere
-      .mockResolvedValueOnce([{ id: 4, name: 'Laundry', command: 'laundry', snoozedUntil: '2026-06-29T00:00:00Z' }])
-      .mockResolvedValueOnce([{ id: 5, displayName: 'Test User' }])
+    mocks.selectWhere.mockResolvedValueOnce([{ id: 4, name: 'Laundry', command: 'laundry', snoozedUntil: '2026-06-29T00:00:00Z' }])
 
     await handleCommand(PREFIX, { author, content: '!laundry', channel_id: 'ch1' })
 
@@ -117,9 +103,7 @@ describe('handleCommand', () => {
   })
 
   it('does not call update when task has no snooze', async () => {
-    mocks.selectWhere
-      .mockResolvedValueOnce([{ id: 5, name: 'Dishes', command: 'dishes', snoozedUntil: null }])
-      .mockResolvedValueOnce([{ id: 5, displayName: 'Test User' }])
+    mocks.selectWhere.mockResolvedValueOnce([{ id: 5, name: 'Dishes', command: 'dishes', snoozedUntil: null }])
 
     await handleCommand(PREFIX, { author, content: '!dishes', channel_id: 'ch1' })
 

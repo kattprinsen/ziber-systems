@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { eq, desc, count, max, gte } from 'drizzle-orm'
 import { db } from '../db/index.js'
-import { plants, userPlants, rooms, wateringEvents, tasks, taskLogs, members } from '../db/schema.js'
+import { plants, userPlants, rooms, wateringEvents, tasks, taskLogs, taskLogMembers, members } from '../db/schema.js'
 import { apiKeyMiddleware } from '../middleware/apiKey.js'
 
 const exportRoute = new Hono()
@@ -98,23 +98,43 @@ exportRoute.get('/tasks', async (c) => {
 // Raw task completion history with task name and member display name.
 // ---------------------------------------------------------------------------
 exportRoute.get('/task-logs', async (c) => {
-  const rows = await db
+  const logs = await db
     .select({
       id: taskLogs.id,
       completedAt: taskLogs.completedAt,
       source: taskLogs.source,
       taskId: taskLogs.taskId,
       taskName: tasks.name,
-      memberId: taskLogs.memberId,
-      displayName: members.displayName,
-      discordName: members.discordName,
     })
     .from(taskLogs)
     .innerJoin(tasks, eq(taskLogs.taskId, tasks.id))
-    .innerJoin(members, eq(taskLogs.memberId, members.id))
     .orderBy(desc(taskLogs.completedAt))
 
-  return c.json(rows)
+  const participants = await db
+    .select({
+      taskLogId: taskLogMembers.taskLogId,
+      memberId: members.id,
+      displayName: members.displayName,
+      discordName: members.discordName,
+    })
+    .from(taskLogMembers)
+    .innerJoin(members, eq(taskLogMembers.memberId, members.id))
+
+  const participantsByLog = new Map<number, typeof participants>()
+  for (const participant of participants) {
+    const list = participantsByLog.get(participant.taskLogId) ?? []
+    list.push(participant)
+    participantsByLog.set(participant.taskLogId, list)
+  }
+
+  return c.json(logs.map((entry) => ({
+    ...entry,
+    participants: (participantsByLog.get(entry.id) ?? []).map(({ memberId, displayName, discordName }) => ({
+      memberId,
+      displayName,
+      discordName,
+    })),
+  })))
 })
 
 // ---------------------------------------------------------------------------
@@ -126,12 +146,13 @@ exportRoute.get('/members', async (c) => {
 
   const stats = await db
     .select({
-      memberId: taskLogs.memberId,
-      taskCount: count(taskLogs.id),
+      memberId: taskLogMembers.memberId,
+      taskCount: count(taskLogMembers.taskLogId),
       lastActiveAt: max(taskLogs.completedAt),
     })
-    .from(taskLogs)
-    .groupBy(taskLogs.memberId)
+    .from(taskLogMembers)
+    .innerJoin(taskLogs, eq(taskLogMembers.taskLogId, taskLogs.id))
+    .groupBy(taskLogMembers.memberId)
 
   const statsMap = new Map(stats.map((s) => [s.memberId, s]))
 
@@ -184,12 +205,13 @@ exportRoute.get('/summary', async (c) => {
     db.select({ totalTasks: count(tasks.id) }).from(tasks),
     db.select({ totalMembers: count(members.id) }).from(members),
     db
-      .select({ memberId: taskLogs.memberId, taskCount: count(taskLogs.id), displayName: members.displayName })
-      .from(taskLogs)
-      .innerJoin(members, eq(taskLogs.memberId, members.id))
+      .select({ memberId: taskLogMembers.memberId, taskCount: count(taskLogMembers.taskLogId), displayName: members.displayName })
+      .from(taskLogMembers)
+      .innerJoin(taskLogs, eq(taskLogMembers.taskLogId, taskLogs.id))
+      .innerJoin(members, eq(taskLogMembers.memberId, members.id))
       .where(gte(taskLogs.completedAt, weekAgoIso))
-      .groupBy(taskLogs.memberId)
-      .orderBy(desc(count(taskLogs.id)))
+      .groupBy(taskLogMembers.memberId)
+      .orderBy(desc(count(taskLogMembers.taskLogId)))
       .limit(1),
   ])
 
