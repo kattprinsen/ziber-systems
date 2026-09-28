@@ -2,16 +2,29 @@ import { eq } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
 import { db } from '../db/index.js'
 import { log } from '../logger.js'
-import { userPlants, plants, wateringEvents, tasks, taskLogs, members } from '../db/schema.js'
+import { userPlants, plants, wateringEvents, tasks } from '../db/schema.js'
+import { recordTaskCompletion, type TaskParticipantInput } from './task-completions.js'
+
+interface DiscordUser {
+  id: string
+  username: string
+  global_name?: string | null
+}
 
 interface DiscordInteraction {
   type: number
+  message?: { id: string }
   data?: {
-    custom_id: string
+    custom_id?: string
     component_type: number
+    values?: string[]
+    resolved?: {
+      users?: Record<string, DiscordUser>
+      members?: Record<string, { nick?: string | null }>
+    }
   }
-  member?: { user: { id: string; username: string } }
-  user?: { id: string; username: string }
+  member?: { user: DiscordUser }
+  user?: DiscordUser
 }
 
 interface InteractionResponse {
@@ -23,7 +36,7 @@ interface InteractionResponse {
   }
 }
 
-type ButtonHandler = (id: string, username: string | null, discordUserId: string | null, token?: string) => Promise<InteractionResponse>
+type ButtonHandler = (id: string, username: string | null, discordUserId: string | null, token?: string, actor?: DiscordUser | null, messageId?: string) => Promise<InteractionResponse>
 
 // Interaction types
 const PING = 1
@@ -31,6 +44,7 @@ const MESSAGE_COMPONENT = 3
 
 // Component types
 const BUTTON = 2
+const USER_SELECT = 5
 
 // Response types
 const PONG = 1
@@ -40,6 +54,7 @@ const CHANNEL_MESSAGE = 4
 // Message flags
 const EPHEMERAL = 64
 const UNDO_WINDOW_MS = 5 * 60 * 1000
+const COMPLETION_SELECTION_WINDOW_MS = 10 * 60 * 1000
 
 interface SnoozeUndo {
   domain: 'plant' | 'task'
@@ -50,6 +65,18 @@ interface SnoozeUndo {
 }
 
 const snoozeUndos = new Map<string, SnoozeUndo>()
+
+interface PendingTaskCompletion {
+  taskId: number
+  taskName: string
+  discordMessageId: string | undefined
+  requester: DiscordUser
+  participants: { user: DiscordUser; displayName: string }[]
+  expiresAt: number
+  processing: boolean
+}
+
+const pendingTaskCompletions = new Map<string, PendingTaskCompletion>()
 
 function rememberSnoozeUndo(undo: Omit<SnoozeUndo, 'expiresAt'>): string {
   const now = Date.now()
@@ -84,9 +111,9 @@ function parseCurrentCustomId(customId: string): ParsedCustomId | null {
   return null
 }
 
-function parseUndoCustomId(customId: string): ParsedCustomId | null {
+function parseTokenCustomId(customId: string): ParsedCustomId | null {
   const parts = customId.split(':')
-  if (parts.length === 4 && parts[0] === 'undo') {
+  if (parts.length === 4 && ['undo', 'participants', 'confirm', 'cancel'].includes(parts[0])) {
     return { action: parts[0], domain: parts[1], id: parts[2], token: parts[3] }
   }
   return null
@@ -108,7 +135,7 @@ function parseLegacyCustomId(customId: string): ParsedCustomId | null {
 }
 
 function parseCustomId(customId: string): ParsedCustomId | null {
-  return parseCurrentCustomId(customId) ?? parseUndoCustomId(customId) ?? parseLegacyCustomId(customId)
+  return parseCurrentCustomId(customId) ?? parseTokenCustomId(customId) ?? parseLegacyCustomId(customId)
 }
 
 // Plant: water
@@ -203,11 +230,15 @@ registerButtonHandler('snooze', 'plant', async (id, _username, _discordUserId) =
 })
 
 // Task: complete
-registerButtonHandler('complete', 'task', async (id, username, discordUserId) => {
+registerButtonHandler('complete', 'task', async (id, _username, discordUserId, _token, actor, messageId) => {
   const taskId = parseInt(id, 10)
   if (isNaN(taskId)) {
     log.warn({ id }, 'Discord button: invalid task ID')
     return { type: CHANNEL_MESSAGE, data: { content: '❌ Invalid task ID.', flags: EPHEMERAL } }
+  }
+
+  if (!discordUserId || !actor) {
+    return { type: CHANNEL_MESSAGE, data: { content: '❌ Could not identify user.', flags: EPHEMERAL } }
   }
 
   const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId))
@@ -216,46 +247,144 @@ registerButtonHandler('complete', 'task', async (id, username, discordUserId) =>
     return { type: UPDATE_MESSAGE, data: { content: '🗑️ This task has been removed.', components: [] } }
   }
 
-  // Look up or create member by Discord user ID — consistent with the !command handler
-  let member: { id: number; displayName: string } | null = null
-  if (discordUserId) {
-    const existing = await db.select().from(members).where(eq(members.discordId, discordUserId))
-    if (existing.length > 0) {
-      member = existing[0]
-    } else {
-      const displayName = username ?? discordUserId
-      const [created] = await db
-        .insert(members)
-        .values({ discordId: discordUserId, discordName: username ?? discordUserId, displayName, createdAt: new Date().toISOString() })
-        .returning()
-      member = created
-      log.info({ discordId: discordUserId, displayName }, 'New member auto-created from Discord button')
-    }
+  const now = Date.now()
+  for (const [token, pending] of pendingTaskCompletions) {
+    if (pending.expiresAt <= now) pendingTaskCompletions.delete(token)
   }
-
-  if (!member) {
-    return { type: CHANNEL_MESSAGE, data: { content: '❌ Could not identify user.', flags: EPHEMERAL } }
-  }
-
-  await db.insert(taskLogs).values({
+  const token = randomUUID()
+  pendingTaskCompletions.set(token, {
     taskId,
-    memberId: member.id,
-    completedAt: new Date().toISOString(),
-    source: 'discord',
+    taskName: task.name,
+    discordMessageId: messageId,
+    requester: actor,
+    participants: [],
+    expiresAt: now + COMPLETION_SELECTION_WINDOW_MS,
+    processing: false,
   })
 
-  // Clear snooze on completion
-  if (task.snoozedUntil) {
-    await db.update(tasks).set({ snoozedUntil: null }).where(eq(tasks.id, taskId))
-  }
-
-  log.info({ taskId, name: task.name, username }, 'Task completed via Discord button')
-
   return {
-    type: UPDATE_MESSAGE,
-    data: { content: `✅ **${task.name}** marked as done by ${member.displayName}!`, components: [] },
+    type: CHANNEL_MESSAGE,
+    data: {
+      content: `Choose everyone who took part in **${task.name}**, then confirm. Leave the selection empty to credit yourself.`,
+      flags: EPHEMERAL,
+      components: completionComponents(taskId, token),
+    },
   }
 })
+
+registerButtonHandler('confirm', 'task', async (id, _username, discordUserId, token) =>
+  confirmTaskCompletion(id, token, discordUserId))
+registerButtonHandler('cancel', 'task', async (id, _username, discordUserId, token) =>
+  cancelTaskCompletion(id, token, discordUserId))
+
+function completionComponents(taskId: number, token: string): unknown[] {
+  return [
+    {
+      type: 1,
+      components: [{
+        type: USER_SELECT,
+        custom_id: `participants:task:${taskId}:${token}`,
+        placeholder: 'Select participants (optional)',
+        min_values: 0,
+        max_values: 25,
+      }],
+    },
+    {
+      type: 1,
+      components: [
+        { type: BUTTON, style: 1, label: 'Confirm completion', custom_id: `confirm:task:${taskId}:${token}` },
+        { type: BUTTON, style: 2, label: 'Cancel', custom_id: `cancel:task:${taskId}:${token}` },
+      ],
+    },
+  ]
+}
+
+function getPendingCompletion(id: string, token: string | undefined, discordUserId: string | null): PendingTaskCompletion | null {
+  const taskId = Number.parseInt(id, 10)
+  const pending = token ? pendingTaskCompletions.get(token) : undefined
+  if (!pending || pending.taskId !== taskId) return null
+  if (pending.expiresAt <= Date.now()) {
+    pendingTaskCompletions.delete(token!)
+    return null
+  }
+  if (pending.requester.id !== discordUserId) return null
+  return pending
+}
+
+function updateParticipantSelection(body: DiscordInteraction, parsed: ParsedCustomId): InteractionResponse {
+  const pending = getPendingCompletion(parsed.id, parsed.token, body.member?.user.id ?? body.user?.id ?? null)
+  if (!pending || pending.processing) {
+    return { type: UPDATE_MESSAGE, data: { content: 'This participant selection has expired or is no longer available.', components: [] } }
+  }
+
+  const ids = [...new Set(body.data?.values ?? [])]
+  if (ids.length > 25) {
+    return { type: UPDATE_MESSAGE, data: { content: 'Select no more than 25 participants.', components: completionComponents(pending.taskId, parsed.token!) } }
+  }
+
+  const users = body.data?.resolved?.users ?? {}
+  const resolvedMembers = body.data?.resolved?.members ?? {}
+  const participants = []
+  for (const id of ids) {
+    const user = users[id]
+    if (!user) {
+      return { type: UPDATE_MESSAGE, data: { content: 'Discord could not resolve one of the selected users. Please select them again.', components: completionComponents(pending.taskId, parsed.token!) } }
+    }
+    const displayName = resolvedMembers[id]?.nick ?? user.global_name ?? user.username
+    participants.push({ user, displayName })
+  }
+  pending.participants = participants
+
+  const summary = participants.length > 0
+    ? `Selected: ${participants.map((participant) => participant.displayName).join(', ')}`
+    : 'No participants selected; confirming will credit you.'
+  return { type: UPDATE_MESSAGE, data: { content: `${summary}\nConfirm to record **${pending.taskName}**.`, components: completionComponents(pending.taskId, parsed.token!) } }
+}
+
+async function confirmTaskCompletion(id: string, token: string | undefined, discordUserId: string | null): Promise<InteractionResponse> {
+  const pending = getPendingCompletion(id, token, discordUserId)
+  if (!pending || pending.processing || !token) {
+    return { type: UPDATE_MESSAGE, data: { content: 'This completion has expired or was already submitted.', components: [] } }
+  }
+  pending.processing = true
+
+  try {
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, pending.taskId))
+    if (!task) {
+      pendingTaskCompletions.delete(token)
+      return { type: UPDATE_MESSAGE, data: { content: 'This task was removed; no completion was recorded.', components: [] } }
+    }
+
+    const participants = pending.participants.length > 0
+      ? pending.participants
+      : [{ user: pending.requester, displayName: pending.requester.global_name ?? pending.requester.username }]
+    const inputs: TaskParticipantInput[] = participants.map(({ user, displayName }) => ({
+      discordId: user.id,
+      discordName: user.username,
+      displayName,
+    }))
+    const recorded = recordTaskCompletion(pending.taskId, 'discord', inputs, pending.discordMessageId)
+    if (recorded.duplicate) {
+      pendingTaskCompletions.delete(token)
+      return { type: UPDATE_MESSAGE, data: { content: `✅ **${task.name}** was already completed from this reminder.`, components: [] } }
+    }
+    if (task.snoozedUntil) await db.update(tasks).set({ snoozedUntil: null }).where(eq(tasks.id, task.id))
+    pendingTaskCompletions.delete(token)
+    log.info({ taskId: task.id, participants: recorded.participants }, 'Task completed via Discord button')
+
+    const names = recorded.participants.join(', ')
+    return { type: UPDATE_MESSAGE, data: { content: `✅ **${task.name}** marked as done by ${names}!`, components: [] } }
+  } catch (error) {
+    pending.processing = false
+    throw error
+  }
+}
+
+function cancelTaskCompletion(id: string, token: string | undefined, discordUserId: string | null): InteractionResponse {
+  const pending = getPendingCompletion(id, token, discordUserId)
+  if (pending && token) pendingTaskCompletions.delete(token)
+  return { type: UPDATE_MESSAGE, data: { content: pending ? 'Completion cancelled.' : 'This completion has expired.', components: [] } }
+}
 
 // Task: snooze
 registerButtonHandler('snooze', 'task', async (id, _username, _discordUserId) => {
@@ -346,16 +475,20 @@ export async function handleInteraction(body: DiscordInteraction): Promise<Inter
     return { type: PONG }
   }
 
-  if (body.type === MESSAGE_COMPONENT && body.data?.component_type === BUTTON) {
+  if (body.type === MESSAGE_COMPONENT && body.data?.custom_id) {
     const customId = body.data.custom_id
-    const username = body.member?.user.username ?? body.user?.username ?? null
-    const discordUserId = body.member?.user.id ?? body.user?.id ?? null
     const parsed = parseCustomId(customId)
 
     if (!parsed) {
       log.warn({ customId }, 'Discord button: unrecognised custom_id format')
       return { type: PONG }
     }
+
+    if (body.data.component_type === USER_SELECT && parsed.action === 'participants' && parsed.domain === 'task') {
+      return updateParticipantSelection(body, parsed)
+    }
+
+    if (body.data.component_type !== BUTTON) return { type: PONG }
 
     const key = `${parsed.action}:${parsed.domain}`
     const handler = handlers.get(key)
@@ -365,7 +498,8 @@ export async function handleInteraction(body: DiscordInteraction): Promise<Inter
       return { type: PONG }
     }
 
-    return handler(parsed.id, username, discordUserId, parsed.token)
+    const actor = body.member?.user ?? body.user ?? null
+    return handler(parsed.id, actor?.username ?? null, actor?.id ?? null, parsed.token, actor, body.message?.id)
   }
 
   return { type: PONG }

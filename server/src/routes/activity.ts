@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { count, eq, sql } from 'drizzle-orm'
 import { db } from '../db/index.js'
-import { tasks, taskLogs, members, userPlants, plants, wateringEvents } from '../db/schema.js'
+import { tasks, taskLogs, taskLogMembers, members, userPlants, plants, wateringEvents } from '../db/schema.js'
 
 const activityRoute = new Hono()
 const DEFAULT_PAGE_SIZE = 25
@@ -21,16 +21,19 @@ activityRoute.get('/', async (c) => {
   const [taskCount, plantCount, entries] = await Promise.all([
     type === 'plant'
       ? Promise.resolve([{ total: 0 }])
-      : db.select({ total: count() }).from(taskLogs).innerJoin(tasks, eq(taskLogs.taskId, tasks.id)).innerJoin(members, eq(taskLogs.memberId, members.id)),
+      : db.select({ total: count() }).from(taskLogs).innerJoin(tasks, eq(taskLogs.taskId, tasks.id)),
     type === 'task'
       ? Promise.resolve([{ total: 0 }])
       : db.select({ total: count() }).from(wateringEvents).innerJoin(userPlants, eq(wateringEvents.userPlantId, userPlants.id)).innerJoin(plants, eq(userPlants.plantId, plants.id)),
     db.all<{ id: string; type: 'task' | 'plant'; name: string; who: string | null; source: string; timestamp: string }>(sql`
       SELECT 'task-' || ${taskLogs.id} AS id, 'task' AS type, ${tasks.name} AS name,
-        ${members.displayName} AS who, ${taskLogs.source} AS source, ${taskLogs.completedAt} AS timestamp
+        (SELECT group_concat(${members.displayName}, ', ')
+          FROM ${taskLogMembers}
+          INNER JOIN ${members} ON ${taskLogMembers.memberId} = ${members.id}
+          WHERE ${taskLogMembers.taskLogId} = ${taskLogs.id}) AS who,
+        ${taskLogs.source} AS source, ${taskLogs.completedAt} AS timestamp
       FROM ${taskLogs}
       INNER JOIN ${tasks} ON ${taskLogs.taskId} = ${tasks.id}
-      INNER JOIN ${members} ON ${taskLogs.memberId} = ${members.id}
       WHERE ${type === 'plant' ? 0 : 1}
       UNION ALL
       SELECT 'plant-' || ${wateringEvents.id} AS id, 'plant' AS type,

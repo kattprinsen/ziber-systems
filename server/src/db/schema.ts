@@ -1,4 +1,4 @@
-import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, integer, text, primaryKey } from 'drizzle-orm/sqlite-core'
 import type { AnySQLiteColumn } from 'drizzle-orm/sqlite-core'
 
 export const healthChecks = sqliteTable('health_checks', {
@@ -61,7 +61,12 @@ export const tasks = sqliteTable('tasks', {
 export const taskLogs = sqliteTable('task_logs', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   taskId: integer('task_id').notNull().references((): AnySQLiteColumn => tasks.id),
-  memberId: integer('member_id').notNull().references((): AnySQLiteColumn => members.id),
   completedAt: text('completed_at').notNull(),
   source: text('source', { enum: ['discord', 'web'] }).notNull(),
+  discordMessageId: text('discord_message_id').unique(),
 })
+
+export const taskLogMembers = sqliteTable('task_log_members', {
+  taskLogId: integer('task_log_id').notNull().references((): AnySQLiteColumn => taskLogs.id, { onDelete: 'cascade' }),
+  memberId: integer('member_id').notNull().references((): AnySQLiteColumn => members.id),
+}, (table) => [primaryKey({ columns: [table.taskLogId, table.memberId] })])
