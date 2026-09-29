@@ -16,15 +16,18 @@ const mocks = vi.hoisted(() => {
   const recordTaskCompletion = vi.fn((_taskId: number, _source: string, participants: { displayName: string }[]) => ({
     taskLogId: 1,
     participants: participants.map((participant) => participant.displayName),
+    duplicate: false,
   }))
+  const editMessage = vi.fn().mockResolvedValue(undefined)
 
-  return { update, set, updateWhere, returning, select, from, selectWhere, insert, insertValues, recordTaskCompletion }
+  return { update, set, updateWhere, returning, select, from, selectWhere, insert, insertValues, recordTaskCompletion, editMessage }
 })
 
 vi.mock('../db/index.js', () => ({
   db: { update: mocks.update, select: mocks.select, insert: mocks.insert },
 }))
 vi.mock('./task-completions.js', () => ({ recordTaskCompletion: mocks.recordTaskCompletion }))
+vi.mock('./api.js', () => ({ editMessage: mocks.editMessage, sendMessage: vi.fn() }))
 
 import { handleInteraction } from './interactions.js'
 
@@ -43,6 +46,7 @@ async function startTaskCompletion(taskId = 7, taskName = 'Dishes'): Promise<str
   mocks.selectWhere.mockResolvedValueOnce([{ id: taskId, name: taskName, snoozedUntil: null }])
   const response = await handleInteraction({
     type: MESSAGE_COMPONENT,
+    channel_id: 'channel-1',
     message: { id: `reminder-${taskId}` },
     data: { custom_id: `complete:task:${taskId}`, component_type: BUTTON },
     member: { user: requester },
@@ -226,6 +230,25 @@ describe('handleInteraction', () => {
       discordName: requester.username,
       displayName: requester.global_name,
     }], 'reminder-7')
+  })
+
+  it('clears the buttons on the original reminder message after a successful confirmation', async () => {
+    const token = await startTaskCompletion()
+    mocks.selectWhere.mockResolvedValueOnce([{ id: 7, name: 'Dishes', snoozedUntil: null }])
+
+    await confirmCompletion(7, token)
+
+    expect(mocks.editMessage).toHaveBeenCalledWith('channel-1', 'reminder-7', { components: [] })
+  })
+
+  it('does not attempt to edit the original message on a duplicate confirmation', async () => {
+    const token = await startTaskCompletion()
+    mocks.selectWhere.mockResolvedValue([{ id: 7, name: 'Dishes', snoozedUntil: null }])
+    mocks.recordTaskCompletion.mockReturnValueOnce({ taskLogId: 0, participants: [], duplicate: true })
+
+    await confirmCompletion(7, token)
+
+    expect(mocks.editMessage).not.toHaveBeenCalled()
   })
 
   it('credits only selected participants, not the clicker implicitly', async () => {

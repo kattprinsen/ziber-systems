@@ -4,6 +4,7 @@ import { db } from '../db/index.js'
 import { log } from '../logger.js'
 import { userPlants, plants, wateringEvents, tasks } from '../db/schema.js'
 import { recordTaskCompletion, type TaskParticipantInput } from './task-completions.js'
+import { editMessage } from './api.js'
 
 interface DiscordUser {
   id: string
@@ -13,6 +14,7 @@ interface DiscordUser {
 
 interface DiscordInteraction {
   type: number
+  channel_id?: string
   message?: { id: string }
   data?: {
     custom_id?: string
@@ -36,7 +38,7 @@ interface InteractionResponse {
   }
 }
 
-type ButtonHandler = (id: string, username: string | null, discordUserId: string | null, token?: string, actor?: DiscordUser | null, messageId?: string) => Promise<InteractionResponse>
+type ButtonHandler = (id: string, username: string | null, discordUserId: string | null, token?: string, actor?: DiscordUser | null, messageId?: string, channelId?: string) => Promise<InteractionResponse>
 
 // Interaction types
 const PING = 1
@@ -70,6 +72,7 @@ interface PendingTaskCompletion {
   taskId: number
   taskName: string
   discordMessageId: string | undefined
+  channelId: string | undefined
   requester: DiscordUser
   participants: { user: DiscordUser; displayName: string }[]
   expiresAt: number
@@ -230,7 +233,7 @@ registerButtonHandler('snooze', 'plant', async (id, _username, _discordUserId) =
 })
 
 // Task: complete
-registerButtonHandler('complete', 'task', async (id, _username, discordUserId, _token, actor, messageId) => {
+registerButtonHandler('complete', 'task', async (id, _username, discordUserId, _token, actor, messageId, channelId) => {
   const taskId = parseInt(id, 10)
   if (isNaN(taskId)) {
     log.warn({ id }, 'Discord button: invalid task ID')
@@ -256,6 +259,7 @@ registerButtonHandler('complete', 'task', async (id, _username, discordUserId, _
     taskId,
     taskName: task.name,
     discordMessageId: messageId,
+    channelId,
     requester: actor,
     participants: [],
     expiresAt: now + COMPLETION_SELECTION_WINDOW_MS,
@@ -371,6 +375,15 @@ async function confirmTaskCompletion(id: string, token: string | undefined, disc
     if (task.snoozedUntil) await db.update(tasks).set({ snoozedUntil: null }).where(eq(tasks.id, task.id))
     pendingTaskCompletions.delete(token)
     log.info({ taskId: task.id, participants: recorded.participants }, 'Task completed via Discord button')
+
+    // Strip the buttons from the original reminder message so it can't be actioned again
+    if (pending.channelId && pending.discordMessageId) {
+      try {
+        await editMessage(pending.channelId, pending.discordMessageId, { components: [] })
+      } catch (err) {
+        log.warn({ err, messageId: pending.discordMessageId }, 'Failed to clear buttons on original task reminder')
+      }
+    }
 
     const names = recorded.participants.join(', ')
     return { type: UPDATE_MESSAGE, data: { content: `✅ **${task.name}** marked as done by ${names}!`, components: [] } }
@@ -499,7 +512,7 @@ export async function handleInteraction(body: DiscordInteraction): Promise<Inter
     }
 
     const actor = body.member?.user ?? body.user ?? null
-    return handler(parsed.id, actor?.username ?? null, actor?.id ?? null, parsed.token, actor, body.message?.id)
+    return handler(parsed.id, actor?.username ?? null, actor?.id ?? null, parsed.token, actor, body.message?.id, body.channel_id)
   }
 
   return { type: PONG }
