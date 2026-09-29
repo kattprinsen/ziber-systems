@@ -35,3 +35,10 @@ export async function sendMessage(channelId: string, payload: object): Promise<{
     body: JSON.stringify(payload),
   }) as Promise<{ id: string }>
 }
+
+export async function editMessage(channelId: string, messageId: string, payload: object): Promise<void> {
+  await discordFetch(`/channels/${channelId}/messages/${messageId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  })
+}
