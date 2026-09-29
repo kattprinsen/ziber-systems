@@ -134,6 +134,21 @@ The Pi lost network connectivity and required physical access to recover (see IN
 - Look into a remote access fallback such as Tailscale so the Pi can be reached even if it drops off the local network
 - Explore a network watchdog script (e.g. ping check + auto-reconnect via `cron`) to self-heal without manual intervention
 
+## CI/CD for Raspberry Pi deploys
+
+Currently every deploy is fully manual: push to main, SSH into the Pi, `git pull`, rebuild, restart pm2 by hand. Not a huge investment, but worth automating as a good personal-dev practice — doesn't need to be perfect.
+
+- Add `.github/workflows/ci.yml` — cloud CI (GitHub-hosted `ubuntu-latest`) running `npm install`, `npm run triage`, `npm run test` on PRs and pushes to `main`. Enable "require status checks" branch protection manually in GitHub settings.
+- Install a self-hosted GitHub Actions runner directly on the Pi (as a systemd service) — pull-based, so no inbound ports/VPN needed since the Pi has no internet-facing access.
+  - One-time manual migration: copy `data/data.db` and `server/.env` from the existing manual clone into the runner's new checkout path, repoint PM2's `ziber` process there, retire the old clone.
+  - Confirm Pi architecture (`uname -m`) first — GitHub's official runner may not support 32-bit armv7l.
+- Add `.github/workflows/deploy.yml` — `workflow_dispatch`-only (manual button, not automatic on push), `runs-on: [self-hosted, raspberry-pi]`.
+  - **Critical**: `actions/checkout` must use `clean: false` — the default `clean: true` runs `git clean -ffdx` and would delete untracked `data/data.db` and `server/.env`.
+  - Steps: `npm install` (not `npm ci`), `npm run triage && npm run test` as a pre-deploy gate, backup the DB (`cp data/data.db data/data.db.backup-<timestamp>`), `npm run build`, `pm2 restart ziber --update-env` (fallback to `pm2 start` if not running), `pm2 save`, then a `curl -f http://localhost:3000/api/health` check that fails the workflow on non-200.
+  - No GitHub Actions secrets needed — the Pi already has its own `server/.env`.
+- Update the Pi deploy sections of `README.md` and `CLAUDE.md` to document the runner setup and the new "merge → Actions → Run deploy workflow" flow, keeping the old manual commands as a fallback.
+- No auto-rollback in v1 — a failed health check just fails the workflow loudly (DB backup already taken); manual rollback via `git checkout <previous-sha>` + rebuild + restart, documented as a possible follow-up.
+
 ## Versioning + release cycle
 Show the app version (from `package.json`) in the UI footer. Use `npm version patch/minor/major` to bump + tag before deploying to the Pi, so you can always see what's running without SSH-ing in.
 
