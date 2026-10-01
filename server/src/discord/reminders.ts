@@ -1,4 +1,4 @@
-import { eq, desc } from 'drizzle-orm'
+import { eq, desc, isNull } from 'drizzle-orm'
 import { db } from '../db/index.js'
 import { log } from '../logger.js'
 import { userPlants, plants, rooms, tasks, taskLogs } from '../db/schema.js'
@@ -27,6 +27,7 @@ export async function sendPlantReminders(forceAll = false): Promise<void> {
     .from(userPlants)
     .innerJoin(plants, eq(userPlants.plantId, plants.id))
     .leftJoin(rooms, eq(userPlants.roomId, rooms.id))
+    .where(isNull(userPlants.archivedAt))
 
   const endOfToday = new Date()
   endOfToday.setHours(23, 59, 59, 999)

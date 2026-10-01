@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { isNull } from 'drizzle-orm'
+import { userPlants } from '../db/schema.js'
 
 // ---- hoisted mocks ----
 
@@ -9,12 +11,13 @@ const mocks = vi.hoisted(() => {
   const where = vi.fn(() => ({ orderBy }))
   const innerJoin = vi.fn()
   const leftJoin = vi.fn()
+  const plantWhere = vi.fn()
   const from = vi.fn()
   const select = vi.fn(() => ({ from }))
 
   const sendMessage = vi.fn().mockResolvedValue(undefined)
 
-  return { select, from, innerJoin, leftJoin, where, orderBy, limit, sendMessage }
+  return { select, from, innerJoin, leftJoin, plantWhere, where, orderBy, limit, sendMessage }
 })
 
 vi.mock('../db/index.js', () => ({ db: { select: mocks.select } }))
@@ -39,14 +42,15 @@ describe('sendPlantReminders', () => {
     // plant query chain: db.select({...}).from(userPlants).innerJoin(plants, ...).leftJoin(rooms, ...)
     mocks.from.mockReturnValue({ innerJoin: mocks.innerJoin })
     mocks.innerJoin.mockReturnValue({ leftJoin: mocks.leftJoin })
-    mocks.leftJoin.mockResolvedValue([])
+    mocks.leftJoin.mockReturnValue({ where: mocks.plantWhere })
+    mocks.plantWhere.mockResolvedValue([])
   })
 
   afterEach(() => vi.useRealTimers())
 
   it('sends a message for a plant due today', async () => {
     const lastWatered = new Date(NOW.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
-    mocks.leftJoin.mockResolvedValueOnce([
+    mocks.plantWhere.mockResolvedValueOnce([
       { id: 1, nickname: null, addedAt: '2026-01-01T00:00:00Z', lastWateredAt: lastWatered, commonName: 'Monstera', latinName: 'Monstera deliciosa', wateringIntervalDays: 7, roomName: 'Living room' },
     ])
 
@@ -64,7 +68,7 @@ describe('sendPlantReminders', () => {
 
   it('uses nickname over commonName in the message', async () => {
     const lastWatered = new Date(NOW.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
-    mocks.leftJoin.mockResolvedValueOnce([
+    mocks.plantWhere.mockResolvedValueOnce([
       { id: 2, nickname: 'Big Green', addedAt: '2026-01-01T00:00:00Z', lastWateredAt: lastWatered, commonName: 'Monstera', latinName: 'Monstera deliciosa', wateringIntervalDays: 7, roomName: null },
     ])
 
@@ -80,7 +84,7 @@ describe('sendPlantReminders', () => {
 
   it('marks overdue plants correctly (plural)', async () => {
     const lastWatered = new Date(NOW.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString()
-    mocks.leftJoin.mockResolvedValueOnce([
+    mocks.plantWhere.mockResolvedValueOnce([
       { id: 3, nickname: null, addedAt: '2026-01-01T00:00:00Z', lastWateredAt: lastWatered, commonName: 'Ficus', latinName: 'Ficus benjamina', wateringIntervalDays: 7 },
     ])
 
@@ -93,7 +97,7 @@ describe('sendPlantReminders', () => {
 
   it('uses singular "day" when exactly 1 day overdue', async () => {
     const lastWatered = new Date(NOW.getTime() - 8 * 24 * 60 * 60 * 1000).toISOString()
-    mocks.leftJoin.mockResolvedValueOnce([
+    mocks.plantWhere.mockResolvedValueOnce([
       { id: 4, nickname: null, addedAt: '2026-01-01T00:00:00Z', lastWateredAt: lastWatered, commonName: 'Cactus', latinName: 'Cactus sp.', wateringIntervalDays: 7 },
     ])
 
@@ -107,7 +111,7 @@ describe('sendPlantReminders', () => {
 
   it('includes water and snooze buttons with correct custom_ids', async () => {
     const lastWatered = new Date(NOW.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
-    mocks.leftJoin.mockResolvedValueOnce([
+    mocks.plantWhere.mockResolvedValueOnce([
       { id: 5, nickname: null, addedAt: '2026-01-01T00:00:00Z', lastWateredAt: lastWatered, commonName: 'Aloe', latinName: 'Aloe vera', wateringIntervalDays: 7 },
     ])
 
@@ -122,7 +126,7 @@ describe('sendPlantReminders', () => {
 
   it('sends no message when no plants are due', async () => {
     const lastWatered = new Date(NOW.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString()
-    mocks.leftJoin.mockResolvedValueOnce([
+    mocks.plantWhere.mockResolvedValueOnce([
       { id: 6, nickname: null, addedAt: '2026-01-01T00:00:00Z', lastWateredAt: lastWatered, commonName: 'Palm', latinName: 'Areca lutescens', wateringIntervalDays: 7 },
     ])
 
@@ -131,9 +135,16 @@ describe('sendPlantReminders', () => {
     expect(mocks.sendMessage).not.toHaveBeenCalled()
   })
 
+  it('excludes archived plants in the database query', async () => {
+    await sendPlantReminders(true)
+
+    expect(mocks.plantWhere).toHaveBeenCalledOnce()
+    expect(mocks.plantWhere).toHaveBeenCalledWith(isNull(userPlants.archivedAt))
+  })
+
   it('sends all plants when forceAll is true regardless of schedule', async () => {
     const lastWatered = new Date(NOW.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString()
-    mocks.leftJoin.mockResolvedValueOnce([
+    mocks.plantWhere.mockResolvedValueOnce([
       { id: 7, nickname: null, addedAt: '2026-01-01T00:00:00Z', lastWateredAt: lastWatered, commonName: 'Palm', latinName: 'Areca lutescens', wateringIntervalDays: 7 },
     ])
 
@@ -146,7 +157,7 @@ describe('sendPlantReminders', () => {
 
   it('falls back to addedAt when lastWateredAt is null', async () => {
     const addedAt = new Date(NOW.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
-    mocks.leftJoin.mockResolvedValueOnce([
+    mocks.plantWhere.mockResolvedValueOnce([
       { id: 8, nickname: null, addedAt, lastWateredAt: null, commonName: 'Ivy', latinName: 'Hedera helix', wateringIntervalDays: 7 },
     ])
 
