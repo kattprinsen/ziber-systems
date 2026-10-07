@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { sendMessage } from './api.js'
+import { sendMessage, deleteMessage } from './api.js'
 
 vi.mock('./config.js', () => ({
   discordConfig: {
@@ -76,5 +76,27 @@ describe('sendMessage', () => {
 
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit & { headers: Record<string, string> }]
     expect(init.headers['Authorization']).toBe('Bot test-bot-token')
+  })
+})
+
+describe('deleteMessage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('sends a DELETE to the message endpoint and tolerates an empty 204 response', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, status: 204, json: () => Promise.reject(new Error('no body')), text: () => Promise.resolve('') })
+
+    await expect(deleteMessage('channel-id', 'message-id')).resolves.toBeUndefined()
+
+    const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('https://discord.com/api/v10/channels/channel-id/messages/message-id')
+    expect(init.method).toBe('DELETE')
+  })
+
+  it('throws when the message no longer exists', async () => {
+    mockFetch.mockResolvedValueOnce(makeResponse(404, { message: 'Unknown Message' }, false))
+
+    await expect(deleteMessage('channel-id', 'gone')).rejects.toThrow('Discord API 404')
   })
 })

@@ -42,3 +42,7 @@ export async function editMessage(channelId: string, messageId: string, payload:
     body: JSON.stringify(payload),
   })
 }
+
+export async function deleteMessage(channelId: string, messageId: string): Promise<void> {
+  await discordFetch(`/channels/${channelId}/messages/${messageId}`, { method: 'DELETE' })
+}

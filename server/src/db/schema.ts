@@ -70,3 +70,11 @@ export const taskLogMembers = sqliteTable('task_log_members', {
   taskLogId: integer('task_log_id').notNull().references((): AnySQLiteColumn => taskLogs.id, { onDelete: 'cascade' }),
   memberId: integer('member_id').notNull().references((): AnySQLiteColumn => members.id),
 }, (table) => [primaryKey({ columns: [table.taskLogId, table.memberId] })])
+
+// Latest reminder posted per plant/task; no FK so deleting the item never blocks on this row
+export const reminderMessages = sqliteTable('reminder_messages', {
+  domain: text('domain', { enum: ['plant', 'task'] }).notNull(),
+  itemId: integer('item_id').notNull(),
+  channelId: text('channel_id').notNull(),
+  messageId: text('message_id').notNull(),
+}, (table) => [primaryKey({ columns: [table.domain, table.itemId] })])

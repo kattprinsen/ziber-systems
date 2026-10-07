@@ -15,13 +15,20 @@ const mocks = vi.hoisted(() => {
   const from = vi.fn()
   const select = vi.fn(() => ({ from }))
 
-  const sendMessage = vi.fn().mockResolvedValue(undefined)
+  const sendMessage = vi.fn().mockResolvedValue({ id: 'new-msg' })
+  const deleteMessage = vi.fn().mockResolvedValue(undefined)
+  const getReminderMessage = vi.fn().mockResolvedValue(undefined)
+  const saveReminderMessage = vi.fn().mockResolvedValue(undefined)
 
-  return { select, from, innerJoin, leftJoin, plantWhere, where, orderBy, limit, sendMessage }
+  return { select, from, innerJoin, leftJoin, plantWhere, where, orderBy, limit, sendMessage, deleteMessage, getReminderMessage, saveReminderMessage }
 })
 
 vi.mock('../db/index.js', () => ({ db: { select: mocks.select } }))
-vi.mock('./api.js', () => ({ sendMessage: mocks.sendMessage }))
+vi.mock('./api.js', () => ({ sendMessage: mocks.sendMessage, deleteMessage: mocks.deleteMessage }))
+vi.mock('./reminder-messages.js', () => ({
+  getReminderMessage: mocks.getReminderMessage,
+  saveReminderMessage: mocks.saveReminderMessage,
+}))
 vi.mock('./config.js', () => ({
   discordConfig: { botToken: 'tok', plantChannelId: 'plant-ch', taskChannelId: 'task-ch' },
 }))
@@ -142,6 +149,64 @@ describe('sendPlantReminders', () => {
     expect(mocks.plantWhere).toHaveBeenCalledWith(isNull(userPlants.archivedAt))
   })
 
+  describe('superseding the previous reminder', () => {
+    const dueRow = () => ({
+      id: 9, nickname: null, addedAt: '2026-01-01T00:00:00Z',
+      lastWateredAt: new Date(NOW.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+      commonName: 'Ficus', latinName: 'Ficus benjamina', wateringIntervalDays: 7, roomName: null,
+    })
+
+    it('stores the new message and deletes the previous reminder for the same plant', async () => {
+      mocks.plantWhere.mockResolvedValueOnce([dueRow()])
+      mocks.getReminderMessage.mockResolvedValueOnce({ channelId: 'plant-ch', messageId: 'old-msg' })
+
+      const p = sendPlantReminders()
+      await vi.runAllTimersAsync()
+      await p
+
+      expect(mocks.getReminderMessage).toHaveBeenCalledWith('plant', 9)
+      expect(mocks.saveReminderMessage).toHaveBeenCalledWith('plant', 9, 'plant-ch', 'new-msg')
+      expect(mocks.deleteMessage).toHaveBeenCalledWith('plant-ch', 'old-msg')
+    })
+
+    it('does not delete anything when there is no previous reminder', async () => {
+      mocks.plantWhere.mockResolvedValueOnce([dueRow()])
+
+      const p = sendPlantReminders()
+      await vi.runAllTimersAsync()
+      await p
+
+      expect(mocks.saveReminderMessage).toHaveBeenCalledWith('plant', 9, 'plant-ch', 'new-msg')
+      expect(mocks.deleteMessage).not.toHaveBeenCalled()
+    })
+
+    it('keeps the previous reminder when sending the new one fails', async () => {
+      mocks.plantWhere.mockResolvedValueOnce([dueRow()])
+      mocks.getReminderMessage.mockResolvedValueOnce({ channelId: 'plant-ch', messageId: 'old-msg' })
+      mocks.sendMessage.mockRejectedValueOnce(new Error('Discord API 500'))
+
+      const p = sendPlantReminders()
+      await vi.runAllTimersAsync()
+      await p
+
+      expect(mocks.saveReminderMessage).not.toHaveBeenCalled()
+      expect(mocks.deleteMessage).not.toHaveBeenCalled()
+    })
+
+    it('still tracks the new reminder when deleting the previous one fails', async () => {
+      mocks.plantWhere.mockResolvedValueOnce([dueRow()])
+      mocks.getReminderMessage.mockResolvedValueOnce({ channelId: 'plant-ch', messageId: 'old-msg' })
+      mocks.deleteMessage.mockRejectedValueOnce(new Error('Discord API 404'))
+
+      const p = sendPlantReminders()
+      await vi.runAllTimersAsync()
+      await p
+
+      expect(mocks.sendMessage).toHaveBeenCalledOnce()
+      expect(mocks.saveReminderMessage).toHaveBeenCalledWith('plant', 9, 'plant-ch', 'new-msg')
+    })
+  })
+
   it('sends all plants when forceAll is true regardless of schedule', async () => {
     const lastWatered = new Date(NOW.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString()
     mocks.plantWhere.mockResolvedValueOnce([
@@ -192,6 +257,22 @@ describe('sendTaskReminders', () => {
     snoozedUntil: null,
     createdAt: '2026-01-01T00:00:00Z',
   }
+
+  it('replaces the previous reminder for the same task', async () => {
+    const completedAt = new Date(NOW.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString()
+    mocks.from.mockResolvedValueOnce([baseTask])
+    mocks.from.mockReturnValueOnce({ where: mocks.where })
+    mocks.limit.mockResolvedValueOnce([{ completedAt }])
+    mocks.getReminderMessage.mockResolvedValueOnce({ channelId: 'task-ch', messageId: 'old-task-msg' })
+
+    const p = sendTaskReminders()
+    await vi.runAllTimersAsync()
+    await p
+
+    expect(mocks.getReminderMessage).toHaveBeenCalledWith('task', 1)
+    expect(mocks.saveReminderMessage).toHaveBeenCalledWith('task', 1, 'task-ch', 'new-msg')
+    expect(mocks.deleteMessage).toHaveBeenCalledWith('task-ch', 'old-task-msg')
+  })
 
   it('sends a message for an interval-based task due today', async () => {
     const completedAt = new Date(NOW.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString()
