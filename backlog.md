@@ -138,16 +138,30 @@ The Pi lost network connectivity and required physical access to recover (see IN
 
 Currently every deploy is fully manual: push to main, SSH into the Pi, `git pull`, rebuild, restart pm2 by hand. Not a huge investment, but worth automating as a good personal-dev practice — doesn't need to be perfect.
 
-- Add `.github/workflows/ci.yml` — cloud CI (GitHub-hosted `ubuntu-latest`) running `npm install`, `npm run triage`, `npm run test` on PRs and pushes to `main`. Enable "require status checks" branch protection manually in GitHub settings.
-- Install a self-hosted GitHub Actions runner directly on the Pi (as a systemd service) — pull-based, so no inbound ports/VPN needed since the Pi has no internet-facing access.
-  - One-time manual migration: copy `data/data.db` and `server/.env` from the existing manual clone into the runner's new checkout path, repoint PM2's `ziber` process there, retire the old clone.
-  - Confirm Pi architecture (`uname -m`) first — GitHub's official runner may not support 32-bit armv7l.
-- Add `.github/workflows/deploy.yml` — `workflow_dispatch`-only (manual button, not automatic on push), `runs-on: [self-hosted, raspberry-pi]`.
-  - **Critical**: `actions/checkout` must use `clean: false` — the default `clean: true` runs `git clean -ffdx` and would delete untracked `data/data.db` and `server/.env`.
-  - Steps: `npm install` (not `npm ci`), `npm run triage && npm run test` as a pre-deploy gate, backup the DB (`cp data/data.db data/data.db.backup-<timestamp>`), `npm run build`, `pm2 restart ziber --update-env` (fallback to `pm2 start` if not running), `pm2 save`, then a `curl -f http://localhost:3000/` check that fails the workflow on non-200. Do not use `/api/health` here: it sits behind `authMiddleware` and returns 401 without a session cookie (an uptime monitor pointed at it would hit the same). Either keep checking `/` (served unauthenticated by `serveStatic` in production) or add `/api/health` to `EXEMPT` in `server/src/middleware/auth.ts`; note it writes a DB row per call, so exempting it makes that write reachable without auth.
-  - No GitHub Actions secrets needed — the Pi already has its own `server/.env`.
-- Update the Pi deploy sections of `README.md` and `CLAUDE.md` to document the runner setup and the new "merge → Actions → Run deploy workflow" flow, keeping the old manual commands as a fallback.
-- No auto-rollback in v1 — a failed health check just fails the workflow loudly (DB backup already taken); manual rollback via `git checkout <previous-sha>` + rebuild + restart, documented as a possible follow-up.
+Design principle: the runner is only a remote trigger. The deploy runs in the **existing clone** that PM2 already uses, so the DB, `server/.env`, `node_modules` and the PM2 working directory stay exactly where they are. Nothing that works today is moved or removed, and the manual process stays available as a fallback.
+
+Risks to design around (from INCIDENT-001/002/005/007 and a review of the code):
+- **Public repo + self-hosted runner**: the repo is public, so a PR from a fork could run arbitrary code on the Pi (with access to `server/.env`). Only the deploy workflow may use the self-hosted runner, and only via `workflow_dispatch`. `ci.yml` must use `ubuntu-latest`, never `self-hosted`. In GitHub → Settings → Actions, require approval for all outside contributors.
+- **Native dependency (INCIDENT-007)**: `better-sqlite3` is compiled per Node version/arch. Never `npm ci`. Only run `npm install` when `package-lock.json` changed in the pull, and then verify the binding (`node -e "new (require('better-sqlite3'))(':memory:').close()"`) and `npm run build` **before** restarting PM2. The `allowScripts` approval lives only on the Pi today and is not in the repo (no `.npmrc`); confirm it is configured at user level so a reinstall can't silently skip compilation.
+- **Wrong working directory = silent empty database**: `db/index.ts` does `mkdirSync('data')` and opens `data/data.db` relative to `process.cwd()`, and `.env` is also resolved from `cwd`. If PM2 is ever started from another directory, the app boots healthy against a brand-new empty DB and a health check will not notice. Deploy in the existing clone and keep `pm2 restart` (never `pm2 start` from a new path).
+- **Runner user and PATH**: install the runner service as the same user that owns the PM2 daemon (a different user gets its own empty PM2 and `ziber` is "not found", as in INCIDENT-002). The service has a minimal PATH, so `node`, `npm` and `pm2` must be resolvable there (check with a read-only run first, especially if installed via nvm).
+- **Pi resources**: don't run `triage` + `test` on the Pi during deploy; cloud CI already does that. Require CI green on the commit instead. The build on the Pi is the same one done manually today.
+- **Restart side effects**: pending participant pickers and undo tokens are in-memory and are lost on restart; the 08:00 reminder cron is in-process with no catch-up, so don't deploy around 08:00. The `tunnel` PM2 process is unaffected.
+- **Migrations are forward-only and run on boot**: rolling code back after a new migration also requires restoring the pre-deploy DB backup. Take the backup before pulling.
+
+Steps:
+- **Step 0 (read-only dry run)**: install the runner, run a workflow that only prints `whoami`, `uname -m`, `node -v`, `pm2 list`, `pwd`. Touches nothing; proves user, PATH and architecture (GitHub's runner may not support 32-bit armv7l; if it doesn't, fall back to a cron/webhook script or manual deploys).
+- Add `.github/workflows/ci.yml` — `ubuntu-latest`, on PRs and pushes to `main`: `npm install`, `npm run triage`, `npm run test`. Enable "require status checks" branch protection in GitHub settings.
+- Add `.github/workflows/deploy.yml` — `workflow_dispatch` only, `runs-on: [self-hosted, raspberry-pi]`, `concurrency: deploy` (no overlapping runs), only from `main`. No `actions/checkout`; run in the existing clone (`cd` to its path), so there's no `git clean` risk. Order:
+  1. Back up the DB with the SQLite backup API (or stop writes first); a plain `cp` of a live DB file can be inconsistent. Keep the last N backups so the SD card doesn't fill.
+  2. `git pull --ff-only origin main`.
+  3. If `package-lock.json` changed: `npm install`, then the `better-sqlite3` binding check.
+  4. `npm run build`; on any failure stop here and leave the running app untouched.
+  5. `pm2 restart ziber --update-env`, `pm2 save`.
+  6. Verify: `curl -f http://localhost:3000/` and confirm `pm2 jlist` shows `ziber` online with an unchanged restart count after a few seconds (catches crash loops). Do not use `/api/health`: it is behind `authMiddleware` and returns 401 unauthenticated. Exempting it in `server/src/middleware/auth.ts` is possible, but it writes a DB row per call, making that write reachable without login.
+- Make the first real deploy a trivial change, and run it while someone can SSH in.
+- Update the Pi deploy sections of `README.md` and `CLAUDE.md`: runner setup, the new flow, the manual fallback, and the rollback procedure.
+- No auto-rollback in v1: a failed step fails the workflow loudly with the backup already taken. Manual rollback: `git checkout <previous-sha>`, rebuild, restore the DB backup if a migration ran, `pm2 restart ziber`.
 
 ## Versioning + release cycle
 Show the app version (from `package.json`) in the UI footer. Use `npm version patch/minor/major` to bump + tag before deploying to the Pi, so you can always see what's running without SSH-ing in.
