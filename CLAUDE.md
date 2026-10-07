@@ -67,6 +67,8 @@ tasks           — household task definitions (name, command, intervalDays null
                   snoozedUntil lives here directly (tasks are shared, not per-user like plants)
 taskLogs        — completion history (FK → tasks, FK → members, completedAt, source: 'discord'|'web')
 members         — household members (discordId, discordName, displayName — auto-created on first interaction)
+
+reminderMessages — latest Discord reminder posted per plant/task (domain, itemId, channelId, messageId); no FK, so deleting an item never blocks on it
 ```
 
 ### Environment variables
@@ -123,6 +125,7 @@ The `server/src/discord/` directory is **shared infrastructure** — never dupli
 ### Reminders
 - `reminders.ts` exports `sendReminders(config: ReminderConfig)`. Adding a new remindable domain = passing a new config, not writing a new function.
 - The cron in `index.ts` calls `sendReminders` once per registered domain.
+- Every reminder is sent through `sendTrackedReminder` in `reminders.ts`: it posts the new message, records it in `reminderMessages`, then deletes the previous reminder for that item, so each plant/task has at most one live reminder. Don't call `sendMessage` directly for reminders.
 
 ### Task event logging
 - Household task completions write to `taskLogs` (FK → tasks, FK → members).

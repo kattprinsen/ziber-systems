@@ -53,7 +53,7 @@ Define chores (e.g. Dishes, Vacuum) with an optional `!command` word and an opti
 Members are auto-created the first time they use a Discord command. The **Members** page (`/members`) lists all members and lets you rename their display names.
 
 ### Discord reminders
-A daily scheduled job (8am) sends reminders for both plants and household tasks. Plant reminders include 💧 water and 😴 snooze buttons; task reminders include ✅ done and 😴 snooze buttons — all actionable directly from Discord without opening the app. On-demand tasks (no interval set) are never reminded. Plant and task reminders post to separate channels (`DISCORD_PLANT_CHANNEL_ID` / `DISCORD_TASK_CHANNEL_ID`). Reminders can also be triggered manually via `POST /api/discord/reminders/trigger`.
+A daily scheduled job (8am) sends reminders for both plants and household tasks. Plant reminders include 💧 water and 😴 snooze buttons; task reminders include ✅ done and 😴 snooze buttons — all actionable directly from Discord without opening the app. On-demand tasks (no interval set) are never reminded. Plant and task reminders post to separate channels (`DISCORD_PLANT_CHANNEL_ID` / `DISCORD_TASK_CHANNEL_ID`). Reminders can also be triggered manually via `POST /api/discord/reminders/trigger`. A new reminder replaces the previous one for the same plant or task, so unresolved items never pile up in the channel.
 
 ### Activity feed
 The **Activity** page (`/activity`) shows a unified chronological feed of task completions and plant waterings — who did what, when, and via which source. Entries are grouped by date (Today / Yesterday / weekday) with an All / Tasks / Plants filter toggle.
