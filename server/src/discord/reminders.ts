@@ -3,9 +3,24 @@ import { db } from '../db/index.js'
 import { log } from '../logger.js'
 import { userPlants, plants, rooms, tasks, taskLogs } from '../db/schema.js'
 import { discordConfig } from './config.js'
-import { sendMessage } from './api.js'
+import { sendMessage, deleteMessage } from './api.js'
+import { getReminderMessage, saveReminderMessage, type ReminderDomain } from './reminder-messages.js'
 
 const DAY_MS = 24 * 60 * 60 * 1000
+
+// Send before deleting so a failed send never leaves the item without a live reminder
+async function sendTrackedReminder(domain: ReminderDomain, itemId: number, channelId: string, payload: object): Promise<void> {
+  const previous = await getReminderMessage(domain, itemId)
+  const sent = await sendMessage(channelId, payload)
+  await saveReminderMessage(domain, itemId, channelId, sent.id)
+
+  if (!previous) return
+  try {
+    await deleteMessage(previous.channelId, previous.messageId)
+  } catch (err) {
+    log.warn({ err, domain, itemId, messageId: previous.messageId }, 'Failed to remove previous reminder')
+  }
+}
 
 export async function sendPlantReminders(forceAll = false): Promise<void> {
   if (!discordConfig.botToken || !discordConfig.plantChannelId) {
@@ -55,7 +70,7 @@ export async function sendPlantReminders(forceAll = false): Promise<void> {
       : `overdue by ${overdueDays} day${overdueDays === 1 ? '' : 's'}`
 
     try {
-      await sendMessage(discordConfig.plantChannelId, {
+      await sendTrackedReminder('plant', plant.id, discordConfig.plantChannelId, {
         content: `🌿 **${name}** needs watering!\n*${plant.latinName}* · 📍 ${plant.roomName ?? 'Room not assigned'} · ${statusText}`,
         components: [
           {
@@ -153,7 +168,7 @@ export async function sendTaskReminders(forceAll = false): Promise<void> {
     }
 
     try {
-      await sendMessage(discordConfig.taskChannelId, {
+      await sendTrackedReminder('task', task.id, discordConfig.taskChannelId, {
         content: `🏠 **${task.name}** needs to be done!\n${task.description ? `*${task.description}* · ` : ''}${statusText}`,
         components: [
           {
