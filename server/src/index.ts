@@ -6,7 +6,6 @@ import { serve } from '@hono/node-server'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { logger as honoLogger } from 'hono/logger'
 import cron from 'node-cron'
 import { log } from './logger.js'
 import { authMiddleware } from './middleware/auth.js'
@@ -29,7 +28,21 @@ import { sendMessage } from './discord/api.js'
 const app = new Hono()
 
 app.use('*', cors())
-app.use('*', honoLogger())
+app.use('*', async (c, next) => {
+  const startedAt = performance.now()
+  await next()
+  log.info({
+    method: c.req.method,
+    path: c.req.path,
+    status: c.res.status,
+    durationMs: Math.round(performance.now() - startedAt),
+  }, 'HTTP request')
+})
+
+app.onError((err, c) => {
+  log.error({ err, method: c.req.method, path: c.req.path }, 'Unhandled HTTP request error')
+  return c.json({ error: 'Internal Server Error' }, 500)
+})
 
 // Auth route must be mounted before the auth middleware so /api/auth/login is reachable
 app.route('/api/auth', authRoute)

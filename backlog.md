@@ -166,8 +166,10 @@ Steps:
 ## Versioning + release cycle
 Show the app version (from `package.json`) in the UI footer. Use `npm version patch/minor/major` to bump + tag before deploying to the Pi, so you can always see what's running without SSH-ing in.
 
-## Logging
-Zero production logging right now. Need structured logs for key operations: adding a plant, watering a plant, Discord reminder sent, errors. Goal: be able to debug failures after the fact.
+## ~~Logging~~ ✅ Done
+~~Add structured production logs for key operations and errors so failures can be debugged after the fact.~~
+
+Implemented with pino: plant and task operations, Discord reminders and interactions, gateway lifecycle, and relevant failures are logged with structured context. HTTP requests now log method, path, status, and duration through pino; unhandled HTTP errors log the error and request context and return a generic 500 response.
 
 ## Authentication + Public Hosting (Cloudflare Tunnel)
 
