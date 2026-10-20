@@ -106,8 +106,14 @@ Add training rotations and Discord reminders, reusing the household-task reminde
 ## ~~Updating text~~ ✅ Done
 ~~We need to update so that the text in discord actually says what room the plants are in, some plants with different intervalls in different rooms are hard to track with the messages we get from discord~~
 
-## Create backup of database
-What would happen today if the rpi would break, it would be impossible to re-creatge the database, we need to secure that and future proof it
+## Database backups — local snapshots implemented; production automation pending
+Run `npm run db:backup -w server` to create a consistent SQLite backup under `data/backups/`. The command keeps the newest seven timestamped snapshots and does not remove unrelated files.
+
+- Schedule a daily backup of the live production database, independent of deployments
+- Copy backups off the Pi/device so hardware or SD-card failure does not destroy both the database and its backups
+- Verify backups periodically by restoring one to a temporary database and checking that the app can read it
+
+The CI/CD deploy checklist below should also take a fresh pre-deploy snapshot for rollback. That is a separate safeguard from the daily off-device backup.
 
 ## ~~Create datapipeline~~ ✅ Done
 
@@ -147,13 +153,13 @@ Risks to design around (from INCIDENT-001/002/005/007 and a review of the code):
 - **Runner user and PATH**: install the runner service as the same user that owns the PM2 daemon (a different user gets its own empty PM2 and `ziber` is "not found", as in INCIDENT-002). The service has a minimal PATH, so `node`, `npm` and `pm2` must be resolvable there (check with a read-only run first, especially if installed via nvm).
 - **Pi resources**: don't run `triage` + `test` on the Pi during deploy; cloud CI already does that. Require CI green on the commit instead. The build on the Pi is the same one done manually today.
 - **Restart side effects**: pending participant pickers and undo tokens are in-memory and are lost on restart; the 08:00 reminder cron is in-process with no catch-up, so don't deploy around 08:00. The `tunnel` PM2 process is unaffected.
-- **Migrations are forward-only and run on boot**: rolling code back after a new migration also requires restoring the pre-deploy DB backup. Take the backup before pulling.
+- **Migrations are forward-only and run on boot**: rolling code back after a new migration also requires restoring the pre-deploy DB backup. Take the backup before pulling; this is separate from the scheduled off-device backup in "Database backups" above.
 
 Steps:
 - **Step 0 (read-only dry run)**: install the runner, run a workflow that only prints `whoami`, `uname -m`, `node -v`, `pm2 list`, `pwd`. Touches nothing; proves user, PATH and architecture (GitHub's runner may not support 32-bit armv7l; if it doesn't, fall back to a cron/webhook script or manual deploys).
 - Add `.github/workflows/ci.yml` — `ubuntu-latest`, on PRs and pushes to `main`: `npm install`, `npm run triage`, `npm run test`. Enable "require status checks" branch protection in GitHub settings.
 - Add `.github/workflows/deploy.yml` — `workflow_dispatch` only, `runs-on: [self-hosted, raspberry-pi]`, `concurrency: deploy` (no overlapping runs), only from `main`. No `actions/checkout`; run in the existing clone (`cd` to its path), so there's no `git clean` risk. Order:
-  1. Back up the DB with the SQLite backup API (or stop writes first); a plain `cp` of a live DB file can be inconsistent. Keep the last N backups so the SD card doesn't fill.
+  1. Create a pre-deploy snapshot with the SQLite backup API before pulling (Pi/PM2: `node server/dist/db/backup.js`; Docker: `docker compose exec app node server/dist/db/backup.js`). Do not `cp` the live DB file; keep the last N local snapshots so the SD card doesn't fill. This deploy snapshot is for rollback; the scheduled off-device backup is tracked separately above.
   2. `git pull --ff-only origin main`.
   3. If `package-lock.json` changed: `npm install`, then the `better-sqlite3` binding check.
   4. `npm run build`; on any failure stop here and leave the running app untouched.

@@ -8,6 +8,7 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "seed": "tsx src/db/seed.ts",
+    "db:backup": "tsx src/db/backup.ts",
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio"
