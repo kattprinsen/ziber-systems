@@ -1,8 +1,9 @@
 import { Hono } from 'hono'
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { db } from '../db/index.js'
 import { log } from '../logger.js'
-import { tasks, taskLogs, taskLogMembers, members } from '../db/schema.js'
+import { deleteMessage } from '../discord/api.js'
+import { tasks, taskLogs, taskLogMembers, members, reminderMessages } from '../db/schema.js'
 
 const tasksRoute = new Hono()
 
@@ -133,9 +134,26 @@ tasksRoute.delete('/:id', async (c) => {
   const id = Number(c.req.param('id'))
   if (!Number.isInteger(id) || id < 1) return c.json({ error: 'Invalid id' }, 400)
 
+  const [task] = await db.select({ id: tasks.id }).from(tasks).where(eq(tasks.id, id))
+  if (!task) return c.json({ error: 'Not found' }, 404)
+
+  const [reminder] = await db
+    .select({ channelId: reminderMessages.channelId, messageId: reminderMessages.messageId })
+    .from(reminderMessages)
+    .where(and(eq(reminderMessages.domain, 'task'), eq(reminderMessages.itemId, id)))
+
   await db.delete(taskLogs).where(eq(taskLogs.taskId, id))
+  await db.delete(reminderMessages).where(and(eq(reminderMessages.domain, 'task'), eq(reminderMessages.itemId, id)))
   const [deleted] = await db.delete(tasks).where(eq(tasks.id, id)).returning()
   if (!deleted) return c.json({ error: 'Not found' }, 404)
+
+  if (reminder) {
+    try {
+      await deleteMessage(reminder.channelId, reminder.messageId)
+    } catch (err) {
+      log.warn({ err, taskId: id, messageId: reminder.messageId }, 'Failed to remove task reminder during deletion')
+    }
+  }
 
   log.info({ taskId: id, name: deleted.name }, 'Task deleted')
   return c.json({ success: true })
