@@ -13,7 +13,7 @@ flowchart LR
     Ext([External systems]) -- "X-Api-Key" --> Server
 ```
 
-See [diagrams/architecture.md](diagrams/architecture.md) for the detailed architecture and data model.
+See [diagrams/architecture.md](diagrams/architecture.md) for the detailed architecture and data model, and [diagrams/deployment.md](diagrams/deployment.md) for the deployment flow.
 
 ## Getting started
 
