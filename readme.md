@@ -2,6 +2,19 @@
 
 Track your household plants, log chores, and manage your home. Built with React, Hono, Drizzle ORM, and SQLite.
 
+## Architecture
+
+```mermaid
+flowchart LR
+    Browser([Browser]) --> Client["client/<br/>React + Vite"]
+    Client -- "/api/*" --> Server["server/<br/>Hono + Drizzle"]
+    Server --> DB[(SQLite)]
+    Server <--> Discord[(Discord)]
+    Ext([External systems]) -- "X-Api-Key" --> Server
+```
+
+See [diagrams/architecture.md](diagrams/architecture.md) for the detailed architecture and data model.
+
 ## Getting started
 
 ```bash
