@@ -169,6 +169,12 @@ Steps:
 - Update the Pi deploy sections of `README.md` and `CLAUDE.md`: runner setup, the new flow, the manual fallback, and the rollback procedure.
 - No auto-rollback in v1: a failed step fails the workflow loudly with the backup already taken. Manual rollback: `git checkout <previous-sha>`, rebuild, restore the DB backup if a migration ran, `pm2 restart ziber`.
 
+**Status (2026-10-30): partially done, blocked on runner install.**
+- Done (untested): `.github/workflows/ci.yml`, `.github/workflows/deploy.yml` (with a `dry_run` input for Step 0), README "Automated deploys" section, `diagrams/deployment.md`.
+- Blocked: `./config.sh` on the Pi fails with "The SSL connection could not be established". `curl` to GitHub works from the Pi (TLS 1.3, HTTP 200), so it is .NET-specific. Not yet tried: confirm Pi `date`, `apt install ca-certificates libssl-dev` + `update-ca-certificates`, `sudo ./bin/installdependencies.sh`, IPv6 test (`curl -6`), and the newest `~/actions-runner/_diag/Runner_*.log`. Also confirm `uname -m` (armv7l may not be supported).
+- Not done: runner service, `ZIBER_DIR` repo variable, branch protection requiring `ci`, outside-contributor approval, dry run, first real deploy, `CLAUDE.md` update.
+- Fallback if the runner can't be made to work: keep manual deploys, or replace the runner with a script on the Pi (cron or webhook) that runs the same steps as `deploy.yml`; `ci.yml` stays useful either way.
+
 ## Versioning + release cycle
 Show the app version (from `package.json`) in the UI footer. Use `npm version patch/minor/major` to bump + tag before deploying to the Pi, so you can always see what's running without SSH-ing in.
 
