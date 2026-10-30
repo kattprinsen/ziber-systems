@@ -1,0 +1,105 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Read-only diagnostics only (whoami, node, pm2); deploys nothing
+        type: boolean
+        default: true
+
+concurrency: deploy
+
+permissions:
+  contents: read
+  checks: read
+
+jobs:
+  require-ci:
+    if: github.ref == 'refs/heads/main' && !inputs.dry_run
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require a successful CI run on this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          conclusion=$(gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/check-runs" \
+            --jq '[.check_runs[] | select(.name == "ci")] | sort_by(.completed_at) | last | .conclusion')
+          echo "ci conclusion: $conclusion"
+          [ "$conclusion" = "success" ]
+
+  diagnostics:
+    if: github.ref == 'refs/heads/main' && inputs.dry_run
+    runs-on: [self-hosted, raspberry-pi]
+    steps:
+      - run: |
+          whoami
+          uname -m
+          node -v
+          pm2 list
+          echo "ZIBER_DIR=${{ vars.ZIBER_DIR }}"
+          pwd
+
+  deploy:
+    needs: require-ci
+    runs-on: [self-hosted, raspberry-pi]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      # No checkout: deploy in the existing clone PM2 already uses (DB, .env, node_modules live there).
+      - name: Enter existing clone
+        run: |
+          test -n "${{ vars.ZIBER_DIR }}" || { echo "Set repo variable ZIBER_DIR to the Pi clone path"; exit 1; }
+          cd "${{ vars.ZIBER_DIR }}" && pwd && git status --short
+
+      - name: Pre-deploy DB snapshot
+        run: |
+          cd "${{ vars.ZIBER_DIR }}"
+          node server/dist/db/backup.js
+
+      - name: Pull
+        id: pull
+        run: |
+          cd "${{ vars.ZIBER_DIR }}"
+          echo "previous=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          git fetch origin main
+          if ! git diff --quiet HEAD origin/main -- package-lock.json; then
+            echo "lock_changed=true" >> "$GITHUB_OUTPUT"
+          fi
+          git pull --ff-only origin main
+
+      - name: Install dependencies (only if lockfile changed)
+        if: steps.pull.outputs.lock_changed == 'true'
+        run: |
+          cd "${{ vars.ZIBER_DIR }}"
+          npm install
+          node -e "new (require('better-sqlite3'))(':memory:').close()"
+
+      - name: Build
+        run: |
+          cd "${{ vars.ZIBER_DIR }}"
+          npm run build
+
+      - name: Restart
+        run: |
+          cd "${{ vars.ZIBER_DIR }}"
+          pm2 restart ziber --update-env
+          pm2 save
+
+      - name: Verify
+        run: |
+          cd "${{ vars.ZIBER_DIR }}"
+          restarts() { pm2 jlist | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const p=JSON.parse(s).find(x=>x.name==='ziber');if(!p||p.pm2_env.status!=='online'){process.exit(1)}console.log(p.pm2_env.restart_time)})"; }
+          sleep 5
+          before=$(restarts)
+          sleep 10
+          after=$(restarts)
+          [ "$before" = "$after" ] || { echo "ziber is restarting (crash loop?)"; exit 1; }
+          curl -fsS -o /dev/null http://localhost:3000/
+
+      - name: Rollback hint on failure
+        if: failure()
+        run: |
+          echo "Previous commit: ${{ steps.pull.outputs.previous }}"
+          echo "Rollback: git checkout <sha>, npm run build, restore data/backups snapshot if a migration ran, pm2 restart ziber"

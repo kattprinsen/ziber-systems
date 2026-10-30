@@ -243,6 +243,18 @@ pm2 startup   # follow the printed command to enable on boot
 > pm2 save
 > ```
 
+### Automated deploys (GitHub Actions)
+
+`ci.yml` runs typecheck, lint and tests on GitHub-hosted runners for PRs and pushes to `main`. `deploy.yml` is manual (`workflow_dispatch`, `main` only) and runs on a self-hosted runner on the Pi, inside the existing clone: DB snapshot, `git pull --ff-only`, `npm install` only if `package-lock.json` changed, build, `pm2 restart ziber`, then a health check. See [diagrams/deployment.md](diagrams/deployment.md).
+
+One-time setup:
+1. Install the Actions runner on the Pi as the **same user that owns PM2**, with label `raspberry-pi`, and make sure `node`, `npm` and `pm2` are on its PATH.
+2. Add a repo variable `ZIBER_DIR` (Settings → Secrets and variables → Actions → Variables) with the absolute path of the clone.
+3. In Settings → Actions, require approval for all outside contributors, and enable branch protection requiring the `ci` check.
+4. Run **Deploy** with `dry_run` checked (the default) to verify user, architecture, PATH and `pm2 list` before the first real deploy.
+
+Avoid deploying around 08:00 (reminder cron has no catch-up). Manual rollback: `git checkout <previous-sha>`, `npm run build`, restore the snapshot from `data/backups/` if a migration ran, `pm2 restart ziber`. The manual SSH flow above still works as a fallback.
+
 ## Tech stack
 
 - **Client**: React 19, TypeScript, Vite 6, react-router-dom, SCSS modules
