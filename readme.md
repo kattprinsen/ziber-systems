@@ -245,7 +245,7 @@ pm2 startup   # follow the printed command to enable on boot
 
 ### Automated deploys (GitHub Actions)
 
-`ci.yml` runs typecheck, lint and tests on GitHub-hosted runners for PRs and pushes to `main`. `deploy.yml` is manual (`workflow_dispatch`, `main` only) and runs on a self-hosted runner on the Pi, inside the existing clone: DB snapshot, `git pull --ff-only`, `npm install` only if `package-lock.json` changed, build, `pm2 restart ziber`, then a health check. See [diagrams/deployment.md](diagrams/deployment.md).
+`ci.yml` runs tests on GitHub-hosted runners for PRs and pushes to `main`. `deploy.yml` is manual (`workflow_dispatch`, `main` only) and runs on a self-hosted runner on the Pi, inside the existing clone: DB snapshot, `git pull --ff-only`, `npm install` only if `package-lock.json` changed, build, `pm2 restart ziber`, then a health check. See [diagrams/deployment.md](diagrams/deployment.md).
 
 One-time setup:
 1. Install the Actions runner on the Pi as the **same user that owns PM2**, with label `raspberry-pi`, and make sure `node`, `npm` and `pm2` are on its PATH.
